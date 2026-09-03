@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTE — Cockpit de pilotage</title>
+
+<style>
+:root{
+  --bg:#07101f;
+  --panel:#0d192b;
+  --panel2:#111f34;
+  --line:#20324b;
+  --text:#f4f7fb;
+  --muted:#91a1b8;
+  --accent:#d7b56d;
+  --accent2:#f0d28e;
+  --green:#4fd18b;
+  --orange:#f3b85b;
+  --red:#ef6b73;
+  --blue:#5ca9ff;
+}
+
+*{box-sizing:border-box}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top right,rgba(215,181,109,.09),transparent 30%),
+    radial-gradient(circle at bottom left,rgba(92,169,255,.06),transparent 30%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+}
+
+button,input,textarea,select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(7,16,31,.94);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+}
+
+.header-inner{
+  max-width:1450px;
+  margin:auto;
+  padding:16px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.logo{
+  font-size:25px;
+  font-weight:900;
+  letter-spacing:4px;
+}
+
+.logo span{
+  color:var(--accent);
+}
+
+.nav{
+  display:flex;
+  gap:7px;
+  overflow:auto;
+}
+
+.nav a{
+  color:var(--muted);
+  text-decoration:none;
+  padding:9px 12px;
+  border-radius:8px;
+  white-space:nowrap;
+  font-size:13px;
+}
+
+.nav a:hover{
+  color:white;
+  background:var(--panel2);
+}
+
+.container{
+  max-width:1450px;
+  margin:auto;
+  padding:35px 24px 80px;
+}
+
+.hero{
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:22px;
+  margin-bottom:25px;
+}
+
+.hero-main,
+.hero-side{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),
+    var(--panel);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:35px;
+}
+
+.eyebrow{
+  color:var(--accent);
+  font-weight:800;
+  letter-spacing:2px;
+  font-size:12px;
+  text-transform:uppercase;
+}
+
+h1{
+  font-size:clamp(38px,6vw,76px);
+  margin:12px 0;
+  line-height:.95;
+  letter-spacing:-3px;
+}
+
+.hero-main p{
+  max-width:720px;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.7;
+}
+
+.badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  margin-top:22px;
+}
+
+.badge{
+  padding:7px 11px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  border-radius:100px;
+  color:#dce5f1;
+  font-size:12px;
+}
+
+.hero-side h3{
+  margin-top:0;
+}
+
+.status{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:18px 0;
+}
+
+.dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:var(--orange);
+  box-shadow:0 0 15px rgba(243,184,91,.5);
+}
+
+.grid{
+  display:grid;
+  gap:16px;
+}
+
+.kpis{
+  grid-template-columns:repeat(4,1fr);
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:20px;
+}
+
+.kpi-label{
+  color:var(--muted);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.kpi-value{
+  font-size:30px;
+  font-weight:850;
+  margin-top:8px;
+}
+
+.kpi-note{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:6px;
+}
+
+section{
+  margin-top:55px;
+  scroll-margin-top:90px;
+}
+
+.section-head{
+  margin-bottom:18px;
+}
+
+.section-head small{
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  font-weight:800;
+}
+
+.section-head h2{
+  margin:5px 0;
+  font-size:32px;
+}
+
+.section-head p{
+  color:var(--muted);
+  margin:0;
+}
+
+.retenir{
+  background:linear-gradient(90deg,rgba(215,181,109,.1),transparent);
+  border-left:3px solid var(--accent);
+  padding:15px 18px;
+  margin-bottom:18px;
+  border-radius:0 10px 10px 0;
+}
+
+.retenir strong{
+  display:block;
+  color:var(--accent2);
+  margin-bottom:7px;
+}
+
+.retenir ul{
+  margin:0;
+  padding-left:18px;
+  color:#c9d3e1;
+}
+
+.cols-2{
+  grid-template-columns:repeat(2,1fr);
+}
+
+.cols-3{
+  grid-template-columns:repeat(3,1fr);
+}
+
+.cols-4{
+  grid-template-columns:repeat(4,1fr);
+}
+
+.label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:7px;
+}
+
+input,
+textarea,
+select{
+  width:100%;
+  background:#091426;
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:11px;
+  color:white;
+  outline:none;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:var(--accent);
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+.field{
+  margin-bottom:13px;
+}
+
+.btn{
+  border:0;
+  border-radius:9px;
+  padding:11px 16px;
+  background:var(--accent);
+  color:#111;
+  font-weight:800;
+}
+
+.btn.secondary{
+  background:var(--panel2);
+  color:white;
+  border:1px solid var(--line);
+}
+
+.btn.danger{
+  background:rgba(239,107,115,.15);
+  color:#ff9da3;
+  border:1px solid rgba(239,107,115,.3);
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.big-number{
+  font-size:42px;
+  font-weight:900;
+  margin:10px 0;
+}
+
+.green{color:var(--green)}
+.orange{color:var(--orange)}
+.red{color:var(--red)}
+.blue{color:var(--blue)}
+.gold{color:var(--accent2)}
+
+.table-wrap{
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:650px;
+}
+
+th,td{
+  padding:12px;
+  text-align:left;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+}
+
+th{
+  color:var(--muted);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+
+td input,
+td select{
+  min-width:100px;
+}
+
+.progress{
+  height:9px;
+  background:#091426;
+  border-radius:100px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.progress div{
+  height:100%;
+  background:var(--accent);
+  width:0%;
+  transition:.3s;
+}
+
+.scenario{
+  border:1px solid var(--line);
+  border-radius:15px;
+  padding:20px;
+  background:var(--panel);
+}
+
+.scenario h3{
+  margin-top:0;
+}
+
+.scenario ul{
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.matrix{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.matrix-box{
+  padding:20px;
+  border-radius:15px;
+  border:1px solid var(--line);
+}
+
+.matrix-box h3{
+  margin-top:0;
+}
+
+.strength{border-left:4px solid var(--green)}
+.weakness{border-left:4px solid var(--red)}
+.opportunity{border-left:4px solid var(--blue)}
+.threat{border-left:4px solid var(--orange)}
+
+.timeline{
+  display:grid;
+  gap:10px;
+}
+
+.month{
+  display:grid;
+  grid-template-columns:100px 1fr 140px 130px;
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:11px;
+}
+
+.month strong{
+  color:var(--accent);
+}
+
+.pill{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:100px;
+  font-size:11px;
+  background:#18283e;
+}
+
+.footer{
+  margin-top:70px;
+  padding:30px 0;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+}
+
+@media(max-width:1000px){
+  .hero,
+  .cols-4,
+  .cols-3{
+    grid-template-columns:1fr 1fr;
+  }
+  .kpis{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:700px){
+  .header-inner{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .hero,
+  .cols-2,
+  .cols-3,
+  .cols-4,
+  .kpis{
+    grid-template-columns:1fr;
+  }
+  .container{
+    padding:25px 14px 60px;
+  }
+  .hero-main,
+  .hero-side{
+    padding:23px;
+  }
+  .month{
+    grid-template-columns:1fr;
+  }
+  h1{
+    letter-spacing:-2px;
+  }
+}
+
+@media print{
+  .header{
+    position:static;
+  }
+  .nav,
+  .actions{
+    display:none!important;
+  }
+  body{
+    background:white;
+    color:#111;
+  }
+  .card,
+  .hero-main,
+  .hero-side,
+  .scenario{
+    background:white;
+    border-color:#ccc;
+  }
+  .kpi-label,
+  .kpi-note,
+  .hero-main p,
+  .section-head p,
+  .label{
+    color:#555;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">F<span>A</span>STE</div>
+
+    <nav class="nav">
+      <a href="#dashboard">Dashboard</a>
+      <a href="#projet">Projet</a>
+      <a href="#offres">Offres</a>
+      <a href="#business">Business Model</a>
+      <a href="#equipe">Équipe</a>
+      <a href="#materiel">Matériel</a>
+      <a href="#finance">Finances</a>
+      <a href="#vision">Vision 5 ans</a>
+      <a href="#actions">Actions</a>
+      <a href="#decision">Décision</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- HERO -->
+
+<div class="hero">
+
+  <div class="hero-main">
+    <div class="eyebrow">Cockpit stratégique & financier</div>
+
+    <h1>FASTE</h1>
+
+    <p>
+      Construire une marque événementielle premium, rentable et scalable
+      depuis Orléans, avec une approche centrée sur l'expérience client,
+      la qualité technique et la production événementielle.
+    </p>
+
+    <div class="badges">
+      <span class="badge">DJ</span>
+      <span class="badge">Sonorisation</span>
+      <span class="badge">Éclairage</span>
+      <span class="badge">Scénographie</span>
+      <span class="badge">Événementiel</span>
+      <span class="badge">Corporate</span>
+      <span class="badge">Mariages</span>
+    </div>
+  </div>
+
+  <div class="hero-side">
+    <h3>État actuel du projet</h3>
+
+    <div class="status">
+      <span class="dot"></span>
+      <strong id="projectStatus">À structurer</strong>
+    </div>
+
+    <p style="color:var(--muted);line-height:1.7">
+      Ce cockpit sert à transformer FASTE en véritable entreprise :
+      stratégie, marché, offres, investissements, finances, commercial,
+      organisation et vision à 5 ans.
+    </p>
+
+    <div class="actions">
+      <button class="btn" onclick="window.print()">Imprimer / PDF</button>
+      <button class="btn secondary" onclick="saveData()">Sauvegarder</button>
+      <button class="btn danger" onclick="resetData()">Réinitialiser</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<section id="dashboard">
+
+<div class="section-head">
+  <small>01 — Pilotage</small>
+  <h2>Dashboard</h2>
+  <p>Les indicateurs essentiels de FASTE.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Les chiffres réels doivent être renseignés avant toute décision financière.</li>
+<li>Le modèle ci-dessous est un outil de pilotage simplifié, pas une comptabilité.</li>
+<li>Les hypothèses peuvent être modifiées à tout moment.</li>
+</ul>
+</div>
+
+<div class="grid kpis">
+
+<div class="card">
+<div class="kpi-label">CA annuel simulé</div>
+<div class="kpi-value gold" id="kpiCA">0 €</div>
+<div class="kpi-note">Hypothèse de pilotage</div>
+</div>
+
+<div class="card">
+<div class="kpi-label">Résultat simplifié</div>
+<div class="kpi-value" id="kpiResult">0 €</div>
+<div class="kpi-note">Avant rémunération, impôts et amortissements</div>
+</div>
+
+<div class="card">
+<div class="kpi-label">Événements / an</div>
+<div class="kpi-value blue" id="kpiEvents">0</div>
+<div class="kpi-note">Projection actuelle</div>
+</div>
+
+<div class="card">
+<div class="kpi-label">Seuil de rentabilité</div>
+<div class="kpi-value orange" id="kpiBreak">—</div>
+<div class="kpi-note">Événements / mois</div>
+</div>
+
+</div>
+
+</section>
+
+<!-- PROJET -->
+
+<section id="projet">
+
+<div class="section-head">
+<small>02 — ADN</small>
+<h2>Le projet FASTE</h2>
+<p>Clarifier le concept avant de chercher à accélérer.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>FASTE doit vendre une expérience, pas uniquement du matériel.</li>
+<li>Le positionnement recherché est premium accessible.</li>
+<li>La croissance doit être progressive et rentable.</li>
+</ul>
+</div>
+
+<div class="grid cols-2">
+
+<div class="card">
+<h3>Vision</h3>
+<textarea id="visionText">Devenir une référence régionale de l'événementiel premium autour d'Orléans et du Val de Loire.</textarea>
+</div>
+
+<div class="card">
+<h3>Mission</h3>
+<textarea id="missionText">Créer des événements mémorables en combinant DJ, son, lumière, scénographie et qualité de production.</textarea>
+</div>
+
+<div class="card">
+<h3>Zone de lancement</h3>
+<input id="zone" value="Orléans / Loiret / Val de Loire / Sologne">
+</div>
+
+<div class="card">
+<h3>Positionnement</h3>
+<textarea id="positionnement">Premium accessible — élégant, moderne, fiable et spectaculaire.</textarea>
+</div>
+
+</div>
+
+</section>
+
+<!-- OFFRES -->
+
+<section id="offres">
+
+<div class="section-head">
+<small>03 — Commercial</small>
+<h2>Architecture des offres</h2>
+<p>À transformer ensuite en tarifs réels après étude du marché.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Ne pas vendre uniquement des heures de DJ.</li>
+<li>Construire des packs lisibles et personnalisables.</li>
+<li>Faire monter progressivement le panier moyen.</li>
+</ul>
+</div>
+
+<div class="grid cols-3">
+
+<div class="card">
+<h3>ESSENTIEL</h3>
+<p style="color:var(--muted)">
+DJ + sonorisation adaptée + éclairage de base.
+</p>
+<p class="pill">À chiffrer</p>
+</div>
+
+<div class="card">
+<h3>PREMIUM</h3>
+<p style="color:var(--muted)">
+DJ + son + éclairage + mise en scène + accompagnement.
+</p>
+<p class="pill">À chiffrer</p>
+</div>
+
+<div class="card">
+<h3>SIGNATURE</h3>
+<p style="color:var(--muted)">
+Production événementielle complète, scénographie et expérience premium.
+</p>
+<p class="pill">À chiffrer</p>
+</div>
+
+</div>
+
+<div class="card" style="margin-top:16px">
+
+<h3>Offres personnalisables</h3>
+
+<div class="table-wrap">
+
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Coût interne</th>
+<th>Prix cible</th>
+<th>Marge cible</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>DJ</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><input type="number" placeholder="À rechercher"></td>
+<td><input type="number" placeholder="%"></td>
+</tr>
+
+<tr>
+<td>Sonorisation</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><input type="number" placeholder="À rechercher"></td>
+<td><input type="number" placeholder="%"></td>
+</tr>
+
+<tr>
+<td>Éclairage</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><input type="number" placeholder="À rechercher"></td>
+<td><input type="number" placeholder="%"></td>
+</tr>
+
+<tr>
+<td>Scénographie</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><input type="number" placeholder="À rechercher"></td>
+<td><input type="number" placeholder="%"></td>
+</tr>
+
+</tbody>
+</table>
+
+</div>
+</div>
+
+</section>
+
+<!-- BUSINESS MODEL -->
+
+<section id="business">
+
+<div class="section-head">
+<small>04 — Modèle économique</small>
+<h2>Business Model</h2>
+<p>Le moteur économique de FASTE.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Le chiffre d'affaires dépend principalement du volume et du panier moyen.</li>
+<li>La marge par événement doit être suivie séparément des charges fixes.</li>
+<li>Le modèle doit pouvoir absorber les périodes creuses.</li>
+</ul>
+</div>
+
+<div class="grid cols-4">
+
+<div class="card">
+<label class="label">Événements / mois</label>
+<input id="eventsMonth" type="number" value="0" min="0" oninput="calculate()">
+</div>
+
+<div class="card">
+<label class="label">Prix moyen / événement (€)</label>
+<input id="avgPrice" type="number" value="0" min="0" oninput="calculate()">
+</div>
+
+<div class="card">
+<label class="label">Coût variable / événement (€)</label>
+<input id="variableCost" type="number" value="0" min="0" oninput="calculate()">
+</div>
+
+<div class="card">
+<label class="label">Charges fixes / mois (€)</label>
+<input id="fixedCost" type="number" value="0" min="0" oninput="calculate()">
+</div>
+
+</div>
+
+<div class="grid cols-3" style="margin-top:16px">
+
+<div class="card">
+<div class="kpi-label">CA mensuel</div>
+<div class="big-number" id="monthlyCA">0 €</div>
+</div>
+
+<div class="card">
+<div class="kpi-label">Marge mensuelle</div>
+<div class="big-number green" id="monthlyMargin">0 €</div>
+</div>
+
+<div class="card">
+<div class="kpi-label">Résultat mensuel simplifié</div>
+<div class="big-number" id="monthlyResult">0 €</div>
+</div>
+
+</div>
+
+</section>
+
+<!-- EQUIPE -->
+
+<section id="equipe">
+
+<div class="section-head">
+<small>05 — Organisation</small>
+<h2>Les deux associés</h2>
+<p>Une entreprise à deux nécessite une répartition claire.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Chaque associé doit avoir un périmètre principal.</li>
+<li>Les décisions importantes doivent rester communes.</li>
+<li>Le commercial et la production doivent être coordonnés.</li>
+</ul>
+</div>
+
+<div class="grid cols-2">
+
+<div class="card">
+<h3>Associé 1</h3>
+
+<div class="field">
+<label class="label">Nom</label>
+<input placeholder="À renseigner">
+</div>
+
+<div class="field">
+<label class="label">Responsabilités principales</label>
+<textarea placeholder="Commercial, relation client, marketing..."></textarea>
+</div>
+
+<div class="field">
+<label class="label">Objectifs</label>
+<textarea placeholder="Objectifs annuels..."></textarea>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Associé 2</h3>
+
+<div class="field">
+<label class="label">Nom</label>
+<input placeholder="À renseigner">
+</div>
+
+<div class="field">
+<label class="label">Responsabilités principales</label>
+<textarea placeholder="Technique, production, logistique..."></textarea>
+</div>
+
+<div class="field">
+<label class="label">Objectifs</label>
+<textarea placeholder="Objectifs annuels..."></textarea>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- MATERIEL -->
+
+<section id="materiel">
+
+<div class="section-head">
+<small>06 — Actifs</small>
+<h2>Parc matériel</h2>
+<p>Inventaire connu à date. Les valeurs restent volontairement à renseigner.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Le matériel déjà détenu constitue un actif de départ.</li>
+<li>Il faut connaître sa valeur réelle, son état et son coût de remplacement.</li>
+<li>Les futurs achats doivent être déclenchés par la demande, pas uniquement par l'envie.</li>
+</ul>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+<thead>
+<tr>
+<th>Équipement</th>
+<th>Quantité</th>
+<th>Valeur actuelle (€)</th>
+<th>État</th>
+<th>Remplacement</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Enceintes</td>
+<td>12</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><select><option>À évaluer</option><option>Bon</option><option>Moyen</option><option>À remplacer</option></select></td>
+<td><input placeholder="À déterminer"></td>
+</tr>
+
+<tr>
+<td>Portique / structure</td>
+<td>1</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><select><option>À évaluer</option><option>Bon</option><option>Moyen</option><option>À remplacer</option></select></td>
+<td><input placeholder="À déterminer"></td>
+</tr>
+
+<tr>
+<td>Lyres</td>
+<td>2</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><select><option>À évaluer</option><option>Bon</option><option>Moyen</option><option>À remplacer</option></select></td>
+<td><input placeholder="À déterminer"></td>
+</tr>
+
+<tr>
+<td>Petites lyres</td>
+<td>2</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><select><option>À évaluer</option><option>Bon</option><option>Moyen</option><option>À remplacer</option></select></td>
+<td><input placeholder="À déterminer"></td>
+</tr>
+
+<tr>
+<td>Pioneer FLX10</td>
+<td>1</td>
+<td><input type="number" placeholder="À renseigner"></td>
+<td><select><option>À évaluer</option><option>Bon</option><option>Moyen</option><option>À remplacer</option></select></td>
+<td><input placeholder="À déterminer"></td>
+</tr>
+
+</tbody>
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FINANCE -->
+
+<section id="finance">
+
+<div class="section-head">
+<small>07 — Finance</small>
+<h2>Simulateur financier</h2>
+<p>Modifiez les hypothèses et observez immédiatement l'impact.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Le modèle ne remplace pas le prévisionnel comptable.</li>
+<li>Il permet de tester rapidement la viabilité opérationnelle.</li>
+<li>Les données réelles doivent remplacer les hypothèses avant financement.</li>
+</ul>
+</div>
+
+<div class="grid cols-2">
+
+<div class="card">
+
+<h3>Hypothèses</h3>
+
+<div class="field">
+<label class="label">Événements / mois</label>
+<input id="events2" type="number" value="0" oninput="syncFinance('events2','eventsMonth')">
+</div>
+
+<div class="field">
+<label class="label">Prix moyen (€)</label>
+<input id="price2" type="number" value="0" oninput="syncFinance('price2','avgPrice')">
+</div>
+
+<div class="field">
+<label class="label">Coût variable / événement (€)</label>
+<input id="variable2" type="number" value="0" oninput="syncFinance('variable2','variableCost')">
+</div>
+
+<div class="field">
+<label class="label">Charges fixes / mois (€)</label>
+<input id="fixed2" type="number" value="0" oninput="syncFinance('fixed2','fixedCost')">
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Résultats</h3>
+
+<p>CA annuel</p>
+<div class="big-number gold" id="annualCA">0 €</div>
+
+<p>Marge annuelle</p>
+<div class="big-number green" id="annualMargin">0 €</div>
+
+<p>Résultat simplifié annuel</p>
+<div class="big-number" id="annualResult">0 €</div>
+
+<p>Seuil de rentabilité</p>
+<div class="big-number orange" id="breakEven">—</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- SCENARIOS -->
+
+<section id="scenarios">
+
+<div class="section-head">
+<small>08 — Décision</small>
+<h2>Les 3 scénarios</h2>
+<p>Un bon projet doit survivre à plusieurs niveaux de performance.</p>
+</div>
+
+<div class="grid cols-3">
+
+<div class="scenario">
+<h3 class="red">PRUDENT</h3>
+
+<ul>
+<li>Volume commercial limité</li>
+<li>Investissements très contrôlés</li>
+<li>Priorité à la trésorerie</li>
+<li>Développement local</li>
+</ul>
+
+<p class="pill">Objectif : sécuriser</p>
+</div>
+
+<div class="scenario">
+<h3 class="gold">CENTRAL</h3>
+
+<ul>
+<li>Montée en puissance progressive</li>
+<li>Panier moyen amélioré</li>
+<li>Investissement selon demande</li>
+<li>Développement corporate + mariage</li>
+</ul>
+
+<p class="pill">Objectif : construire</p>
+</div>
+
+<div class="scenario">
+<h3 class="green">AMBITIEUX</h3>
+
+<ul>
+<li>Forte acquisition commerciale</li>
+<li>Positionnement premium affirmé</li>
+<li>Renforcement matériel</li>
+<li>Première expansion géographique</li>
+</ul>
+
+<p class="pill">Objectif : accélérer</p>
+</div>
+
+</div>
+
+</section>
+
+<!-- VISION 5 ANS -->
+
+<section id="vision">
+
+<div class="section-head">
+<small>09 — Stratégie</small>
+<h2>Vision à 5 ans</h2>
+<p>Une trajectoire à construire avec des données réelles.</p>
+</div>
+
+<div class="grid cols-3">
+
+<div class="card">
+<h3>Année 1</h3>
+<p style="color:var(--muted)">
+Validation du marché, premiers clients, réputation, process et rentabilité.
+</p>
+</div>
+
+<div class="card">
+<h3>Année 2</h3>
+<p style="color:var(--muted)">
+Augmentation du volume, amélioration du panier moyen et développement corporate.
+</p>
+</div>
+
+<div class="card">
+<h3>Année 3</h3>
+<p style="color:var(--muted)">
+Structuration de la production et éventuel renforcement humain ou matériel.
+</p>
+</div>
+
+<div class="card">
+<h3>Année 4</h3>
+<p style="color:var(--muted)">
+Développement régional, partenariats premium et montée en gamme.
+</p>
+</div>
+
+<div class="card">
+<h3>Année 5</h3>
+<p style="color:var(--muted)">
+FASTE devient une marque événementielle régionale structurée et scalable.
+</p>
+</div>
+
+<div class="card">
+<h3>Objectif ultime</h3>
+<textarea placeholder="À définir : CA, marge, équipe, territoire, nombre d'événements..."></textarea>
+</div>
+
+</div>
+
+</section>
+
+<!-- VEHICULE / LOCAL -->
+
+<section id="infrastructure">
+
+<div class="section-head">
+<small>10 — Infrastructure</small>
+<h2>Véhicule & stockage</h2>
+<p>Deux postes qui peuvent fortement influencer la rentabilité.</p>
+</div>
+
+<div class="grid cols-2">
+
+<div class="card">
+
+<h3>Véhicule</h3>
+
+<div class="field">
+<label class="label">Besoin identifié ?</label>
+<select>
+<option>À déterminer</option>
+<option>Oui</option>
+<option>Non</option>
+</select>
+</div>
+
+<div class="field">
+<label class="label">Budget maximum envisagé (€)</label>
+<input type="number" placeholder="À déterminer">
+</div>
+
+<div class="field">
+<label class="label">Solution</label>
+<select>
+<option>À rechercher</option>
+<option>Véhicule personnel</option>
+<option>Location</option>
+<option>Crédit</option>
+<option>Achat société</option>
+</select>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Stockage</h3>
+
+<div class="field">
+<label class="label">Besoin</label>
+<select>
+<option>À déterminer</option>
+<option>Stockage domicile</option>
+<option>Box</option>
+<option>Local professionnel</option>
+<option>Entrepôt</option>
+</select>
+</div>
+
+<div class="field">
+<label class="label">Budget mensuel (€)</label>
+<input type="number" placeholder="À déterminer">
+</div>
+
+<div class="field">
+<label class="label">Déclencheur</label>
+<textarea placeholder="À partir de quel volume de matériel / nombre d'événements faut-il louer un local ?"></textarea>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- RISQUES -->
+
+<section id="risques">
+
+<div class="section-head">
+<small>11 — Analyse</small>
+<h2>SWOT</h2>
+<p>À enrichir au fur et à mesure des recherches terrain.</p>
+</div>
+
+<div class="matrix">
+
+<div class="matrix-box strength">
+<h3>Forces</h3>
+<textarea>• Deux associés
+• Parc matériel déjà disponible
+• Capacité DJ + technique
+• Positionnement premium possible</textarea>
+</div>
+
+<div class="matrix-box weakness">
+<h3>Faiblesses</h3>
+<textarea>• Marque à construire
+• Données financières encore à renseigner
+• Capacité opérationnelle limitée à deux
+• Forte dépendance aux associés</textarea>
+</div>
+
+<div class="matrix-box opportunity">
+<h3>Opportunités</h3>
+<textarea>• Mariages
+• Corporate
+• Domaines et châteaux
+• Partenariats avec wedding planners
+• Développement régional</textarea>
+</div>
+
+<div class="matrix-box threat">
+<h3>Menaces</h3>
+<textarea>• Concurrence
+• Guerre des prix
+• Saison creuse
+• Pannes matériel
+• Annulations
+• Dépendance au bouche-à-oreille</textarea>
+</div>
+
+</div>
+
+</section>
+
+<!-- ACTIONS -->
+
+<section id="actions">
+
+<div class="section-head">
+<small>12 — Exécution</small>
+<h2>Plan d'action 12 mois</h2>
+<p>Transformer la stratégie en actions concrètes.</p>
+</div>
+
+<div class="timeline">
+
+<script>
+const months=[
+"MOIS 1","MOIS 2","MOIS 3","MOIS 4","MOIS 5","MOIS 6",
+"MOIS 7","MOIS 8","MOIS 9","MOIS 10","MOIS 11","MOIS 12"
+];
+
+months.forEach((m,i)=>{
+document.write(`
+<div class="month">
+<strong>${m}</strong>
+<input placeholder="Action prioritaire">
+<input placeholder="Responsable">
+<select>
+<option>À faire</option>
+<option>En cours</option>
+<option>Terminé</option>
+</select>
+</div>
+`);
+});
+</script>
+
+</div>
+
+</section>
+
+<!-- KPI -->
+
+<section id="kpi">
+
+<div class="section-head">
+<small>13 — Performance</small>
+<h2>KPI commerciaux</h2>
+<p>Les indicateurs qui doivent être suivis chaque mois.</p>
+</div>
+
+<div class="grid cols-3">
+
+<div class="card">
+<label class="label">Prospects / mois</label>
+<input type="number" placeholder="À renseigner">
+</div>
+
+<div class="card">
+<label class="label">Devis envoyés</label>
+<input type="number" placeholder="À renseigner">
+</div>
+
+<div class="card">
+<label class="label">Événements signés</label>
+<input type="number" placeholder="À renseigner">
+</div>
+
+<div class="card">
+<label class="label">Taux de conversion</label>
+<input type="number" placeholder="%">
+</div>
+
+<div class="card">
+<label class="label">Panier moyen</label>
+<input type="number" placeholder="€">
+</div>
+
+<div class="card">
+<label class="label">Avis clients</label>
+<input type="number" placeholder="Note / 5">
+</div>
+
+</div>
+
+</section>
+
+<!-- DECISION -->
+
+<section id="decision">
+
+<div class="section-head">
+<small>14 — Décision</small>
+<h2>Centre de décision FASTE</h2>
+<p>Ne pas décider sur l'intuition uniquement.</p>
+</div>
+
+<div class="retenir">
+<strong>## CE QU’IL FAUT RETENIR</strong>
+<ul>
+<li>Ne pas investir fortement avant validation de la demande.</li>
+<li>Mesurer la rentabilité réelle événement par événement.</li>
+<li>Le passage à l'échelle doit être déclenché par des indicateurs.</li>
+</ul>
+</div>
+
+<div class="card">
+
+<h3>Checklist de viabilité</h3>
+
+<div class="table-wrap">
+
+<table>
+<thead>
+<tr>
+<th>Critère</th>
+<th>État</th>
+<th>Commentaire</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Marché local validé</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Preuve / source"></td>
+</tr>
+
+<tr>
+<td>Offres définies</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Commentaire"></td>
+</tr>
+
+<tr>
+<td>Prix validés par le marché</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Commentaire"></td>
+</tr>
+
+<tr>
+<td>Rentabilité démontrée</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Commentaire"></td>
+</tr>
+
+<tr>
+<td>Trésorerie suffisante</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Commentaire"></td>
+</tr>
+
+<tr>
+<td>Organisation à deux validée</td>
+<td>
+<select>
+<option>À statuer</option>
+<option>GO</option>
+<option>ATTENTION</option>
+<option>NO GO</option>
+</select>
+</td>
+<td><input placeholder="Commentaire"></td>
+</tr>
+
+</tbody>
+</table>
+
+</div>
+
+</div>
+
+<div class="card" style="margin-top:16px;text-align:center">
+
+<h3>Verdict actuel</h3>
+
+<div class="big-number orange" id="verdict">
+À STATUER
+</div>
+
+<p style="color:var(--muted)">
+Le verdict définitif doit être établi après renseignement des données
+réelles et validation du marché.
+</p>
+
+</div>
+
+</section>
+
+<!-- DATA -->
+
+<section>
+
+<div class="section-head">
+<small>15 — Données</small>
+<h2>Journal des hypothèses</h2>
+<p>Ne jamais confondre une donnée réelle avec une hypothèse.</p>
+</div>
+
+<div class="grid cols-3">
+
+<div class="card">
+<h3 class="green">RÉEL</h3>
+<p style="color:var(--muted)">
+Donnée issue d'une facture, contrat, relevé bancaire,
+devis réel ou information vérifiée.
+</p>
+</div>
+
+<div class="card">
+<h3 class="orange">HYPOTHÈSE</h3>
+<p style="color:var(--muted)">
+Valeur temporaire utilisée pour tester un scénario.
+</p>
+</div>
+
+<div class="card">
+<h3 class="red">À RECHERCHER</h3>
+<p style="color:var(--muted)">
+Information qui doit être obtenue avant une décision importante.
+</p>
+</div>
+
+</div>
+
+</section>
+
+<div class="footer">
+FASTE — Cockpit stratégique & financier<br>
+Outil de pilotage interne — Données à compléter et vérifier.
+</div>
+
+</main>
+
+<script>
+
+function euro(value){
+  return new Intl.NumberFormat('fr-FR',{
+    style:'currency',
+    currency:'EUR',
+    maximumFractionDigits:0
+  }).format(value || 0);
+}
+
+function number(id){
+  return Number(document.getElementById(id)?.value || 0);
+}
+
+function calculate(){
+
+  const events=number('eventsMonth');
+  const price=number('avgPrice');
+  const variable=number('variableCost');
+  const fixed=number('fixedCost');
+
+  const monthlyCA=events*price;
+  const monthlyMargin=events*(price-variable);
+  const monthlyResult=monthlyMargin-fixed;
+
+  const annualCA=monthlyCA*12;
+  const annualMargin=monthlyMargin*12;
+  const annualResult=monthlyResult*12;
+
+  let breakEven='—';
+
+  if(price-variable>0){
+    breakEven=Math.ceil(fixed/(price-variable));
+  }
+
+  document.getElementById('monthlyCA').textContent=euro(monthlyCA);
+  document.getElementById('monthlyMargin').textContent=euro(monthlyMargin);
+  document.getElementById('monthlyResult').textContent=euro(monthlyResult);
+
+  document.getElementById('annualCA').textContent=euro(annualCA);
+  document.getElementById('annualMargin').textContent=euro(annualMargin);
+  document.getElementById('annualResult').textContent=euro(annualResult);
+  document.getElementById('breakEven').textContent=breakEven==='—'?'—':breakEven+' événement(s)';
+
+  document.getElementById('kpiCA').textContent=euro(annualCA);
+  document.getElementById('kpiResult').textContent=euro(annualResult);
+  document.getElementById('kpiEvents').textContent=events*12;
+
+  document.getElementById('kpiBreak').textContent=breakEven==='—'?'—':breakEven;
+
+  const result=document.getElementById('monthlyResult');
+
+  if(monthlyResult>0){
+    result.className='big-number green';
+  }else if(monthlyResult<0){
+    result.className='big-number red';
+  }else{
+    result.className='big-number';
+  }
+}
+
+function syncFinance(source,target){
+
+  document.getElementById(target).value=
+    document.getElementById(source).value;
+
+  calculate();
+
+  if(source==='events2'){
+    document.getElementById('eventsMonth').value=
+      document.getElementById('events2').value;
+  }
+
+  if(source==='price2'){
+    document.getElementById('avgPrice').value=
+      document.getElementById('price2').value;
+  }
+
+  if(source==='variable2'){
+    document.getElementById('variableCost').value=
+      document.getElementById('variable2').value;
+  }
+
+  if(source==='fixed2'){
+    document.getElementById('fixedCost').value=
+      document.getElementById('fixed2').value;
+  }
+
+  calculate();
+}
+
+function saveData(){
+
+  const data={};
+
+  document.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+    data['field_'+i]=el.value;
+  });
+
+  localStorage.setItem('FASTE_COCKPIT',JSON.stringify(data));
+
+  alert('Données FASTE sauvegardées dans ce navigateur.');
+}
+
+function loadData(){
+
+  const raw=localStorage.getItem('FASTE_COCKPIT');
+
+  if(!raw) return;
+
+  try{
+
+    const data=JSON.parse(raw);
+
+    document.querySelectorAll('input,textarea,select').forEach((el,i)=>{
+
+      if(data['field_'+i]!==undefined){
+        el.value=data['field_'+i];
+      }
+
+    });
+
+  }catch(e){
+    console.log(e);
+  }
+
+}
+
+function resetData(){
+
+  if(!confirm('Réinitialiser les données saisies dans ce navigateur ?')){
+    return;
+  }
+
+  localStorage.removeItem('FASTE_COCKPIT');
+
+  location.reload();
+}
+
+loadData();
+calculate();
+
+</script>
+
+</body>
+</html>
