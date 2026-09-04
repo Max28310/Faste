@@ -618,6 +618,44 @@ tr:hover td{
     padding:50px 0 20px;
 }
 
+
+/* MATERIAL MANAGER */
+.material-table{min-width:1250px;}
+.material-table th{white-space:nowrap;}
+.material-table td{padding:9px 7px;}
+.material-input,.material-select{
+    width:100%;
+    min-width:105px;
+    background:#081525;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:7px;
+    padding:9px 8px;
+    outline:none;
+}
+.material-input:focus,.material-select:focus{border-color:var(--accent);}
+.material-name{min-width:180px;}
+.material-qty{min-width:70px;max-width:85px;}
+.material-number{min-width:125px;}
+.material-actions{display:flex;gap:6px;white-space:nowrap;}
+.material-action{
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    border-radius:7px;
+    padding:7px 9px;
+    cursor:pointer;
+}
+.material-action:hover{border-color:var(--accent);}
+.material-action.delete:hover{border-color:var(--red);color:var(--red);}
+.material-empty{
+    padding:30px;
+    text-align:center;
+    color:var(--muted);
+    border-top:1px solid var(--border);
+}
+.material-kpis{margin-bottom:20px;}
+
 /* MOBILE */
 
 .mobile-menu{
@@ -1665,113 +1703,70 @@ et évolution du marché.
 <div class="hero">
 <div class="eyebrow">08 — PARC MATÉRIEL</div>
 <h1>Inventaire FASTE</h1>
-<p>Les valeurs financières restent volontairement à renseigner.</p>
+<p>Un inventaire entièrement modifiable : ajoutez, supprimez et valorisez chaque référence de votre parc.</p>
 </div>
 
 <div class="retain">
 <div class="retain-title">Ce qu'il faut retenir</div>
 <div class="retain-grid">
-<div class="retain-item">Le matériel actuel est un actif de départ.</div>
-<div class="retain-item">Sa valeur doit être documentée précisément.</div>
-<div class="retain-item">Chaque futur achat doit être justifié par son utilisation.</div>
-<div class="retain-item">La location peut être préférable à l'achat pour certains besoins.</div>
+<div class="retain-item">Chaque matériel peut avoir son propre nom, sa quantité et ses valeurs.</div>
+<div class="retain-item">Les données restent enregistrées automatiquement dans votre navigateur.</div>
+<div class="retain-item">Vous pouvez ajouter autant de références que nécessaire.</div>
+<div class="retain-item">Les valeurs inconnues restent volontairement à renseigner.</div>
 </div>
 </div>
 
-<div class="card">
+<div class="grid grid-4 material-kpis">
+<div class="card kpi"><div class="card-title">Références</div><div class="card-value gold" id="materialRefCount">0</div><div class="card-note">Types de matériel</div></div>
+<div class="card kpi"><div class="card-title">Unités possédées</div><div class="card-value" id="materialUnitCount">0</div><div class="card-note">Toutes références</div></div>
+<div class="card kpi"><div class="card-title">Valeur d'achat</div><div class="card-value blue" id="materialPurchaseValue">À renseigner</div><div class="card-note">Selon les données saisies</div></div>
+<div class="card kpi"><div class="card-title">Valeur actuelle</div><div class="card-value green" id="materialCurrentValue">À renseigner</div><div class="card-note">Selon les données saisies</div></div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+<div class="card-header">
+<div>
+<h3>Parc matériel</h3>
+<p style="color:var(--muted);font-size:12px;line-height:1.5;">Chaque ligne est modifiable. Les montants sont unitaires : la valeur totale est calculée automatiquement avec la quantité.</p>
+</div>
+<button class="btn primary" id="addMaterialBtn">＋ Ajouter du matériel</button>
+</div>
 
 <div class="table-wrap">
-
-<table>
-
+<table class="material-table">
 <thead>
 <tr>
-<th>Matériel</th>
+<th>Matériel / Référence</th>
+<th>Catégorie</th>
 <th>Qté</th>
-<th>Valeur achat</th>
-<th>Valeur actuelle</th>
+<th>Prix achat unitaire</th>
+<th>Valeur actuelle unitaire</th>
 <th>État</th>
 <th>Utilisation</th>
 <th>Maintenance</th>
+<th>Actions</th>
 </tr>
 </thead>
-
-<tbody>
-
-<tr>
-<td>Enceintes</td>
-<td>12</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>Sonorisation</td>
-<td>À définir</td>
-</tr>
-
-<tr>
-<td>Portique</td>
-<td>1</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>Structure</td>
-<td>À définir</td>
-</tr>
-
-<tr>
-<td>Lyres</td>
-<td>2</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>Éclairage</td>
-<td>À définir</td>
-</tr>
-
-<tr>
-<td>Petites lyres</td>
-<td>2</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>Éclairage</td>
-<td>À définir</td>
-</tr>
-
-<tr>
-<td>Pioneer FLX10</td>
-<td>1</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>À renseigner</td>
-<td>DJ</td>
-<td>À définir</td>
-</tr>
-
-</tbody>
-
+<tbody id="materialTableBody"></tbody>
 </table>
-
 </div>
 
+<div id="materialEmpty" class="material-empty" style="display:none;">
+Aucun matériel enregistré. Cliquez sur <strong>＋ Ajouter du matériel</strong> pour créer votre première référence.
+</div>
 </div>
 
 <div class="section-title"><h2>Règle d'investissement</h2></div>
 
 <div class="card decision">
-
 <h3>ACHETER SI...</h3>
-
 <p style="color:var(--muted);line-height:1.8;">
-L'équipement permet de réaliser davantage de prestations,
-augmente le panier moyen, réduit suffisamment les coûts de location
-ou devient nécessaire opérationnellement.
+L'équipement permet de réaliser davantage de prestations, augmente le panier moyen,
+réduit suffisamment les coûts de location ou devient nécessaire opérationnellement.
 </p>
-
 <p style="color:var(--accent);margin-top:12px;font-size:12px;">
 Formule recommandée : coût d'achat ÷ marge supplémentaire générée = délai de récupération.
 </p>
-
 </div>
 
 </section>
@@ -3028,6 +3023,7 @@ function resetData(){
     if(confirm("Réinitialiser les hypothèses enregistrées ?")){
 
         localStorage.removeItem(storageKey);
+        localStorage.removeItem(materialStorageKey);
 
         location.reload();
 
@@ -3357,6 +3353,7 @@ document.getElementById("exportBtn").addEventListener("click",()=>{
 
     });
 
+    data.materials = materials;
     data.exportDate = new Date().toISOString();
 
     const blob = new Blob(
@@ -3384,9 +3381,191 @@ document.getElementById("exportBtn").addEventListener("click",()=>{
 });
 
 
+
+/* =========================================================
+   PARC MATÉRIEL — INVENTAIRE DYNAMIQUE
+========================================================= */
+
+const materialStorageKey = "faste_material_inventory";
+
+const defaultMaterials = [
+    {name:"Enceinte — à préciser", category:"Enceinte", qty:12, purchase:"", current:"", state:"À renseigner", use:"Sonorisation", maintenance:"À définir"},
+    {name:"Portique", category:"Structure", qty:1, purchase:"", current:"", state:"À renseigner", use:"Structure", maintenance:"À définir"},
+    {name:"Lyre — à préciser", category:"Éclairage", qty:2, purchase:"", current:"", state:"À renseigner", use:"Éclairage", maintenance:"À définir"},
+    {name:"Petite lyre — à préciser", category:"Éclairage", qty:2, purchase:"", current:"", state:"À renseigner", use:"Éclairage", maintenance:"À définir"},
+    {name:"Pioneer FLX10", category:"DJ", qty:1, purchase:"", current:"", state:"À renseigner", use:"DJ", maintenance:"À définir"}
+];
+
+let materials = [];
+
+function materialId(){
+    return "mat_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+function normalizeMaterials(list){
+    return (Array.isArray(list) ? list : []).map(m => ({
+        id: m.id || materialId(),
+        name: m.name ?? "",
+        category: m.category ?? "Autre",
+        qty: Math.max(0, Number(m.qty) || 0),
+        purchase: m.purchase === "" || m.purchase == null ? "" : Number(m.purchase) || 0,
+        current: m.current === "" || m.current == null ? "" : Number(m.current) || 0,
+        state: m.state ?? "À renseigner",
+        use: m.use ?? "",
+        maintenance: m.maintenance ?? ""
+    }));
+}
+
+function loadMaterials(){
+    try{
+        const raw = localStorage.getItem(materialStorageKey);
+        if(raw){
+            materials = normalizeMaterials(JSON.parse(raw));
+        }else{
+            materials = normalizeMaterials(defaultMaterials);
+        }
+    }catch(e){
+        materials = normalizeMaterials(defaultMaterials);
+    }
+    renderMaterials();
+}
+
+function saveMaterials(){
+    localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+    updateMaterialKPIs();
+}
+
+function materialEsc(value){
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+}
+
+function renderMaterials(){
+    const body = document.getElementById("materialTableBody");
+    const empty = document.getElementById("materialEmpty");
+    if(!body) return;
+
+    body.innerHTML = "";
+
+    materials.forEach((m,index)=>{
+        const tr = document.createElement("tr");
+        tr.dataset.materialId = m.id;
+        tr.innerHTML = `
+            <td><input class="material-input material-name" data-field="name" value="${materialEsc(m.name)}" placeholder="Ex. Yamaha DXR12"></td>
+            <td>
+                <select class="material-select" data-field="category">
+                    ${["Enceinte","Caisson","DJ","Éclairage","Structure","Câblage","Transport","Scénographie","Autre"].map(c=>`<option ${m.category===c?"selected":""}>${c}</option>`).join("")}
+                </select>
+            </td>
+            <td><input class="material-input material-qty" data-field="qty" type="number" min="0" step="1" value="${m.qty}"></td>
+            <td><input class="material-input material-number" data-field="purchase" type="number" min="0" step="0.01" value="${m.purchase}" placeholder="À renseigner"></td>
+            <td><input class="material-input material-number" data-field="current" type="number" min="0" step="0.01" value="${m.current}" placeholder="À renseigner"></td>
+            <td>
+                <select class="material-select" data-field="state">
+                    ${["Neuf","Très bon","Bon","Correct","À réparer","À remplacer","À renseigner"].map(c=>`<option ${m.state===c?"selected":""}>${c}</option>`).join("")}
+                </select>
+            </td>
+            <td><input class="material-input" data-field="use" value="${materialEsc(m.use)}" placeholder="Ex. Mariages"></td>
+            <td><input class="material-input" data-field="maintenance" value="${materialEsc(m.maintenance)}" placeholder="Ex. Annuel"></td>
+            <td>
+                <div class="material-actions">
+                    <button class="material-action duplicate" title="Dupliquer">⧉</button>
+                    <button class="material-action delete" title="Supprimer">🗑</button>
+                </div>
+            </td>
+        `;
+
+        tr.querySelectorAll("[data-field]").forEach(control=>{
+            control.addEventListener("input",()=>updateMaterialFromRow(tr));
+            control.addEventListener("change",()=>updateMaterialFromRow(tr));
+        });
+
+        tr.querySelector(".delete").addEventListener("click",()=>{
+            if(confirm(`Supprimer « ${m.name || "ce matériel"} » ?`)){
+                materials = materials.filter(x=>x.id !== m.id);
+                saveMaterials();
+                renderMaterials();
+            }
+        });
+
+        tr.querySelector(".duplicate").addEventListener("click",()=>{
+            const copy = {...m, id:materialId(), name:(m.name || "Matériel") + " — copie"};
+            materials.splice(index+1,0,copy);
+            saveMaterials();
+            renderMaterials();
+        });
+
+        body.appendChild(tr);
+    });
+
+    if(empty) empty.style.display = materials.length ? "none" : "block";
+    updateMaterialKPIs();
+}
+
+function updateMaterialFromRow(row){
+    const id = row.dataset.materialId;
+    const material = materials.find(m=>m.id===id);
+    if(!material) return;
+
+    row.querySelectorAll("[data-field]").forEach(control=>{
+        const field = control.dataset.field;
+        if(control.type === "number"){
+            material[field] = control.value === "" ? "" : Number(control.value);
+        }else{
+            material[field] = control.value;
+        }
+    });
+
+    saveMaterials();
+}
+
+function updateMaterialKPIs(){
+    const refs = materials.length;
+    const units = materials.reduce((sum,m)=>sum+(Number(m.qty)||0),0);
+    const purchaseKnown = materials.filter(m=>m.purchase!=="" && Number.isFinite(Number(m.purchase)));
+    const currentKnown = materials.filter(m=>m.current!=="" && Number.isFinite(Number(m.current)));
+    const purchase = purchaseKnown.reduce((sum,m)=>sum+(Number(m.purchase)||0)*(Number(m.qty)||0),0);
+    const current = currentKnown.reduce((sum,m)=>sum+(Number(m.current)||0)*(Number(m.qty)||0),0);
+
+    const set = (id,text)=>{const el=document.getElementById(id); if(el) el.textContent=text;};
+    set("materialRefCount",number(refs));
+    set("materialUnitCount",number(units));
+    set("materialPurchaseValue",purchaseKnown.length ? euro(purchase) : "À renseigner");
+    set("materialCurrentValue",currentKnown.length ? euro(current) : "À renseigner");
+}
+
+document.getElementById("addMaterialBtn")?.addEventListener("click",()=>{
+    const newMaterial = {
+        id:materialId(),
+        name:"Nouveau matériel",
+        category:"Autre",
+        qty:1,
+        purchase:"",
+        current:"",
+        state:"À renseigner",
+        use:"",
+        maintenance:""
+    };
+    materials.push(newMaterial);
+    saveMaterials();
+    renderMaterials();
+    requestAnimationFrame(()=>{
+        const row = document.querySelector(`[data-material-id="${newMaterial.id}"]`);
+        const input = row?.querySelector('[data-field="name"]');
+        input?.focus();
+        input?.select();
+    });
+});
+
+
 /* =========================================================
    INITIALISATION
 ========================================================= */
+
+loadMaterials();
 
 loadData();
 
