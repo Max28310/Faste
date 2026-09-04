@@ -2903,6 +2903,131 @@ Version de travail • Les hypothèses financières doivent être remplacées pa
 <script>
 
 /* =========================================================
+   SUPABASE — SYNCHRONISATION PARTAGÉE
+========================================================= */
+
+const FASTE_SUPABASE_URL = "https://jmaswyffmeaaauymapmi.supabase.co";
+const FASTE_SUPABASE_KEY = "sb_publishable_pERmayuxuRzMADUxvJDI2w_vwDCMS9c";
+const FASTE_ROW_ID = 1;
+let fasteRemoteUpdatedAt = null;
+let fasteSaveTimer = null;
+let fasteRemoteLoading = false;
+let fasteReady = false;
+
+function setCloudStatus(text, type="ok"){
+    const el = document.querySelector(".sidebar-bottom .status");
+    if(!el) return;
+    el.innerHTML = `<span class="status-dot"></span>${text}`;
+    el.dataset.status = type;
+}
+
+function collectBusinessData(){
+    const data = {};
+    document.querySelectorAll("input").forEach(input=>{
+        if(input.id) data[input.id] = input.value;
+    });
+    return data;
+}
+
+async function cloudLoad(){
+    if(fasteRemoteLoading) return;
+    fasteRemoteLoading = true;
+    try{
+        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=id,data,updated_at`, {
+            headers:{ apikey: FASTE_SUPABASE_KEY, Authorization:`Bearer ${FASTE_SUPABASE_KEY}` }
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        if(!rows.length){
+            await cloudSaveNow(true);
+            return;
+        }
+        const row = rows[0];
+        fasteRemoteUpdatedAt = row.updated_at || null;
+        const payload = row.data || {};
+        const business = payload.business_data || {};
+        Object.entries(business).forEach(([id,value])=>{
+            const input=document.getElementById(id);
+            if(input) input.value=value;
+        });
+        if(Array.isArray(payload.materials)){
+            materials = normalizeMaterials(payload.materials);
+            renderMaterials();
+        }
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
+        localStorage.setItem(storageKey, JSON.stringify(business));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        setCloudStatus("Synchronisé ☁️");
+        fasteReady = true;
+    }catch(e){
+        console.error("FASTE Supabase load:",e);
+        setCloudStatus("Connexion cloud impossible — mode local", "error");
+    }finally{
+        fasteRemoteLoading = false;
+    }
+}
+
+async function cloudSaveNow(force=false){
+    if(!fasteReady && !force) return;
+    const payload = {
+        business_data: collectBusinessData(),
+        materials: materials,
+        client_updated_at: new Date().toISOString()
+    };
+    setCloudStatus("Sauvegarde en cours…", "warn");
+    try{
+        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data`, {
+            method:"POST",
+            headers:{
+                apikey: FASTE_SUPABASE_KEY,
+                Authorization:`Bearer ${FASTE_SUPABASE_KEY}`,
+                "Content-Type":"application/json",
+                Prefer:"resolution=merge-duplicates,return=representation"
+            },
+            body:JSON.stringify({id:FASTE_ROW_ID,data:payload,updated_at:new Date().toISOString()})
+        });
+        if(!res.ok){
+            const msg=await res.text();
+            throw new Error(`${res.status} ${msg}`);
+        }
+        const rows=await res.json();
+        fasteRemoteUpdatedAt=rows?.[0]?.updated_at || new Date().toISOString();
+        localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        setCloudStatus("Synchronisé pour les 2 associés");
+    }catch(e){
+        console.error("FASTE Supabase save:",e);
+        localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        setCloudStatus("Cloud indisponible — copie locale conservée", "error");
+    }
+}
+
+function queueCloudSave(){
+    if(!fasteReady) return;
+    clearTimeout(fasteSaveTimer);
+    fasteSaveTimer=setTimeout(()=>cloudSaveNow(),700);
+}
+
+async function cloudCheckForChanges(){
+    if(!fasteReady || fasteRemoteLoading) return;
+    try{
+        const res=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=updated_at`,{
+            headers:{apikey:FASTE_SUPABASE_KEY,Authorization:`Bearer ${FASTE_SUPABASE_KEY}`}
+        });
+        if(!res.ok) return;
+        const rows=await res.json();
+        const remote=rows?.[0]?.updated_at;
+        if(remote && remote!==fasteRemoteUpdatedAt){
+            await cloudLoad();
+        }
+    }catch(e){ console.warn("FASTE cloud check:",e); }
+}
+
+
+/* =========================================================
    NAVIGATION
 ========================================================= */
 
@@ -2967,72 +3092,45 @@ function number(value){
 
 
 /* =========================================================
-   LOCAL STORAGE
+   LOCAL STORAGE + FALLBACK
 ========================================================= */
 
 const storageKey = "faste_business_cockpit";
 
 function saveData(){
-
-    const inputs = document.querySelectorAll("input");
-
-    const data = {};
-
-    inputs.forEach(input => {
-
-        if(input.id){
-            data[input.id] = input.value;
-        }
-
-    });
-
+    const data = collectBusinessData();
     localStorage.setItem(storageKey,JSON.stringify(data));
-
+    queueCloudSave();
 }
 
 function loadData(){
-
     const raw = localStorage.getItem(storageKey);
-
     if(!raw) return;
-
     try{
-
         const data = JSON.parse(raw);
-
-        Object.keys(data).forEach(id => {
-
-            const input = document.getElementById(id);
-
-            if(input){
-                input.value = data[id];
-            }
-
+        Object.keys(data).forEach(id=>{
+            const input=document.getElementById(id);
+            if(input) input.value=data[id];
         });
-
-    }catch(e){
-
-        console.log("Impossible de charger les données");
-
-    }
-
+    }catch(e){ console.log("Impossible de charger les données locales"); }
 }
 
 function resetData(){
-
-    if(confirm("Réinitialiser les hypothèses enregistrées ?")){
-
-        localStorage.removeItem(storageKey);
-        localStorage.removeItem(materialStorageKey);
-
-        location.reload();
-
+    if(confirm("Réinitialiser les données FASTE partagées ?")){
+        materials = normalizeMaterials(defaultMaterials);
+        document.querySelectorAll("input").forEach(input=>{
+            if(input.id) input.value="";
+        });
+        saveMaterials();
+        saveData();
+        renderMaterials();
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
     }
-
 }
 
-document.getElementById("resetBtn").addEventListener("click",resetData);
-
+document.getElementById("resetBtn")?.addEventListener("click",resetData);
 
 /* =========================================================
    SIMULATEUR
@@ -3419,20 +3517,15 @@ function normalizeMaterials(list){
 function loadMaterials(){
     try{
         const raw = localStorage.getItem(materialStorageKey);
-        if(raw){
-            materials = normalizeMaterials(JSON.parse(raw));
-        }else{
-            materials = normalizeMaterials(defaultMaterials);
-        }
-    }catch(e){
-        materials = normalizeMaterials(defaultMaterials);
-    }
+        materials = raw ? normalizeMaterials(JSON.parse(raw)) : normalizeMaterials(defaultMaterials);
+    }catch(e){ materials = normalizeMaterials(defaultMaterials); }
     renderMaterials();
 }
 
 function saveMaterials(){
     localStorage.setItem(materialStorageKey, JSON.stringify(materials));
     updateMaterialKPIs();
+    queueCloudSave();
 }
 
 function materialEsc(value){
@@ -3566,21 +3659,27 @@ document.getElementById("addMaterialBtn")?.addEventListener("click",()=>{
 ========================================================= */
 
 loadMaterials();
-
 loadData();
-
 calculateSimulation();
-
 calculateScenarios();
-
 calculateOfferMargins();
 
+/* Sauvegarde dès qu'une valeur est modifiée */
+document.querySelectorAll("input").forEach(input=>{
+    input.addEventListener("input",()=>{
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
+        saveData();
+    });
+    input.addEventListener("change",saveData);
+});
 
-/* =========================================================
-   AUTOSAVE
-========================================================= */
-
-setInterval(saveData,5000);
+/* Connexion initiale + vérification des changements de l'autre associé */
+setCloudStatus("Connexion à FASTE…", "warn");
+cloudLoad().then(()=>{
+    setInterval(cloudCheckForChanges,3000);
+});
 
 </script>
 
