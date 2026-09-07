@@ -1,0 +1,58 @@
+name: Patch FASTE settings button
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-settings-button.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          button='<button class="nav-btn" type="button" onclick="window.location.href=\'faste-parametres.html\'">⚙️ Paramètres</button>'
+          if 'faste-parametres.html' not in s:
+              marker='        <button class="nav-btn" data-page="donnees">⚙ Données</button>'
+              if marker not in s:
+                  raise SystemExit('Anchor Données introuvable')
+              s=s.replace(marker, marker+'\n'+button, 1)
+              p.write_text(s, encoding='utf-8')
+              print('index patched')
+          else:
+              print('index already patched')
+      - name: Patch devis if needed
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('faste-devis.html')
+          s=p.read_text(encoding='utf-8')
+          if 'faste-parametres.html' not in s:
+              marker="<button class=\"btn secondary\" onclick=\"window.location.href='index.html'\">← FASTE</button>"
+              button="<button class=\"btn secondary\" onclick=\"window.location.href='faste-parametres.html'\">⚙️ Paramètres</button>"
+              if marker not in s:
+                  raise SystemExit('Anchor retour FASTE introuvable dans devis')
+              s=s.replace(marker, marker+button, 1)
+              p.write_text(s, encoding='utf-8')
+              print('devis patched')
+          else:
+              print('devis already patched')
+      - name: Commit changes
+        run: |
+          git config user.name 'FASTE Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html faste-devis.html
+          if git diff --cached --quiet; then
+            echo 'No changes'
+          else
+            git commit -m 'Ajout du bouton Paramètres FASTE'
+            git push
+          fi
