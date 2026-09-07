@@ -17,7 +17,6 @@ jobs:
         run: |
           from pathlib import Path
 
-          # index.html: exact current structure is checked before changing it.
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
           if 'faste-parametres.html' not in s:
               marker='        <button class="nav-btn" data-page="donnees">⚙ Données</button>'
@@ -26,7 +25,6 @@ jobs:
               s=s.replace(marker,marker+'\n'+addition,1)
               p.write_text(s,encoding='utf-8')
 
-          # faste-devis.html: navigation + shared settings + PDF issuer/footer.
           p=Path('faste-devis.html'); s=p.read_text(encoding='utf-8')
           if 'faste-parametres.html' not in s:
               old='<div class="actions"><button class="btn secondary" onclick="window.close()">← Fermer</button><button class="btn green" onclick="openDoc()">+ Nouveau devis</button></div>'
@@ -45,7 +43,7 @@ jobs:
               s=s.replace(old,'cloudData=a?.[0]?.data||{};companySettings=cloudData.settings||{};docs=Array.isArray(cloudData.devis_factures)?cloudData.devis_factures:[];prospects=mergeProspects(cloudData.prospects);',1)
 
           if "const cs={companyName:'FASTE'" not in s:
-              old="pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT('FASTE',left+7,y+17,11,'bold',text);wrapped('Informations légales à compléter',left+7,y+24,73,8,4.2,'normal',text);wrapped('SIRET  •  TVA  •  Adresse  •  Téléphone  •  Email',left+7,y+32,73,6.8,'normal',muted);"
+              old="pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT('FASTE',left+7,y+17,11,'bold',text);wrapped('Informations légales à compléter',left+7,y+24,73,8,4.2,'normal',text);wrapped('SIRET  •  TVA  •  Adresse  •  Téléphone  •  Email',left+7,y+32,73,6.8,3.7,'normal',muted);"
               new="const cs={companyName:'FASTE',legalForm:'',siren:'',siret:'',vat:'',capital:'',address:'',zip:'',city:'',phone:'',email:'',website:'',iban:'',bic:'',...companySettings};pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT(cs.companyName||'FASTE',left+7,y+17,11,'bold',text);let issuer=[];if(cs.legalForm)issuer.push(cs.legalForm);if(cs.siret)issuer.push('SIRET '+cs.siret);if(cs.siren)issuer.push('SIREN '+cs.siren);if(cs.vat)issuer.push('TVA '+cs.vat);if(cs.capital)issuer.push('Capital '+cs.capital+' €');if(cs.address)issuer.push(cs.address+(cs.zip||cs.city?' — '+[cs.zip,cs.city].filter(Boolean).join(' '):''));if(cs.phone)issuer.push(cs.phone);if(cs.email)issuer.push(cs.email);wrapped(issuer.join('  •  ')||'Informations légales à compléter',left+7,y+24,73,6.8,3.7,'normal',issuer.length?text:muted);"
               if s.count(old)!=1: raise SystemExit(f'PDF issuer anchor missing: {s.count(old)}')
               s=s.replace(old,new,1)
