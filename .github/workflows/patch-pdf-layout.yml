@@ -1,0 +1,76 @@
+name: Patch PDF layout FASTE
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/patch-pdf-layout.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch PDF client and issuer blocks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('faste-devis.html')
+          s=p.read_text(encoding='utf-8')
+
+          old='<div class="field"><label>Client / entreprise</label><input id="client" placeholder="Nom du client"></div>\n<div class="field"><label>Email / téléphone</label><input id="contact" placeholder="Coordonnées"></div>'
+          new='<div class="field"><label>Client / entreprise</label><input id="client" placeholder="Nom du client"></div>\n<div class="field"><label>Email / téléphone</label><input id="contact" placeholder="Coordonnées"></div>\n<div class="field"><label>Adresse client</label><input id="clientAddress" placeholder="Rue et numéro"></div>\n<div class="field"><label>Code postal / ville</label><input id="clientZipCity" placeholder="45000 Orléans"></div>'
+          assert old in s, 'UI client fields not found'
+          s=s.replace(old,new,1)
+
+          old='function normalizeProspects(list){return (Array.isArray(list)?list:[]).map(p=>{const name=p?.name||p?.company||p?.raisonSociale||p?.nom||p?.clientName||\'\';return {...p,id:p?.id||crypto.randomUUID(),type:[\'client\',\'lieu\',\'prestataire\'].includes(p?.type)?p.type:\'client\',name,city:p?.city||p?.ville||\'\',contact:p?.contact||\'\',phone:p?.phone||p?.telephone||\'\',email:p?.email||\'\',eventType:p?.eventType||\'\',eventDate:p?.eventDate||\'\',venue:p?.venue||\'\',updatedAt:p?.updatedAt||\'\'}}).filter(p=>p.name);}'
+          new='function normalizeProspects(list){return (Array.isArray(list)?list:[]).map(p=>{const name=p?.name||p?.company||p?.raisonSociale||p?.nom||p?.clientName||\'\';return {...p,id:p?.id||crypto.randomUUID(),type:[\'client\',\'lieu\',\'prestataire\'].includes(p?.type)?p.type:\'client\',name,city:p?.city||p?.ville||\'\',zip:p?.zip||p?.postalCode||p?.codePostal||\'\',address:p?.address||p?.adresse||\'\',contact:p?.contact||\'\',phone:p?.phone||p?.telephone||\'\',email:p?.email||\'\',eventType:p?.eventType||\'\',eventDate:p?.eventDate||\'\',venue:p?.venue||\'\',updatedAt:p?.updatedAt||\'\'}}).filter(p=>p.name);}'
+          assert old in s, 'normalizeProspects not found'
+          s=s.replace(old,new,1)
+
+          old="function fillFromProspect(id){const p=prospects.find(x=>x.id===id);if(!p)return;document.getElementById('client').value=p.name||'';document.getElementById('contact').value=[p.email,p.phone].filter(Boolean).join(' · ')||p.contact||'';if(p.eventType)document.getElementById('eventType').value=p.eventType;if(p.eventDate)document.getElementById('eventDate').value=p.eventDate;if(p.type==='lieu'&&p.name)document.getElementById('venue').value=p.name;}"
+          new="function fillFromProspect(id){const p=prospects.find(x=>x.id===id);if(!p)return;document.getElementById('client').value=p.name||'';document.getElementById('contact').value=[p.email,p.phone].filter(Boolean).join(' · ')||p.contact||'';document.getElementById('clientAddress').value=p.address||'';document.getElementById('clientZipCity').value=[p.zip,p.city].filter(Boolean).join(' ')||'';if(p.eventType)document.getElementById('eventType').value=p.eventType;if(p.eventDate)document.getElementById('eventDate').value=p.eventDate;if(p.type==='lieu'&&p.name)document.getElementById('venue').value=p.name;}"
+          assert old in s, 'fillFromProspect not found'
+          s=s.replace(old,new,1)
+
+          old="function clearClient(){document.getElementById('clientPicker').value='';document.getElementById('client').value='';document.getElementById('contact').value='';}"
+          new="function clearClient(){document.getElementById('clientPicker').value='';document.getElementById('client').value='';document.getElementById('contact').value='';document.getElementById('clientAddress').value='';document.getElementById('clientZipCity').value='';}"
+          assert old in s, 'clearClient not found'
+          s=s.replace(old,new,1)
+
+          old="document.getElementById('client').value=d.client||'';document.getElementById('contact').value=d.contact||'';document.getElementById('eventType').value=d.eventType||'';"
+          new="document.getElementById('client').value=d.client||'';document.getElementById('contact').value=d.contact||'';document.getElementById('clientAddress').value=d.clientAddress||'';document.getElementById('clientZipCity').value=d.clientZipCity||'';document.getElementById('eventType').value=d.eventType||'';"
+          assert old in s, 'openDoc fields not found'
+          s=s.replace(old,new,1)
+
+          old="client:document.getElementById('client').value,contact:document.getElementById('contact').value,eventType:document.getElementById('eventType').value"
+          new="client:document.getElementById('client').value,contact:document.getElementById('contact').value,clientAddress:document.getElementById('clientAddress').value,clientZipCity:document.getElementById('clientZipCity').value,eventType:document.getElementById('eventType').value"
+          assert old in s, 'saveDoc client fields not found'
+          s=s.replace(old,new,1)
+
+          old="client:document.getElementById('client').value,contact:document.getElementById('contact').value,eventType:document.getElementById('eventType').value,eventDate"
+          new="client:document.getElementById('client').value,contact:document.getElementById('contact').value,clientAddress:document.getElementById('clientAddress').value,clientZipCity:document.getElementById('clientZipCity').value,eventType:document.getElementById('eventType').value,eventDate"
+          assert old in s, 'currentFormDoc client fields not found'
+          s=s.replace(old,new,1)
+
+          old="header();y=54;const cardW=87,gap=6,clientX=left+cardW+gap;fillRound(left,y,cardW,39,3,soft);strokeRound(left,y,cardW,39,3,line);fillRound(clientX,y,cardW,39,3,soft);strokeRound(clientX,y,cardW,39,3,line);const cs={companyName:'FASTE',legalForm:'',siren:'',siret:'',vat:'',capital:'',address:'',zip:'',city:'',phone:'',email:'',website:'',iban:'',bic:'',...companySettings};pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT(cs.companyName||'FASTE',left+7,y+17,11,'bold',text);let issuer=[];if(cs.legalForm)issuer.push(cs.legalForm);if(cs.siret)issuer.push('SIRET '+cs.siret);if(cs.siren)issuer.push('SIREN '+cs.siren);if(cs.vat)issuer.push('TVA '+cs.vat);if(cs.capital)issuer.push('Capital '+cs.capital+' €');if(cs.address)issuer.push(cs.address+(cs.zip||cs.city?' — '+[cs.zip,cs.city].filter(Boolean).join(' '):''));if(cs.phone)issuer.push(cs.phone);if(cs.email)issuer.push(cs.email);wrapped(issuer.join('  •  ')||'Informations légales à compléter',left+7,y+24,73,6.8,3.7,'normal',issuer.length?text:muted);pdfT('CLIENT',clientX+7,y+8,7.5,'bold',muted);const clientLines=pdf.splitTextToSize(d.client||'Client à renseigner',73);pdfT(clientLines,clientX+7,y+17,10,'bold',text);let cy=y+17+clientLines.length*4.5;if(d.contact)cy=wrapped(d.contact,clientX+7,cy,73,8.2,4,'normal',text);if(d.venue)cy=wrapped('Lieu : '+d.venue,clientX+7,cy+1,73,8,'normal',muted);y+=48;"
+          new="header();y=54;const cardW=87,gap=6,clientX=left+cardW+gap;fillRound(left,y,cardW,48,3,soft);strokeRound(left,y,cardW,48,3,line);fillRound(clientX,y,cardW,48,3,soft);strokeRound(clientX,y,cardW,48,3,line);const cs={companyName:'FASTE',legalForm:'',siren:'',siret:'',vat:'',capital:'',address:'',zip:'',city:'',phone:'',email:'',website:'',iban:'',bic:'',...companySettings};pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT(cs.companyName||'FASTE',left+7,y+17,11,'bold',text);let iy=y+24;if(cs.legalForm)pdfT(cs.legalForm,left+7,iy,6.7,'normal',text),iy+=4;if(cs.address)iy=wrapped(cs.address,left+7,iy,73,6.7,3.7,'normal',text);if(cs.zip||cs.city)iy=wrapped([cs.zip,cs.city].filter(Boolean).join(' '),left+7,iy,73,6.7,3.7,'normal',text);let legal=[];if(cs.siret)legal.push('SIRET '+cs.siret);if(cs.siren)legal.push('SIREN '+cs.siren);if(cs.vat)legal.push('TVA '+cs.vat);if(cs.capital)legal.push('Capital '+cs.capital+' €');if(legal.length)iy=wrapped(legal.join('  •  '),left+7,iy,73,6.4,3.6,'normal',text);if(cs.phone||cs.email)iy=wrapped([cs.phone,cs.email].filter(Boolean).join('  •  '),left+7,iy,73,6.4,3.6,'normal',text);pdfT('CLIENT',clientX+7,y+8,7.5,'bold',muted);const clientNameLines=pdf.splitTextToSize(d.client||'Client à renseigner',73);pdfT(clientNameLines,clientX+7,y+17,10,'bold',text);let cy=y+17+clientNameLines.length*4.5;const prospect=d.prospectId?prospects.find(p=>p.id===d.prospectId):null;const cAddress=d.clientAddress||prospect?.address||'';const cZipCity=d.clientZipCity||[prospect?.zip,prospect?.city].filter(Boolean).join(' ');if(cAddress)cy=wrapped(cAddress,clientX+7,cy,73,7.4,3.8,'normal',text);if(cZipCity)cy=wrapped(cZipCity,clientX+7,cy,73,7.4,3.8,'normal',text);if(d.contact)cy=wrapped(d.contact,clientX+7,cy,73,7.2,3.8,'normal',muted);if(d.venue)cy=wrapped('Lieu : '+d.venue,clientX+7,cy+1,73,7.2,3.8,'normal',muted);y+=57;"
+          assert old in s, 'PDF party block not found'
+          s=s.replace(old,new,1)
+
+          old="function currentFormDoc(){const lines=readLines();const t=totals(lines);const paid=Number(document.getElementById('paid').value)||0;return{id:currentId||crypto.randomUUID(),type:document.getElementById('docType').value,number:document.getElementById('docNumber').value,client:document.getElementById('client').value,contact:document.getElementById('contact').value,clientAddress:document.getElementById('clientAddress').value,clientZipCity:document.getElementById('clientZipCity').value,eventType:document.getElementById('eventType').value,eventDate"
+          new="function currentFormDoc(){const lines=readLines();const t=totals(lines);const paid=Number(document.getElementById('paid').value)||0;const prospectId=document.getElementById('clientPicker').value||'';const prospect=prospects.find(p=>p.id===prospectId);return{id:currentId||crypto.randomUUID(),type:document.getElementById('docType').value,number:document.getElementById('docNumber').value,prospectId,client:document.getElementById('client').value,contact:document.getElementById('contact').value,clientAddress:document.getElementById('clientAddress').value||prospect?.address||'',clientZipCity:document.getElementById('clientZipCity').value||[prospect?.zip,prospect?.city].filter(Boolean).join(' '),eventType:document.getElementById('eventType').value,eventDate"
+          assert old in s, 'currentFormDoc prospect marker not found'
+          s=s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
+          print('Patched faste-devis.html')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add faste-devis.html
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Améliore la mise en page PDF des devis FASTE"
+          git push
