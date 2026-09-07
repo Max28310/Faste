@@ -1,0 +1,91 @@
+name: Integrate FASTE settings
+
+on:
+  push:
+    paths:
+      - '.github/workflows/integrate-settings.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Integrate settings safely
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def patch(path, replacements):
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              original = s
+              for old, new in replacements:
+                  count = s.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{path}: expected exactly 1 occurrence, found {count}: {old[:120]}')
+                  s = s.replace(old, new, 1)
+              if s == original:
+                  raise SystemExit(f'{path}: no change made')
+              p.write_text(s, encoding='utf-8')
+
+          patch('index.html', [
+              (
+                  '<div class="nav">',
+                  '<div class="nav">\n        <button type="button" onclick="window.location.href=\'faste-parametres.html\'">⚙️ Paramètres</button>'
+              )
+          ])
+
+          patch('faste-devis.html', [
+              (
+                  '<div class="actions"><button class="btn secondary" onclick="window.close()">← Fermer</button><button class="btn green" onclick="openDoc()">+ Nouveau devis</button></div>',
+                  '<div class="actions"><button class="btn secondary" onclick="window.location.href=\'index.html\'">← FASTE</button><button class="btn secondary" onclick="window.location.href=\'faste-parametres.html\'">⚙️ Paramètres</button><button class="btn green" onclick="openDoc()">+ Nouveau devis</button></div>'
+              ),
+              (
+                  "let docs=[];let prospects=[];let currentId=null;let cloudData={};",
+                  "let docs=[];let prospects=[];let currentId=null;let cloudData={};let companySettings={};"
+              ),
+              (
+                  "cloudData=a?.[0]?.data||{};docs=Array.isArray(cloudData.devis_factures)?cloudData.devis_factures:[];prospects=mergeProspects(cloudData.prospects);",
+                  "cloudData=a?.[0]?.data||{};companySettings=cloudData.settings||{};docs=Array.isArray(cloudData.devis_factures)?cloudData.devis_factures:[];prospects=mergeProspects(cloudData.prospects);"
+              ),
+              (
+                  "const safe=(d.number||'document').replace(/[^a-z0-9_-]+/gi,'_');pdf.save(safe+'.pdf')}",
+                  "const safe=(d.number||'document').replace(/[^a-z0-9_-]+/gi,'_');pdf.save(safe+'.pdf')}"
+              )
+          ])
+
+          # Replace the PDF issuer card and final legal note with settings-aware content.
+          p = Path('faste-devis.html')
+          s = p.read_text(encoding='utf-8')
+          old = "pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT('FASTE',left+7,y+17,11,'bold',text);wrapped('Informations légales à compléter',left+7,y+24,73,8,4.2,'normal',text);wrapped('SIRET  •  TVA  •  Adresse  •  Téléphone  •  Email',left+7,y+32,73,6.8,'normal',muted);"
+          new = "const cs={companyName:'FASTE',legalForm:'',siren:'',siret:'',vat:'',capital:'',address:'',zip:'',city:'',phone:'',email:'',website:'',iban:'',bic:'',...companySettings};pdfT('ÉMETTEUR',left+7,y+8,7.5,'bold',muted);pdfT(cs.companyName||'FASTE',left+7,y+17,11,'bold',text);let issuer=[];if(cs.legalForm)issuer.push(cs.legalForm);if(cs.siret)issuer.push('SIRET '+cs.siret);if(cs.siren)issuer.push('SIREN '+cs.siren);if(cs.vat)issuer.push('TVA '+cs.vat);if(cs.capital)issuer.push('Capital '+cs.capital+' €');if(cs.address)issuer.push(cs.address+(cs.zip||cs.city?' — '+[cs.zip,cs.city].filter(Boolean).join(' '):''));if(cs.phone)issuer.push(cs.phone);if(cs.email)issuer.push(cs.email);wrapped(issuer.join('  •  ')||'Informations légales à compléter',left+7,y+24,73,6.8,3.7,'normal',issuer.length?text:muted);"
+          if s.count(old) != 1:
+              raise SystemExit(f'faste-devis.html: issuer block not found exactly once (found {s.count(old)})')
+          s = s.replace(old, new, 1)
+          old2 = "pdfT('Les informations légales de FASTE pourront être ajoutées ultérieurement dans les paramètres de l’entreprise.',left,y,7.2,'normal',muted);pdfT('Document généré automatiquement par FASTE.',left,y+4.5,7.2,'normal',muted);"
+          new2 = "pdfT((cs.companyName||'FASTE')+'  •  Document commercial',left,y,7.2,'normal',muted);pdfT(cs.iban?'IBAN : '+cs.iban+(cs.bic?'  •  BIC : '+cs.bic:''):'Coordonnées de paiement disponibles dans les paramètres.',left,y+4.5,7.2,'normal',muted);"
+          if s.count(old2) != 1:
+              raise SystemExit(f'faste-devis.html: legal footer block not found exactly once (found {s.count(old2)})')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+
+          print('Safe FASTE settings integration completed.')
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html faste-devis.html
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Integrate shared company settings'
+          git push
