@@ -1,0 +1,33 @@
+name: Fix FASTE prospect sync
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-prospect-sync.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch prospect cloud save
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='''function saveProspects(){\n    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));\n    updateProspectKPIs();\n    queueCloudSave();\n}'''
+          new='''async function saveProspects(){\n    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));\n    updateProspectKPIs();\n\n    // Sauvegarde immédiate des prospects dans le même enregistrement Supabase.\n    // On relit la ligne avant le PATCH afin de ne pas écraser les autres données\n    // (business plan, matériel, devis/factures, paramètres…).\n    if(!fasteReady){\n        setTimeout(()=>{ if(fasteReady) saveProspects(); },1200);\n        return;\n    }\n\n    try{\n        const res=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=id,data,updated_at`,{\n            headers:await getAuthHeaders()\n        });\n        if(!res.ok) throw new Error(`HTTP ${res.status}`);\n        const rows=await res.json();\n        if(!rows.length) throw new Error("Ligne FASTE introuvable");\n\n        const remoteData=rows[0].data || {};\n        remoteData.prospects=prospects;\n        const now=new Date().toISOString();\n\n        const save=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}`,{\n            method:"PATCH",\n            headers:{...getAuthHeaders(),"Content-Type":"application/json",Prefer:"return=representation"},\n            body:JSON.stringify({data:remoteData,updated_at:now})\n        });\n        if(!save.ok) throw new Error(`HTTP ${save.status}: ${await save.text()}`);\n        fasteRemoteUpdatedAt=now;\n        setCloudStatus("Prospects synchronisés ☁️");\n    }catch(e){\n        console.error("FASTE prospects save:",e);\n        // On conserve la copie locale et on retentera au prochain chargement\n        // dès que la connexion cloud sera disponible.\n        setCloudStatus("Prospects : copie locale conservée", "error");\n    }\n}'''
+          if old not in s:
+              raise SystemExit('Fonction saveProspects introuvable ou déjà modifiée')
+          s=s.replace(old,new,1)
+          # Les appels existants peuvent rester non-await : la fonction gère elle-même la synchro.
+          p.write_text(s,encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name 'FASTE Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fiabilise la synchronisation des prospects' || echo 'No changes'
+          git push || true
