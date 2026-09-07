@@ -1,0 +1,68 @@
+name: Fix PDF iPhone v2
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch PDF button
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('faste-devis.html')
+          s=p.read_text(encoding='utf-8')
+          new=r'''function downloadCurrentPdf(){
+  try{
+    const d=currentFormDoc();
+    const filename=(d.number||'FASTE-document')+'.pdf';
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+    if(!window.jspdf?.jsPDF)throw new Error('Le module PDF n’est pas chargé');
+    const {jsPDF}=window.jspdf;
+    let blank=null;
+    if(isIOS && !(navigator.share && navigator.canShare)) blank=window.open('about:blank','_blank');
+    const originalSave=jsPDF.prototype.save;
+    let blob=null;
+    jsPDF.prototype.save=function(){blob=this.output('blob');};
+    try{generatePdf(d);}finally{jsPDF.prototype.save=originalSave;}
+    if(!blob)throw new Error('PDF non généré');
+    const file=new File([blob],filename,{type:'application/pdf'});
+    if(isIOS && navigator.share && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).catch(()=>{});
+      return;
+    }
+    const url=URL.createObjectURL(blob);
+    if(isIOS){
+      if(blank && !blank.closed){blank.location.href=url;}
+      else{
+        const a=document.createElement('a');
+        a.href=url;a.target='_blank';a.rel='noopener';
+        document.body.appendChild(a);a.click();a.remove();
+      }
+    }else{
+      const a=document.createElement('a');a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();a.remove();
+    }
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){console.error(e);alert('Impossible de générer le PDF. Réessaie.');}
+}'''
+          pattern=r'function downloadCurrentPdf\(\)\{.*?(?=\n(?:async )?function )'
+          ns,n=re.subn(pattern,new+'\n',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('downloadCurrentPdf introuvable')
+          p.write_text(ns,encoding='utf-8')
+          print('PDF PATCH OK')
+          PY
+      - name: Commit patch and remove workflow
+        run: |
+          rm -f .github/workflows/fix-pdf-ios-v2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add faste-devis.html .github/workflows/fix-pdf-ios-v2.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Corrige définitivement le PDF sur iPhone"
+          git push
