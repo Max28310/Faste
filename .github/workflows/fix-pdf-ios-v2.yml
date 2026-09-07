@@ -1,8 +1,5 @@
-name: Fix PDF iPhone v2
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+name: Fix PDF iPhone v3
+on: push
 permissions:
   contents: write
 jobs:
@@ -11,51 +8,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch PDF button
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('faste-devis.html')
           s=p.read_text(encoding='utf-8')
           marker='</body>'
-          override=r'''<script>
-function downloadCurrentPdf(){
-  try{
-    const d=currentFormDoc();
-    const filename=(d.number||'FASTE-document')+'.pdf';
-    if(!window.jspdf?.jsPDF) throw new Error('Le module PDF n’est pas chargé');
-    const {jsPDF}=window.jspdf;
-    const originalSave=jsPDF.prototype.save;
-    let blob=null, dataUrl=null;
-    jsPDF.prototype.save=function(){blob=this.output('blob');dataUrl=this.output('datauristring');};
-    try{generatePdf(d);}finally{jsPDF.prototype.save=originalSave;}
-    if(!blob) throw new Error('PDF non généré');
-    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
-    const file=typeof File==='function'?new File([blob],filename,{type:'application/pdf'}):null;
-    if(isIOS && file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:filename}).catch(()=>{});return;
-    }
-    const a=document.createElement('a');
-    a.href=isIOS&&dataUrl?dataUrl:URL.createObjectURL(blob);
-    a.target=isIOS?'_blank':'_self';a.rel='noopener';a.download=isIOS?'':filename;a.style.display='none';
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>{if(a.href.startsWith('blob:'))URL.revokeObjectURL(a.href)},60000);
-  }catch(e){console.error(e);alert('Impossible de générer le PDF : '+(e?.message||e));}
-}
-</script>'''
-          if marker not in s: raise SystemExit('body introuvable')
           if 'datauristring' not in s:
+              override='''<script>\nfunction downloadCurrentPdf(){try{const d=currentFormDoc();const filename=(d.number||"FASTE-document")+".pdf";if(!window.jspdf?.jsPDF)throw new Error("Le module PDF n’est pas chargé");const {jsPDF}=window.jspdf;const originalSave=jsPDF.prototype.save;let blob=null,dataUrl=null;jsPDF.prototype.save=function(){blob=this.output("blob");dataUrl=this.output("datauristring")};try{generatePdf(d)}finally{jsPDF.prototype.save=originalSave}if(!blob)throw new Error("PDF non généré");const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);const file=typeof File==="function"?new File([blob],filename,{type:"application/pdf"}):null;if(isIOS&&file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:filename}).catch(()=>{});return}const a=document.createElement("a");a.href=isIOS&&dataUrl?dataUrl:URL.createObjectURL(blob);a.target=isIOS?"_blank":"_self";a.rel="noopener";a.download=isIOS?"":filename;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>{if(a.href.startsWith("blob:"))URL.revokeObjectURL(a.href)},60000)}catch(e){console.error(e);alert("Impossible de générer le PDF : "+(e?.message||e))}}\n</script>'''
+              if marker not in s: raise SystemExit('body introuvable')
               s=s.replace(marker,override+'\n'+marker,1)
+              p.write_text(s,encoding='utf-8')
+              print('PDF PATCH OK')
           else:
-              print('PDF override already present')
-          p.write_text(s,encoding='utf-8')
-          print('PDF PATCH OK')
-          PY
+              print('PATCH DEJA PRESENT')
       - name: Commit patch and remove workflow
         run: |
           rm -f .github/workflows/fix-pdf-ios-v2.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add faste-devis.html .github/workflows/fix-pdf-ios-v2.yml
-          git diff --cached --quiet && exit 0
-          git commit -m "Corrige le PDF iPhone avec ouverture native"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Fix PDF iPhone'
           git push
