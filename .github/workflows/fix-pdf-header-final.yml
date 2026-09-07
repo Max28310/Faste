@@ -2,6 +2,8 @@ name: Fix PDF header final
 on:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   fix:
     runs-on: ubuntu-latest
@@ -29,7 +31,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add faste-devis.html
-          git diff --cached -- faste-devis.html
           git commit -m 'Fix PDF header call on iPhone'
           git push
       - name: Remove temporary workflow
