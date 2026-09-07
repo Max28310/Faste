@@ -14,47 +14,40 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('faste-devis.html')
           s=p.read_text(encoding='utf-8')
-          new=r'''function downloadCurrentPdf(){
+          marker='</body>'
+          override=r'''<script>
+function downloadCurrentPdf(){
   try{
     const d=currentFormDoc();
     const filename=(d.number||'FASTE-document')+'.pdf';
-    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
-    if(!window.jspdf?.jsPDF)throw new Error('Le module PDF n’est pas chargé');
+    if(!window.jspdf?.jsPDF) throw new Error('Le module PDF n’est pas chargé');
     const {jsPDF}=window.jspdf;
-    let blank=null;
-    if(isIOS && !(navigator.share && navigator.canShare)) blank=window.open('about:blank','_blank');
     const originalSave=jsPDF.prototype.save;
-    let blob=null;
-    jsPDF.prototype.save=function(){blob=this.output('blob');};
+    let blob=null, dataUrl=null;
+    jsPDF.prototype.save=function(){blob=this.output('blob');dataUrl=this.output('datauristring');};
     try{generatePdf(d);}finally{jsPDF.prototype.save=originalSave;}
-    if(!blob)throw new Error('PDF non généré');
-    const file=new File([blob],filename,{type:'application/pdf'});
-    if(isIOS && navigator.share && navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:filename}).catch(()=>{});
-      return;
+    if(!blob) throw new Error('PDF non généré');
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+    const file=typeof File==='function'?new File([blob],filename,{type:'application/pdf'}):null;
+    if(isIOS && file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).catch(()=>{});return;
     }
-    const url=URL.createObjectURL(blob);
-    if(isIOS){
-      if(blank && !blank.closed){blank.location.href=url;}
-      else{
-        const a=document.createElement('a');
-        a.href=url;a.target='_blank';a.rel='noopener';
-        document.body.appendChild(a);a.click();a.remove();
-      }
-    }else{
-      const a=document.createElement('a');a.href=url;a.download=filename;
-      document.body.appendChild(a);a.click();a.remove();
-    }
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
-  }catch(e){console.error(e);alert('Impossible de générer le PDF. Réessaie.');}
-}'''
-          pattern=r'function downloadCurrentPdf\(\)\{.*?(?=\n(?:async )?function )'
-          ns,n=re.subn(pattern,new+'\n',s,count=1,flags=re.S)
-          if n!=1: raise SystemExit('downloadCurrentPdf introuvable')
-          p.write_text(ns,encoding='utf-8')
+    const a=document.createElement('a');
+    a.href=isIOS&&dataUrl?dataUrl:URL.createObjectURL(blob);
+    a.target=isIOS?'_blank':'_self';a.rel='noopener';a.download=isIOS?'':filename;a.style.display='none';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>{if(a.href.startsWith('blob:'))URL.revokeObjectURL(a.href)},60000);
+  }catch(e){console.error(e);alert('Impossible de générer le PDF : '+(e?.message||e));}
+}
+</script>'''
+          if marker not in s: raise SystemExit('body introuvable')
+          if 'datauristring' not in s:
+              s=s.replace(marker,override+'\n'+marker,1)
+          else:
+              print('PDF override already present')
+          p.write_text(s,encoding='utf-8')
           print('PDF PATCH OK')
           PY
       - name: Commit patch and remove workflow
@@ -64,5 +57,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add faste-devis.html .github/workflows/fix-pdf-ios-v2.yml
           git diff --cached --quiet && exit 0
-          git commit -m "Corrige définitivement le PDF sur iPhone"
+          git commit -m "Corrige le PDF iPhone avec ouverture native"
           git push
