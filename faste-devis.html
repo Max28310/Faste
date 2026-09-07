@@ -74,9 +74,234 @@ async function deleteDoc(){if(!currentId)return;if(!confirm('Supprimer ce docume
 async function convertToInvoice(){if(!currentId)return;const q=docs.find(x=>x.id===currentId);if(!q||q.type!=='devis')return;if(q.status!=='accepted'&&!confirm('Ce devis n’est pas marqué « Accepté ». Le transformer quand même en facture ?'))return;const invoice={...q,id:crypto.randomUUID(),type:'facture',number:nextNumber('facture'),docDate:today(),dueDate:'',status:'unpaid',paid:0,remaining:Number(q.ttc||0),sourceQuoteId:q.id,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};docs.unshift(invoice);try{await saveCloud();closeDoc();render();openDoc(invoice.id);alert('Facture créée à partir du devis '+q.number+'.')}catch(e){alert('Erreur de conversion : '+e.message)}}
 function currentFormDoc(){const lines=readLines();const t=totals(lines);const paid=Number(document.getElementById('paid').value)||0;return{id:currentId||crypto.randomUUID(),type:document.getElementById('docType').value,number:document.getElementById('docNumber').value,client:document.getElementById('client').value,contact:document.getElementById('contact').value,eventType:document.getElementById('eventType').value,eventDate:document.getElementById('eventDate').value,venue:document.getElementById('venue').value,docDate:document.getElementById('docDate').value,dueDate:document.getElementById('dueDate').value,status:document.getElementById('docStatus').value,paid,remaining:Math.max(0,t.ttc-paid),notes:document.getElementById('notes').value,lines,...t}}
 function money(n){return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
-function pdfText(doc,text,x,y,maxWidth=170){const lines=doc.splitTextToSize(String(text||'—'),maxWidth);doc.text(lines,x,y);return y+(lines.length*5)}
-function drawPdfHeader(pdf,d){pdf.setFillColor(17,24,39);pdf.rect(0,0,210,30,'F');pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(19);pdf.text('FASTE',15,14);pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text('Production événementielle • DJ • Son • Lumière',15,21);pdf.setFont('helvetica','bold');pdf.setFontSize(18);pdf.text(d.type==='devis'?'DEVIS':'FACTURE',195,14,{align:'right'});pdf.setFontSize(10);pdf.setFont('helvetica','normal');pdf.text(d.number||'',195,21,{align:'right'});pdf.setTextColor(23,32,51)}
-function generatePdf(d){if(!window.jspdf?.jsPDF){alert('Le module PDF n’est pas chargé. Vérifie ta connexion internet puis recharge la page.');return}const {jsPDF}=window.jspdf;const pdf=new jsPDF({unit:'mm',format:'a4'});drawPdfHeader(pdf,d);let y=42;pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.text('FASTE',15,y);pdf.setFont('helvetica','normal');pdf.setFontSize(8.5);y+=5;pdf.text('Informations légales de l’entreprise à compléter',15,y);pdf.text('Document commercial généré par le cockpit FASTE',15,y+5);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.text('CLIENT',120,42);pdf.setFont('helvetica','normal');pdf.setFontSize(9);let cy=47;cy=pdfText(pdf,d.client||'Client à renseigner',120,cy,75);cy=pdfText(pdf,d.contact||'',120,cy+1,75);if(d.venue)cy=pdfText(pdf,'Lieu : '+d.venue,120,cy+1,75);pdf.setDrawColor(220,224,232);pdf.line(15,65,195,65);y=74;pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.text(d.type==='devis'?'Détails du devis':'Détails de la facture',15,y);pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.text('Date du document : '+(d.docDate||'—'),15,y+6);if(d.eventDate)pdf.text('Événement : '+d.eventType+' — '+d.eventDate,15,y+11);else if(d.eventType)pdf.text('Événement : '+d.eventType,15,y+11);if(d.dueDate&&d.type==='facture')pdf.text('Échéance : '+d.dueDate,120,y+6);y+=23;const x=[15,112,135,165,195];const widths=[97,23,30,30,30];pdf.setFillColor(242,244,248);pdf.rect(15,y,180,9,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(8);pdf.text('PRESTATION',18,y+6);pdf.text('QTÉ',123,y+6,{align:'right'});pdf.text('PU HT',160,y+6,{align:'right'});pdf.text('TVA',181,y+6,{align:'right'});pdf.text('TOTAL TTC',193,y+6,{align:'right'});y+=14;pdf.setFont('helvetica','normal');d.lines.forEach((l,i)=>{if(y>260){pdf.addPage();y=20}const total=l.qty*l.unit*(1+l.vat/100);const desc=pdf.splitTextToSize(l.description||'Prestation',92);pdf.text(desc,18,y);pdf.text(String(l.qty),123,y,{align:'right'});pdf.text(money(l.unit).replace(' €',''),160,y,{align:'right'});pdf.text(String(l.vat).replace('.',',')+'%',181,y,{align:'right'});pdf.text(money(total),193,y,{align:'right'});y+=Math.max(7,desc.length*5);pdf.setDrawColor(232,235,240);pdf.line(15,y-3,195,y-3)});y+=8;const t=totals(d.lines);pdf.setFont('helvetica','normal');pdf.text('Total HT',150,y);pdf.text(money(t.ht),195,y,{align:'right'});y+=6;pdf.text('TVA',150,y);pdf.text(money(t.tva),195,y,{align:'right'});y+=4;pdf.setDrawColor(23,32,51);pdf.line(145,y,195,y);y+=8;pdf.setFont('helvetica','bold');pdf.setFontSize(12);pdf.text('TOTAL TTC',150,y);pdf.text(money(t.ttc),195,y,{align:'right'});if(d.type==='facture'){y+=9;pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text('Déjà encaissé',150,y);pdf.text(money(d.paid),195,y,{align:'right'});y+=6;pdf.setFont('helvetica','bold');pdf.text('Reste à encaisser',150,y);pdf.text(money(d.remaining),195,y,{align:'right'})}y+=15;if(d.notes){pdf.setFont('helvetica','bold');pdf.setFontSize(9);pdf.text('Notes / conditions',15,y);pdf.setFont('helvetica','normal');y+=6;y=pdfText(pdf,d.notes,15,y,180)}const pageH=pdf.internal.pageSize.getHeight();pdf.setFont('helvetica','normal');pdf.setFontSize(7.5);pdf.setTextColor(105,115,134);pdf.text('FASTE • Document généré automatiquement • Les mentions légales (SIRET, TVA, adresse, etc.) sont à compléter dans les paramètres de l’entreprise.',15,pageH-12);pdf.text('Page '+pdf.internal.getNumberOfPages(),195,pageH-7,{align:'right'});const safe=(d.number||'document').replace(/[^a-z0-9_-]+/gi,'_');pdf.save(safe+'.pdf')}
+function pdfText(doc,text,x,y,maxWidth=170,lineHeight=4.6){
+    const lines=doc.splitTextToSize(String(text||'—'),maxWidth);
+    doc.text(lines,x,y);
+    return y+(lines.length*lineHeight);
+}
+function pdfDate(v){
+    if(!v) return '—';
+    const d=new Date(v+'T00:00:00');
+    return isNaN(d)?v:d.toLocaleDateString('fr-FR');
+}
+function drawPdfHeader(pdf,d){
+    pdf.setFillColor(17,24,39);
+    pdf.roundedRect(12,10,186,30,4,4,'F');
+    pdf.setTextColor(255,255,255);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(20);
+    pdf.text('FASTE',20,23);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    pdf.text('Production événementielle  •  DJ  •  Son  •  Lumière',20,31);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(16);
+    pdf.text(d.type==='devis'?'DEVIS':'FACTURE',190,23,{align:'right'});
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9);
+    pdf.text(d.number||'',190,31,{align:'right'});
+    pdf.setTextColor(23,32,51);
+}
+function drawPdfFooter(pdf){
+    const h=pdf.internal.pageSize.getHeight();
+    const page=pdf.internal.getNumberOfPages();
+    pdf.setDrawColor(225,229,236);
+    pdf.line(15,h-18,195,h-18);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(7);
+    pdf.setTextColor(105,115,134);
+    pdf.text('FASTE  •  Document commercial',15,h-11);
+    pdf.text('Page '+page,195,h-11,{align:'right'});
+    pdf.setTextColor(23,32,51);
+}
+function newPdfPage(pdf,d){
+    drawPdfFooter(pdf);
+    pdf.addPage();
+    drawPdfHeader(pdf,d);
+    return 50;
+}
+function generatePdf(d){
+    if(!window.jspdf?.jsPDF){alert('Le module PDF n’est pas chargé. Vérifie ta connexion internet puis recharge la page.');return}
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({unit:'mm',format:'a4',compress:true});
+    drawPdfHeader(pdf,d);
+    const left=15,right=195,width=180;
+    const pageBottom=270;
+    let y=49;
+
+    /* Bloc entreprise / client */
+    pdf.setFillColor(248,249,251);
+    pdf.roundedRect(left,y,width,39,3,3,'F');
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(8);
+    pdf.setTextColor(105,115,134);
+    pdf.text('ÉMETTEUR',21,y+8);
+    pdf.text('CLIENT',112,y+8);
+    pdf.setTextColor(23,32,51);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(10);
+    pdf.text('FASTE',21,y+16);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    pdf.text('Informations légales à compléter',21,y+22);
+    pdf.text('SIRET • TVA • Adresse • Téléphone • Email',21,y+28);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(10);
+    const clientLines=pdf.splitTextToSize(d.client||'Client à renseigner',76);
+    pdf.text(clientLines,112,y+16);
+    let cy=y+16+(clientLines.length*4.5);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    if(d.contact) cy=pdfText(pdf,d.contact,112,cy,76,4.3);
+    if(d.venue) cy=pdfText(pdf,'Lieu : '+d.venue,112,cy+1,76,4.3);
+    y+=47;
+
+    /* Informations document */
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(11);
+    pdf.text(d.type==='devis'?'Votre devis':'Votre facture',left,y);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(105,115,134);
+    pdf.text('Date du document',112,y-1);
+    pdf.text(pdfDate(d.docDate),112,y+5);
+    if(d.type==='facture' && d.dueDate){
+        pdf.text('Échéance',153,y-1);
+        pdf.text(pdfDate(d.dueDate),153,y+5);
+    }
+    pdf.setTextColor(23,32,51);
+    y+=10;
+    if(d.eventType || d.eventDate){
+        pdf.setFillColor(250,247,240);
+        pdf.roundedRect(left,y,width,14,2,2,'F');
+        pdf.setFont('helvetica','bold');
+        pdf.setFontSize(8);
+        pdf.text('ÉVÉNEMENT',21,y+6);
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(8.5);
+        let ev=d.eventType||'Événement';
+        if(d.eventDate) ev+='  •  '+pdfDate(d.eventDate);
+        pdf.text(pdf.splitTextToSize(ev,135),63,y+6);
+        y+=21;
+    }else{
+        y+=5;
+    }
+
+    /* Tableau des prestations */
+    const drawTableHeader=()=>{
+        pdf.setFillColor(17,24,39);
+        pdf.roundedRect(left,y,width,10,2,2,'F');
+        pdf.setTextColor(255,255,255);
+        pdf.setFont('helvetica','bold');
+        pdf.setFontSize(7.5);
+        pdf.text('PRESTATION',21,y+6.5);
+        pdf.text('QTÉ',125,y+6.5,{align:'right'});
+        pdf.text('PU HT',157,y+6.5,{align:'right'});
+        pdf.text('TVA',176,y+6.5,{align:'right'});
+        pdf.text('TOTAL TTC',193,y+6.5,{align:'right'});
+        pdf.setTextColor(23,32,51);
+        y+=15;
+    };
+    drawTableHeader();
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    const lines=Array.isArray(d.lines)?d.lines:[];
+    lines.forEach((l)=>{
+        const desc=pdf.splitTextToSize(l.description||'Prestation',96);
+        const rowH=Math.max(10,desc.length*4.3+4);
+        if(y+rowH>pageBottom){
+            y=newPdfPage(pdf,d);
+            drawTableHeader();
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(8.5);
+        }
+        if((lines.indexOf(l)%2)===0){
+            pdf.setFillColor(249,250,252);
+            pdf.rect(left,y-5,width,rowH,'F');
+        }
+        pdf.text(desc,21,y);
+        pdf.text(String(l.qty??0),125,y,{align:'right'});
+        pdf.text(money(l.unit).replace(' €',''),157,y,{align:'right'});
+        pdf.text(String(l.vat??0).replace('.',',')+'%',176,y,{align:'right'});
+        const total=(Number(l.qty)||0)*(Number(l.unit)||0)*(1+(Number(l.vat)||0)/100);
+        pdf.text(money(total),193,y,{align:'right'});
+        pdf.setDrawColor(232,235,240);
+        pdf.line(left,y+rowH-5,right,y+rowH-5);
+        y+=rowH;
+    });
+
+    /* Totaux */
+    const t=totals(lines);
+    if(y+58>pageBottom) y=newPdfPage(pdf,d);
+    y+=8;
+    pdf.setFillColor(248,249,251);
+    pdf.roundedRect(112,y,83,48,3,3,'F');
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    pdf.text('Total HT',120,y+10);
+    pdf.text(money(t.ht),190,y+10,{align:'right'});
+    pdf.text('TVA',120,y+18);
+    pdf.text(money(t.tva),190,y+18,{align:'right'});
+    pdf.setDrawColor(210,214,222);
+    pdf.line(120,y+23,190,y+23);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(11.5);
+    pdf.text('TOTAL TTC',120,y+33);
+    pdf.text(money(t.ttc),190,y+33,{align:'right'});
+    if(d.type==='facture'){
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(8);
+        pdf.text('Déjà encaissé',120,y+41);
+        pdf.text(money(d.paid),190,y+41,{align:'right'});
+        pdf.setFont('helvetica','bold');
+        pdf.text('Reste à encaisser',120,y+47);
+        pdf.text(money(d.remaining),190,y+47,{align:'right'});
+    }
+    y+=58;
+
+    /* Notes / conditions */
+    if(d.notes){
+        if(y+25>pageBottom) y=newPdfPage(pdf,d);
+        pdf.setFont('helvetica','bold');
+        pdf.setFontSize(9);
+        pdf.text('NOTES & CONDITIONS',left,y);
+        y+=7;
+        pdf.setFillColor(250,250,251);
+        const noteLines=pdf.splitTextToSize(String(d.notes),170);
+        const noteH=Math.max(18,noteLines.length*4.5+9);
+        if(y+noteH>pageBottom){
+            y=newPdfPage(pdf,d);
+            pdf.setFont('helvetica','bold');
+            pdf.setFontSize(9);
+            pdf.text('NOTES & CONDITIONS',left,y);
+            y+=7;
+        }
+        pdf.roundedRect(left,y,width,noteH,2,2,'F');
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(8.5);
+        pdf.text(noteLines,left+5,y+7);
+        y+=noteH+8;
+    }
+
+    /* Mentions de bas de document */
+    if(y+25>pageBottom) y=newPdfPage(pdf,d);
+    pdf.setDrawColor(225,229,236);
+    pdf.line(left,y,right,y);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(105,115,134);
+    y+=6;
+    pdf.text('Les informations légales de FASTE (SIRET, TVA, adresse, etc.) pourront être ajoutées',left,y);
+    pdf.text('ultérieurement dans les paramètres de l’entreprise.',left,y+4.5);
+
+    /* Pied de page sur toutes les pages */
+    for(let i=1;i<=pdf.internal.getNumberOfPages();i++){
+        pdf.setPage(i);
+        drawPdfFooter(pdf);
+    }
+    const safe=(d.number||'document').replace(/[^a-z0-9_-]+/gi,'_');
+    pdf.save(safe+'.pdf');
+}
 function downloadPdfById(id){const d=docs.find(x=>x.id===id);if(d)generatePdf(d)}
 function downloadCurrentPdf(){generatePdf(currentFormDoc())}
 document.getElementById('clientPicker').addEventListener('change',e=>fillFromProspect(e.target.value));document.getElementById('docType').addEventListener('change',()=>{if(!currentId)document.getElementById('docNumber').value=nextNumber(document.getElementById('docType').value);toggleInvoiceFields()});document.getElementById('docStatus').addEventListener('change',calc);document.getElementById('paid').addEventListener('input',calc);document.getElementById('search').addEventListener('input',render);document.getElementById('filter').addEventListener('change',render);loadCloud();
