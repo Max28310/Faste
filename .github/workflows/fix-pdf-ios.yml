@@ -1,0 +1,56 @@
+name: Fix PDF iPhone FASTE
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corriger le téléchargement PDF iPhone
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('faste-devis.html')
+          s=p.read_text(encoding='utf-8')
+          old='function downloadCurrentPdf(){generatePdf(currentFormDoc())}'
+          new='''async function downloadCurrentPdf(){
+            try{
+              const d=currentFormDoc();
+              const filename=(d.number||'FASTE-document')+'.pdf';
+              const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+              let win=null;
+              if(isIOS && !(navigator.share && navigator.canShare)) win=window.open('about:blank','_blank');
+              generatePdfForMobile(d,filename,isIOS,win);
+            }catch(e){console.error(e);alert('Impossible de générer le PDF. Réessaie.');}
+          }
+          async function generatePdfForMobile(d,filename,isIOS,win){
+            if(!window.jspdf?.jsPDF){alert('Le module PDF n’est pas chargé. Vérifie ta connexion internet puis recharge la page.');return;}
+            const {jsPDF}=window.jspdf;
+            const originalSave=jsPDF.prototype.save;
+            let captured=null;
+            jsPDF.prototype.save=function(name){captured=this.output('blob');};
+            try{generatePdf(d);}finally{jsPDF.prototype.save=originalSave;}
+            const blob=captured;
+            if(!blob)throw new Error('PDF non généré');
+            const file=new File([blob],filename,{type:'application/pdf'});
+            if(navigator.share && navigator.canShare({files:[file]})){await navigator.share({files:[file],title:filename});return;}
+            const url=URL.createObjectURL(blob);
+            if(isIOS){if(win && !win.closed)win.location.href=url;else window.location.href=url;setTimeout(()=>URL.revokeObjectURL(url),60000);}
+            else{const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+          }
+          '''
+          if old not in s:
+              raise SystemExit('Fonction PDF attendue introuvable')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit et supprimer le workflow temporaire
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add faste-devis.html
+          git rm .github/workflows/fix-pdf-ios.yml
+          git commit -m "Corrige le bouton PDF sur iPhone"
+          git push
