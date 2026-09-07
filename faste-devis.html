@@ -51,22 +51,31 @@ const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).f
 const today=()=>new Date().toISOString().slice(0,10);
 const prospectTypeLabel=t=>({client:'👤 Client',lieu:'🏰 Lieu',prestataire:'🤝 Prestataire'}[t]||'Contact');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-function normalizeProspects(list){return (Array.isArray(list)?list:[]).map(p=>({...p,id:p?.id||crypto.randomUUID(),type:['client','lieu','prestataire'].includes(p?.type)?p.type:'client',name:p?.name||'',city:p?.city||'',contact:p?.contact||'',phone:p?.phone||'',email:p?.email||'',eventType:p?.eventType||'',eventDate:p?.eventDate||'',venue:p?.venue||'',updatedAt:p?.updatedAt||''})).filter(p=>p.name);}
-async function loadCloud(){try{const r=await fetch(`${URL}/rest/v1/faste_data?id=eq.${ROW}&select=data,updated_at`,{headers:headers()});if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();cloudData=a?.[0]?.data||{};docs=Array.isArray(cloudData.devis_factures)?cloudData.devis_factures:[];prospects=normalizeProspects(cloudData.prospects);renderClientPicker();render();}catch(e){console.error(e);alert('Impossible de charger les données FASTE. Vérifie ta connexion.')}}
+function normalizeProspects(list){return (Array.isArray(list)?list:[]).map(p=>{const name=p?.name||p?.company||p?.raisonSociale||p?.nom||p?.clientName||'';return {...p,id:p?.id||crypto.randomUUID(),type:['client','lieu','prestataire'].includes(p?.type)?p.type:'client',name,city:p?.city||p?.ville||'',contact:p?.contact||'',phone:p?.phone||p?.telephone||'',email:p?.email||'',eventType:p?.eventType||'',eventDate:p?.eventDate||'',venue:p?.venue||'',updatedAt:p?.updatedAt||''}}).filter(p=>p.name);}
+function mergeProspects(remoteList){
+  const remote=normalizeProspects(remoteList);
+  let local=[];
+  try{local=normalizeProspects(JSON.parse(localStorage.getItem('faste_prospects')||'[]'));}catch(e){local=[];}
+  const merged=[...remote];
+  local.forEach(lp=>{
+    const idx=merged.findIndex(r=>(r.id&&lp.id&&r.id===lp.id)||String(r.name).trim().toLowerCase()===String(lp.name).trim().toLowerCase());
+    if(idx===-1)merged.push(lp);
+    else merged[idx]={...merged[idx],...lp};
+  });
+  return merged;
+}
+async function loadCloud(){try{const r=await fetch(`${URL}/rest/v1/faste_data?id=eq.${ROW}&select=data,updated_at`,{headers:headers()});if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();cloudData=a?.[0]?.data||{};docs=Array.isArray(cloudData.devis_factures)?cloudData.devis_factures:[];prospects=mergeProspects(cloudData.prospects);renderClientPicker();render();}catch(e){console.error(e);alert('Impossible de charger les données FASTE. Vérifie ta connexion.')}}
 async function saveCloud(){
-  // Toujours relire la ligne Supabase avant d'enregistrer afin de ne jamais
-  // écraser un nouveau prospect/client ajouté depuis le cockpit.
   const latest=await fetch(`${URL}/rest/v1/faste_data?id=eq.${ROW}&select=data,updated_at`,{headers:headers()});
   if(!latest.ok)throw new Error(await latest.text());
   const rows=await latest.json();
   const remoteData=rows?.[0]?.data||{};
   const mergedData={...remoteData,devis_factures:docs};
-  // Les prospects restent ceux de la base distante : ils sont gérés par le cockpit.
   cloudData=mergedData;
   const r=await fetch(`${URL}/rest/v1/faste_data?id=eq.${ROW}`,{method:'PATCH',headers:{...headers(),Prefer:'return=representation'},body:JSON.stringify({data:mergedData,updated_at:new Date().toISOString()})});
   if(!r.ok)throw new Error(await r.text());
   if(Array.isArray(mergedData.prospects)){
-    prospects=normalizeProspects(mergedData.prospects);
+    prospects=mergeProspects(mergedData.prospects);
     renderClientPicker();
   }
 }
@@ -175,7 +184,6 @@ function generatePdf(d){
     header();
     y=47;
 
-    // Émetteur / client : deux cartes distinctes pour une lecture nette.
     const cardW=87, gap=6, clientX=left+cardW+gap;
     fillRound(left,y,cardW,39,3,soft);strokeRound(left,y,cardW,39,3,line);
     fillRound(clientX,y,cardW,39,3,soft);strokeRound(clientX,y,cardW,39,3,line);
@@ -189,10 +197,9 @@ function generatePdf(d){
     pdfT(clientLines,clientX+7,y+17,10,'bold',text);
     let cy=y+17+clientLines.length*4.5;
     if(d.contact) cy=wrapped(d.contact,clientX+7,cy,73,8.2,4,'normal',text);
-    if(d.venue) cy=wrapped('Lieu : '+d.venue,clientX+7,cy+1,73,8,4,'normal',muted);
+    if(d.venue) cy=wrapped('Lieu : '+d.venue,clientX+7,cy+1,73,8,'normal',muted);
     y+=48;
 
-    // Bandeau document.
     pdfT(d.type==='devis'?'VOTRE DEVIS':'VOTRE FACTURE',left,y,11,'bold',text);
     pdfT('Date du document',clientX,y-1,7.5,'bold',muted);
     pdfT(pdfDate(d.docDate),clientX,y+5,8.5,'normal',text);
@@ -211,7 +218,6 @@ function generatePdf(d){
         y+=22;
     }
 
-    // Tableau premium : large description, colonnes fixes et espaces constants.
     const cols={desc:21,qty:123,unit:156,vat:176,total:193};
     const headerH=10;
     fillRound(left,y,width,headerH,2.5,dark);
