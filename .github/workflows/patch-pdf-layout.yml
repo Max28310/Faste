@@ -1,4 +1,5 @@
 name: Patch PDF layout FASTE
+# Déclenchement volontaire pour appliquer la mise à jour au PDF.
 on:
   workflow_dispatch:
   push:
