@@ -1,0 +1,72 @@
+name: Fix PDF mobile final
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch PDF generation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('faste-devis.html')
+          s=p.read_text(encoding='utf-8')
+          # Make generatePdf return the jsPDF instance while preserving normal desktop download.
+          old='pdf.save(filename);'
+          if old in s and 'pdf.save(filename);return pdf;' not in s:
+              s=s.replace(old,'pdf.save(filename);return pdf;',1)
+          # Replace the mobile wrapper with a direct jsPDF blob extraction.
+          start=s.find('async function generatePdfForMobile(')
+          if start==-1:
+              raise SystemExit('generatePdfForMobile introuvable')
+          end=s.find('\nfunction ',start)
+          if end==-1:
+              end=s.find('\nasync function ',start)
+          if end==-1:
+              raise SystemExit('fin generatePdfForMobile introuvable')
+          new='''async function generatePdfForMobile(d,filename,isIOS,win){
+            if(!window.jspdf?.jsPDF){alert('Le module PDF n’est pas chargé. Vérifie ta connexion internet puis recharge la page.');return;}
+            try{
+              const pdf=generatePdf(d);
+              if(!pdf)throw new Error('PDF non généré');
+              const blob=pdf.output('blob');
+              if(!blob)throw new Error('PDF non généré');
+              const file=new File([blob],filename,{type:'application/pdf'});
+              if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){await navigator.share({files:[file],title:filename});return;}
+              const url=URL.createObjectURL(blob);
+              if(isIOS){
+                if(win && !win.closed)win.location.href=url;else window.location.href=url;
+                setTimeout(()=>URL.revokeObjectURL(url),60000);
+              }else{
+                const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+              }
+            }catch(e){console.error(e);throw e;}
+          }'''
+          s=s[:start]+new+s[end:]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify patch
+        run: |
+          grep -q "pdf.save(filename);return pdf;" faste-devis.html
+          grep -q "const blob=pdf.output('blob')" faste-devis.html
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add faste-devis.html
+          git diff --cached --quiet || git commit -m "Corrige définitivement le PDF mobile"
+          git push
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          rm -f .github/workflows/fix-pdf-mobile-final.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u .github/workflows/fix-pdf-mobile-final.yml
+          git diff --cached --quiet || git commit -m "Supprime le workflow temporaire PDF"
+          git push || true
