@@ -738,7 +738,6 @@ tr:hover td{
 .auth-user{font-size:11px;color:#8fa4bd;margin:4px 0 9px;word-break:break-all}
 .auth-btn{width:100%;border:0;border-radius:9px;padding:9px 10px;background:#d7b46a;color:#07111f;font-weight:700;cursor:pointer}
 .auth-btn.secondary{margin-top:7px;background:#213650;color:#edf4ff}
-#authModal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;z-index:9999}
 .auth-modal-card{width:min(420px,calc(100vw - 32px));background:#12243a;border:1px solid #34506f;border-radius:16px;padding:24px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
 .auth-modal-card h2{margin:0 0 8px;color:#edf4ff}
 .auth-modal-card p{color:#8fa4bd;font-size:13px}
@@ -789,12 +788,6 @@ tr:hover td{
 
     </nav>
 
-    <div class="auth-box">
-        <div id="authUser" class="auth-user">Non connecté</div>
-        <button id="loginBtn" class="auth-btn">Se connecter</button>
-        <button id="logoutBtn" class="auth-btn secondary" style="display:none">Se déconnecter</button>
-    </div>
-
     <div class="sidebar-bottom">
         <div class="status">
             <span class="status-dot"></span>
@@ -804,21 +797,6 @@ tr:hover td{
 
 </aside>
 
-
-<!-- AUTH MODAL -->
-<div id="authModal">
-  <div class="auth-modal-card">
-    <h2>Connexion FASTE</h2>
-    <p>Connectez-vous avec le compte FASTE créé dans Supabase.</p>
-    <input id="authEmail" type="email" placeholder="E-mail" autocomplete="email">
-    <input id="authPassword" type="password" placeholder="Mot de passe" autocomplete="current-password">
-    <div class="auth-actions">
-      <button id="authLogin" class="auth-btn">Se connecter</button>
-      <button id="authClose" class="auth-btn secondary">Annuler</button>
-    </div>
-    <div id="authMessage" class="auth-message"></div>
-  </div>
-</div>
 
 <!-- MAIN -->
 
@@ -2936,7 +2914,6 @@ Version de travail • Les hypothèses financières doivent être remplacées pa
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 
 /* =========================================================
@@ -2950,46 +2927,11 @@ let fasteRemoteUpdatedAt = null;
 let fasteSaveTimer = null;
 let fasteRemoteLoading = false;
 let fasteReady = false;
-let fasteAuth = null;
-let fasteSession = null;
-
-async function getAuthHeaders(){
-    if(!fasteSession?.access_token) throw new Error("Utilisateur non connecté");
-    return {apikey: FASTE_SUPABASE_KEY, Authorization:`Bearer ${fasteSession.access_token}`};
-}
-
-function updateAuthUI(){
-    const user=document.getElementById("authUser");
-    const login=document.getElementById("loginBtn");
-    const logout=document.getElementById("logoutBtn");
-    if(fasteSession?.user){
-        if(user) user.textContent=`Connecté : ${fasteSession.user.email}`;
-        if(login) login.style.display="none";
-        if(logout) logout.style.display="block";
-    }else{
-        if(user) user.textContent="Non connecté";
-        if(login) login.style.display="block";
-        if(logout) logout.style.display="none";
-    }
-}
-
-async function initAuth(){
-    if(!window.supabase) throw new Error("Supabase JS indisponible");
-    fasteAuth=window.supabase.createClient(FASTE_SUPABASE_URL, FASTE_SUPABASE_KEY);
-    const {data}=await fasteAuth.auth.getSession();
-    fasteSession=data.session;
-    updateAuthUI();
-    fasteAuth.auth.onAuthStateChange(async (_event,session)=>{
-        fasteSession=session;
-        updateAuthUI();
-        if(session){
-            setCloudStatus("Connexion réussie — synchronisation…","warn");
-            await cloudLoad();
-        }else{
-            fasteReady=false;
-            setCloudStatus("Connectez-vous pour synchroniser","warn");
-        }
-    });
+function getAuthHeaders(){
+    return {
+        apikey: FASTE_SUPABASE_KEY,
+        Authorization: `Bearer ${FASTE_SUPABASE_KEY}`
+    };
 }
 
 function setCloudStatus(text, type="ok"){
@@ -3102,37 +3044,6 @@ async function cloudCheckForChanges(){
         }
     }catch(e){ console.warn("FASTE cloud check:",e); }
 }
-
-
-/* =========================================================
-   AUTH UI
-========================================================= */
-document.getElementById("loginBtn")?.addEventListener("click",()=>{
-    document.getElementById("authModal").style.display="flex";
-    document.getElementById("authEmail")?.focus();
-});
-document.getElementById("authClose")?.addEventListener("click",()=>{
-    document.getElementById("authModal").style.display="none";
-});
-document.getElementById("authLogin")?.addEventListener("click",async()=>{
-    const email=document.getElementById("authEmail")?.value.trim();
-    const password=document.getElementById("authPassword")?.value||"";
-    const msg=document.getElementById("authMessage");
-    if(!email || !password){ if(msg) msg.textContent="Renseignez l’e-mail et le mot de passe."; return; }
-    if(msg) msg.textContent="Connexion…";
-    const {error}=await fasteAuth.auth.signInWithPassword({email,password});
-    if(error){ if(msg) msg.textContent=error.message; return; }
-    if(msg) msg.textContent="Connecté.";
-    document.getElementById("authModal").style.display="none";
-});
-document.getElementById("logoutBtn")?.addEventListener("click",async()=>{
-    await fasteAuth.auth.signOut();
-});
-
-initAuth().catch(e=>{
-    console.error("FASTE auth init:",e);
-    setCloudStatus("Authentification indisponible","error");
-});
 
 
 /* =========================================================
