@@ -312,6 +312,10 @@ h3{
     grid-template-columns:repeat(4,1fr);
 }
 
+.grid-5{
+    grid-template-columns:repeat(5,1fr);
+}
+
 .card{
     background:linear-gradient(145deg,rgba(18,36,58,.9),rgba(13,27,45,.9));
     border:1px solid var(--border);
@@ -367,6 +371,10 @@ h3{
 
 .blue{
     color:var(--blue);
+}
+
+.purple{
+    color:#b88cff;
 }
 
 /* TABLE */
@@ -664,7 +672,8 @@ tr:hover td{
 
 @media(max-width:1100px){
     .retain-grid,
-    .grid-4{
+    .grid-4,
+    .grid-5{
         grid-template-columns:repeat(2,1fr);
     }
 
@@ -709,6 +718,7 @@ tr:hover td{
     .grid-2,
     .grid-3,
     .grid-4,
+    .grid-5,
     .form-grid,
     .swot,
     .retain-grid{
@@ -778,13 +788,41 @@ tr:hover td{
 /* PROSPECTION */
 .prospect-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .prospect-toolbar input,.prospect-toolbar select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;min-width:170px}
-.prospect-table{width:100%;border-collapse:collapse;min-width:1050px}
-.prospect-table th,.prospect-table td{padding:11px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;font-size:12px}
-.prospect-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-.prospect-table input,.prospect-table select,.prospect-table textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;min-width:90px}
-.prospect-table textarea{min-height:44px;resize:vertical}
+.prospect-table{width:100%;border-collapse:collapse;min-width:900px}
+.prospect-table th,.prospect-table td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;font-size:12px}
+.prospect-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.prospect-table tbody tr{cursor:pointer;transition:.15s}
+.prospect-table tbody tr:hover td{background:rgba(255,255,255,.025)}
 .prospect-empty{text-align:center;padding:35px;color:var(--muted);border:1px dashed var(--border);border-radius:12px;margin-top:15px}
-.prospect-badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:700;background:var(--panel2);color:var(--muted)}
+.prospect-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:700;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.prospect-summary{max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prospect-actions{display:flex;gap:6px;white-space:nowrap}
+.prospect-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.prospect-modal.open{display:flex}
+.prospect-modal-card{width:min(1050px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:0 25px 90px rgba(0,0,0,.5)}
+.prospect-modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding:22px 24px;background:rgba(13,27,45,.97);border-bottom:1px solid var(--border)}
+.prospect-modal-head h2{margin:0 0 5px}
+.prospect-modal-head p{font-size:12px;color:var(--muted);line-height:1.5}
+.prospect-modal-close{font-size:20px;padding:7px 11px}
+.prospect-form{padding:22px 24px}
+.prospect-form-section{margin-bottom:24px}
+.prospect-form-section:last-child{margin-bottom:0}
+.prospect-form-section h3{display:flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--accent)}
+.prospect-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.prospect-field{display:flex;flex-direction:column;gap:6px}
+.prospect-field.wide{grid-column:span 2}
+.prospect-field.full{grid-column:1/-1}
+.prospect-field label{font-size:11px;color:var(--muted)}
+.prospect-field input,.prospect-field select,.prospect-field textarea{width:100%;background:#081525;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px;outline:none}
+.prospect-field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.prospect-field input:focus,.prospect-field select:focus,.prospect-field textarea:focus{border-color:var(--accent)}
+.prospect-modal-foot{display:flex;justify-content:space-between;gap:10px;padding:18px 24px;border-top:1px solid var(--border);background:rgba(7,17,31,.5);position:sticky;bottom:0}
+.prospect-modal-foot-left,.prospect-modal-foot-right{display:flex;gap:8px}
+.prospect-type-client{background:rgba(184,140,255,.12);color:#c7a8ff}
+.prospect-type-lieu{background:rgba(93,169,255,.12);color:var(--blue)}
+.prospect-type-prestataire{background:rgba(66,211,146,.12);color:var(--green)}
+@media(max-width:900px){.prospect-form-grid{grid-template-columns:repeat(2,1fr)}.prospect-field.wide{grid-column:span 2}}
+@media(max-width:600px){.prospect-form-grid{grid-template-columns:1fr}.prospect-field.wide,.prospect-field.full{grid-column:1}.prospect-modal{padding:8px}.prospect-form,.prospect-modal-head,.prospect-modal-foot{padding:16px}.prospect-modal-foot{flex-direction:column}.prospect-modal-foot-left,.prospect-modal-foot-right{width:100%}.prospect-modal-foot button{flex:1}}
 
 </style>
 </head>
@@ -834,7 +872,7 @@ tr:hover td{
     <div class="sidebar-bottom">
         <div class="status">
             <span class="status-dot"></span>
-            Données sauvegardées localement
+            ☁ Données partagées FASTE
         </div>
     </div>
 
@@ -1761,38 +1799,38 @@ et évolution du marché.
 
 <div class="hero">
 <div class="eyebrow">08 — PROSPECTION</div>
-<h1>Prospects & partenaires</h1>
-<p>Centralisez les lieux à démarcher et les prestataires avec lesquels FASTE peut créer un réseau.</p>
+<h1>Prospects & réseau FASTE</h1>
+<p>Une base commerciale structurée pour distinguer clairement les lieux, les clients et les prestataires.</p>
 </div>
 
 <div class="retain">
-<div class="retain-title">Trois types de prospection</div>
+<div class="retain-title">Trois catégories à ne pas mélanger</div>
 <div class="retain-grid">
-<div class="retain-item"><strong>🏰 Lieux</strong><br>Châteaux, domaines, salles, hôtels, lieux de réception…</div>
-<div class="retain-item"><strong>👤 Clients</strong><br>Particuliers, entreprises, agences ou organisateurs qui peuvent réserver FASTE.</div>
-<div class="retain-item"><strong>🤝 Prestataires</strong><br>Traiteurs, photographes, vidéastes, wedding planners, fleuristes, DJ, décorateurs…</div>
-<div class="retain-item">Ajoutez autant de prospects que nécessaire et faites évoluer leur statut.</div>
-<div class="retain-item">Les modifications sont sauvegardées automatiquement et partagées entre vous deux.</div>
+<div class="retain-item"><strong>🏰 Lieux</strong><br>Châteaux, domaines, salles, hôtels et lieux de réception. Ils peuvent devenir partenaires ou apporteurs d'affaires.</div>
+<div class="retain-item"><strong>👤 Clients</strong><br>Particuliers, entreprises, agences ou organisateurs qui achètent directement les prestations FASTE.</div>
+<div class="retain-item"><strong>🤝 Prestataires</strong><br>Traiteurs, photographes, vidéastes, wedding planners, fleuristes, décorateurs, DJ et autres partenaires.</div>
+<div class="retain-item">Chaque contact possède maintenant sa propre fiche détaillée.</div>
+<div class="retain-item">Le tableau sert uniquement de vue d'ensemble : on clique sur une ligne pour ouvrir la fiche.</div>
 </div>
 </div>
 
 <div class="grid grid-5 prospect-kpis">
-<div class="card kpi"><div class="card-title">Total prospects</div><div class="card-value gold" id="prospectCount">0</div><div class="card-note">Lieux + clients + prestataires</div></div>
-<div class="card kpi"><div class="card-title">Lieux</div><div class="card-value blue" id="prospectVenueCount">0</div><div class="card-note">Châteaux, domaines, salles…</div></div>
+<div class="card kpi"><div class="card-title">Total</div><div class="card-value gold" id="prospectCount">0</div><div class="card-note">Toute la base</div></div>
+<div class="card kpi"><div class="card-title">Lieux</div><div class="card-value blue" id="prospectVenueCount">0</div><div class="card-note">Partenaires / apporteurs</div></div>
 <div class="card kpi"><div class="card-title">Clients</div><div class="card-value purple" id="prospectClientCount">0</div><div class="card-note">Prospects commerciaux</div></div>
-<div class="card kpi"><div class="card-title">Prestataires</div><div class="card-value green" id="prospectPartnerCount">0</div><div class="card-note">Réseau à développer</div></div>
-<div class="card kpi"><div class="card-title">À contacter</div><div class="card-value orange" id="prospectToContactCount">0</div><div class="card-note">Statut « À contacter »</div></div>
+<div class="card kpi"><div class="card-title">Prestataires</div><div class="card-value green" id="prospectPartnerCount">0</div><div class="card-note">Réseau FASTE</div></div>
+<div class="card kpi"><div class="card-title">À contacter</div><div class="card-value orange" id="prospectToContactCount">0</div><div class="card-note">Première action à faire</div></div>
 </div>
 
 <div class="card" style="margin-top:20px;">
 <div class="card-header">
 <div>
 <h3>Base de prospection</h3>
-<p style="color:var(--muted);font-size:12px;line-height:1.5;">Un fichier vivant : ajoutez un contact, mettez à jour son statut, notez vos échanges et indiquez la prochaine action.</p>
+<p style="color:var(--muted);font-size:12px;line-height:1.5;">Ajoutez un contact, ouvrez sa fiche et complétez progressivement les informations utiles. Les modifications sont sauvegardées automatiquement et partagées entre vous deux.</p>
 </div>
 <div class="prospect-toolbar">
 <input id="prospectSearch" placeholder="🔎 Rechercher…">
-<select id="prospectFilterType"><option value="all">Tous</option><option value="lieu">🏰 Lieux</option><option value="client">👤 Clients</option><option value="prestataire">🤝 Prestataires</option></select>
+<select id="prospectFilterType"><option value="all">Tous les types</option><option value="lieu">🏰 Lieux</option><option value="client">👤 Clients</option><option value="prestataire">🤝 Prestataires</option></select>
 <select id="prospectFilterStatus"><option value="all">Tous les statuts</option><option>À contacter</option><option>Contacté</option><option>RDV pris</option><option>Relance</option><option>Partenaire</option><option>Gagné</option><option>Perdu</option></select>
 <button class="btn primary" id="addProspectBtn">＋ Ajouter un prospect</button>
 </div>
@@ -1801,7 +1839,7 @@ et évolution du marché.
 <div class="table-wrap">
 <table class="prospect-table">
 <thead><tr>
-<th>Type</th><th>Nom / entreprise</th><th>Ville</th><th>Contact</th><th>Téléphone</th><th>Email / site</th><th>Statut</th><th>Potentiel</th><th>Prochaine action</th><th>Notes</th><th>Actions</th>
+<th>Type</th><th>Nom / entreprise</th><th>Ville</th><th>Contact</th><th>Téléphone</th><th>Statut</th><th>Potentiel</th><th>Prochaine action</th><th>Actions</th>
 </tr></thead>
 <tbody id="prospectTableBody"></tbody>
 </table>
@@ -3131,6 +3169,7 @@ async function cloudLoad(){
         }
         if(Array.isArray(payload.prospects)){
             prospects = normalizeProspects(payload.prospects);
+            localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
             renderProspects();
         }
         calculateSimulation();
@@ -3158,29 +3197,31 @@ async function cloudSaveNow(force=false){
     };
     setCloudStatus("Sauvegarde en cours…", "warn");
     try{
-        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data`, {
-            method:"POST",
+        const now = new Date().toISOString();
+        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}`, {
+            method:"PATCH",
             headers:{
-                ...(await getAuthHeaders()),
-                "Content-Type":"application/json",
-                Prefer:"resolution=merge-duplicates,return=representation"
+                ...getAuthHeaders(),
+                Prefer:"return=representation"
             },
-            body:JSON.stringify({id:FASTE_ROW_ID,data:payload,updated_at:new Date().toISOString()})
+            body:JSON.stringify({data:payload,updated_at:now})
         });
         if(!res.ok){
             const msg=await res.text();
             throw new Error(`${res.status} ${msg}`);
         }
         const rows=await res.json();
-        fasteRemoteUpdatedAt=rows?.[0]?.updated_at || new Date().toISOString();
+        fasteRemoteUpdatedAt=rows?.[0]?.updated_at || now;
         localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
         localStorage.setItem(materialStorageKey, JSON.stringify(materials));
         localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
+        fasteReady = true;
         setCloudStatus("Synchronisé pour les 2 associés");
     }catch(e){
         console.error("FASTE Supabase save:",e);
         localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
         localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
         setCloudStatus("Cloud indisponible — copie locale conservée", "error");
     }
 }
@@ -3654,72 +3695,392 @@ document.getElementById("exportBtn").addEventListener("click",()=>{
 
 
 /* =========================================================
-   PROSPECTION — LIEUX & PRESTATAIRES
+   PROSPECTION — LIEUX / CLIENTS / PRESTATAIRES
 ========================================================= */
 
 const prospectStorageKey = "faste_prospects";
 const prospectStatuses = ["À contacter","Contacté","RDV pris","Relance","Partenaire","Gagné","Perdu"];
+const prospectPotentials = ["Faible","Moyen","Fort"];
 let prospects = [];
+let activeProspectId = null;
 
-function prospectId(){ return "pros_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-function normalizeProspects(list){
-    return (Array.isArray(list)?list:[]).map(p=>({
-        id:p.id||prospectId(), type:["lieu","client","prestataire"].includes(p.type)?p.type:"lieu", name:p.name||"", city:p.city||"", contact:p.contact||"", phone:p.phone||"", email:p.email||"", status:p.status||"À contacter", potential:p.potential||"Moyen", next:p.next||"", notes:p.notes||""
-    }));
+function prospectId(){
+    return "pros_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
+
+function createEmptyProspect(type="client"){
+    const now = new Date().toISOString();
+    return {
+        id:prospectId(),
+        type,
+        name:"",
+        city:"",
+        address:"",
+        contact:"",
+        role:"",
+        phone:"",
+        email:"",
+        website:"",
+        instagram:"",
+        status:"À contacter",
+        potential:"Moyen",
+        source:"",
+
+        clientType:"",
+        eventType:"",
+        eventDate:"",
+        guests:"",
+        budget:"",
+        fasteNeeds:"",
+
+        venueType:"",
+        capacity:"",
+        constraints:"",
+
+        specialty:"",
+        serviceArea:"",
+        priceRange:"",
+        qualityTrust:"",
+        availability:"",
+        workingMethod:"",
+
+        next:"",
+        relaunchDate:"",
+        notes:"",
+        createdAt:now,
+        updatedAt:now
+    };
+}
+
+function normalizeProspects(list){
+    return (Array.isArray(list)?list:[]).map(p=>{
+        const type=["lieu","client","prestataire"].includes(p?.type) ? p.type : "client";
+        const base=createEmptyProspect(type);
+        return {
+            ...base,
+            ...p,
+            id:p?.id || base.id,
+            type,
+            name:p?.name || "",
+            city:p?.city || "",
+            status:prospectStatuses.includes(p?.status) ? p.status : "À contacter",
+            potential:prospectPotentials.includes(p?.potential) ? p.potential : "Moyen",
+            updatedAt:p?.updatedAt || base.updatedAt
+        };
+    });
+}
+
 function loadProspects(){
-    try{ const raw=localStorage.getItem(prospectStorageKey); prospects=raw?normalizeProspects(JSON.parse(raw)):[]; }catch(e){ prospects=[]; }
+    try{
+        const raw=localStorage.getItem(prospectStorageKey);
+        prospects=raw ? normalizeProspects(JSON.parse(raw)) : [];
+    }catch(e){
+        prospects=[];
+    }
     renderProspects();
 }
+
 function saveProspects(){
     localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
-    queueCloudSave();
     updateProspectKPIs();
+    queueCloudSave();
 }
-function prospectEsc(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function prospectEsc(v){
+    return String(v??"")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+}
+
+function prospectTypeLabel(type){
+    if(type==="lieu") return "🏰 Lieu";
+    if(type==="prestataire") return "🤝 Prestataire";
+    return "👤 Client";
+}
+
+function prospectTypeClass(type){
+    return type==="lieu" ? "prospect-type-lieu" : type==="prestataire" ? "prospect-type-prestataire" : "prospect-type-client";
+}
+
+function prospectField(label,key,value,type="text",placeholder="",wide=false){
+    return `<div class="prospect-field ${wide?"wide":""}">
+        <label>${label}</label>
+        <input data-prospect-field="${key}" type="${type}" value="${prospectEsc(value)}" placeholder="${prospectEsc(placeholder)}">
+    </div>`;
+}
+
+function prospectTextarea(label,key,value,placeholder="",full=true){
+    return `<div class="prospect-field ${full?"full":"wide"}">
+        <label>${label}</label>
+        <textarea data-prospect-field="${key}" placeholder="${prospectEsc(placeholder)}">${prospectEsc(value)}</textarea>
+    </div>`;
+}
+
+function prospectSelect(label,key,value,options,wide=false){
+    return `<div class="prospect-field ${wide?"wide":""}">
+        <label>${label}</label>
+        <select data-prospect-field="${key}">
+            ${options.map(o=>`<option value="${prospectEsc(o)}" ${value===o?"selected":""}>${prospectEsc(o)}</option>`).join("")}
+        </select>
+    </div>`;
+}
+
+function readProspectFormIntoObject(p){
+    const form=document.getElementById("prospectForm");
+    if(!form) return;
+    form.querySelectorAll("[data-prospect-field]").forEach(el=>{
+        p[el.dataset.prospectField]=el.value;
+    });
+    p.updatedAt=new Date().toISOString();
+}
+
+function ensureProspectModal(){
+    if(document.getElementById("prospectModal")) return;
+
+    const modal=document.createElement("div");
+    modal.id="prospectModal";
+    modal.className="prospect-modal";
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click",e=>{
+        if(e.target===modal) closeProspectModal();
+    });
+}
+
+function renderProspectModal(p){
+    ensureProspectModal();
+
+    const modal=document.getElementById("prospectModal");
+    const typeDescription = p.type==="lieu"
+        ? "Fiche d'un lieu de réception, partenaire potentiel ou apporteur d'affaires."
+        : p.type==="prestataire"
+            ? "Fiche d'un prestataire avec lequel FASTE peut collaborer."
+            : "Fiche d'un prospect ou client qui peut acheter une prestation FASTE.";
+
+    let specificHtml="";
+
+    if(p.type==="client"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>👤 Projet / besoin client</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Type de client","clientType",p.clientType,"text","Particulier, entreprise, agence…")}
+                ${prospectField("Type d'événement","eventType",p.eventType,"text","Mariage, soirée, corporate…")}
+                ${prospectField("Date de l'événement","eventDate",p.eventDate,"date")}
+                ${prospectField("Nombre d'invités","guests",p.guests,"number","Ex. 150")}
+                ${prospectField("Budget estimé","budget",p.budget,"text","Ex. 2 500 €")}
+                ${prospectField("Besoins FASTE","fasteNeeds",p.fasteNeeds,"text","DJ, son, lumière…",true)}
+            </div>
+        </div>`;
+    }
+
+    if(p.type==="lieu"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>🏰 Informations sur le lieu</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Type de lieu","venueType",p.venueType,"text","Château, domaine, salle, hôtel…",true)}
+                ${prospectField("Capacité","capacity",p.capacity,"text","Ex. 180 personnes")}
+                ${prospectField("Contraintes / conditions","constraints",p.constraints,"text","Prestataires imposés, horaires, accès…",true)}
+            </div>
+        </div>`;
+    }
+
+    if(p.type==="prestataire"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>🤝 Informations partenaire</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Spécialité","specialty",p.specialty,"text","Traiteur, photo, vidéo, wedding planner…",true)}
+                ${prospectField("Zone d'intervention","serviceArea",p.serviceArea,"text","Loiret, Centre-Val de Loire…")}
+                ${prospectField("Fourchette tarifaire","priceRange",p.priceRange,"text","Ex. 800–1 500 €")}
+                ${prospectField("Qualité / confiance","qualityTrust",p.qualityTrust,"text","À tester, recommandé, premium…")}
+                ${prospectField("Disponibilité","availability",p.availability,"text","Sur réservation, week-end…")}
+                ${prospectField("Mode de travail","workingMethod",p.workingMethod,"text","Commission, recommandation, sous-traitance…",true)}
+            </div>
+        </div>`;
+    }
+
+    modal.innerHTML=`
+        <div class="prospect-modal-card">
+            <div class="prospect-modal-head">
+                <div>
+                    <h2>${p.name ? prospectEsc(p.name) : "Nouveau prospect"}</h2>
+                    <p>${typeDescription}</p>
+                </div>
+                <button class="btn prospect-modal-close" id="prospectModalClose">✕</button>
+            </div>
+
+            <form class="prospect-form" id="prospectForm">
+                <div class="prospect-form-section">
+                    <h3>📇 Identité & contact</h3>
+                    <div class="prospect-form-grid">
+                        ${prospectSelect("Type de fiche","type",p.type,["client","lieu","prestataire"])}
+                        ${prospectField("Nom / entreprise","name",p.name,"text","Nom du lieu, entreprise, personne…",true)}
+                        ${prospectField("Ville","city",p.city,"text","Orléans")}
+                        ${prospectField("Adresse","address",p.address,"text","Adresse complète",true)}
+                        ${prospectField("Nom du contact","contact",p.contact,"text","Prénom Nom")}
+                        ${prospectField("Rôle / fonction","role",p.role,"text","Dirigeant, responsable événementiel…")}
+                        ${prospectField("Téléphone","phone",p.phone,"tel","06…")}
+                        ${prospectField("E-mail","email",p.email,"email","contact@…")}
+                        ${prospectField("Site internet","website",p.website,"url","https://…")}
+                        ${prospectField("Instagram","instagram",p.instagram,"text","@…")}
+                        ${prospectSelect("Statut","status",p.status,prospectStatuses)}
+                        ${prospectSelect("Potentiel","potential",p.potential,prospectPotentials)}
+                        ${prospectField("Source","source",p.source,"text","Recommandation, salon, Google, prospection…",true)}
+                    </div>
+                </div>
+
+                ${specificHtml}
+
+                <div class="prospect-form-section">
+                    <h3>📅 Suivi commercial</h3>
+                    <div class="prospect-form-grid">
+                        ${prospectField("Prochaine action","next",p.next,"text","Appeler vendredi, envoyer devis…",true)}
+                        ${prospectField("Date de relance","relaunchDate",p.relaunchDate,"date")}
+                        ${prospectTextarea("Notes & historique des échanges","notes",p.notes,"Compte-rendu des appels, informations utiles, historique…",true)}
+                    </div>
+                </div>
+            </form>
+
+            <div class="prospect-modal-foot">
+                <div class="prospect-modal-foot-left">
+                    <button class="btn danger" id="prospectDeleteBtn">🗑 Supprimer</button>
+                    <button class="btn" id="prospectDuplicateBtn">⧉ Dupliquer</button>
+                </div>
+                <div class="prospect-modal-foot-right">
+                    <button class="btn" id="prospectCancelBtn">Annuler</button>
+                    <button class="btn primary" id="prospectSaveBtn">✓ Enregistrer</button>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById("prospectModalClose")?.addEventListener("click",closeProspectModal);
+    document.getElementById("prospectCancelBtn")?.addEventListener("click",closeProspectModal);
+
+    document.getElementById("prospectSaveBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        readProspectFormIntoObject(p);
+        saveProspects();
+        renderProspects();
+        closeProspectModal();
+    });
+
+    document.getElementById("prospectDeleteBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        if(confirm(`Supprimer « ${p.name||"ce prospect"} » ?`)){
+            prospects=prospects.filter(x=>x.id!==p.id);
+            saveProspects();
+            renderProspects();
+            closeProspectModal();
+        }
+    });
+
+    document.getElementById("prospectDuplicateBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        readProspectFormIntoObject(p);
+        const copy={...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+        prospects.unshift(copy);
+        saveProspects();
+        renderProspects();
+        activeProspectId=copy.id;
+        renderProspectModal(copy);
+        document.getElementById("prospectModal")?.classList.add("open");
+    });
+
+    document.querySelector('#prospectForm [data-prospect-field="type"]')?.addEventListener("change",e=>{
+        readProspectFormIntoObject(p);
+        p.type=e.target.value;
+        renderProspectModal(p);
+        document.getElementById("prospectModal")?.classList.add("open");
+    });
+}
+
+function openProspect(id){
+    const p=prospects.find(x=>x.id===id);
+    if(!p) return;
+    activeProspectId=id;
+    renderProspectModal(p);
+    document.getElementById("prospectModal")?.classList.add("open");
+}
+
+function closeProspectModal(){
+    document.getElementById("prospectModal")?.classList.remove("open");
+    activeProspectId=null;
+}
+
 function renderProspects(){
-    const body=document.getElementById("prospectTableBody"), empty=document.getElementById("prospectEmpty");
+    const body=document.getElementById("prospectTableBody");
+    const empty=document.getElementById("prospectEmpty");
     if(!body) return;
+
     const q=(document.getElementById("prospectSearch")?.value||"").toLowerCase().trim();
     const ft=document.getElementById("prospectFilterType")?.value||"all";
     const fs=document.getElementById("prospectFilterStatus")?.value||"all";
+
     const list=prospects.filter(p=>{
-        const hay=[p.type,p.name,p.city,p.contact,p.phone,p.email,p.status,p.potential,p.next,p.notes].join(" ").toLowerCase();
-        return (!q||hay.includes(q))&&(ft==="all"||p.type===ft)&&(fs==="all"||p.status===fs);
+        const hay=[
+            p.type,p.name,p.city,p.address,p.contact,p.role,p.phone,p.email,
+            p.website,p.instagram,p.status,p.potential,p.source,p.clientType,
+            p.eventType,p.venueType,p.specialty,p.serviceArea,p.next,p.relaunchDate,p.notes
+        ].join(" ").toLowerCase();
+        return (!q||hay.includes(q)) &&
+               (ft==="all"||p.type===ft) &&
+               (fs==="all"||p.status===fs);
     });
+
     body.innerHTML="";
+
     list.forEach(p=>{
         const tr=document.createElement("tr");
         tr.dataset.id=p.id;
         tr.innerHTML=`
-<td><select data-field="type"><option value="lieu" ${p.type==="lieu"?"selected":""}>🏰 Lieu</option><option value="client" ${p.type==="client"?"selected":""}>👤 Client</option><option value="prestataire" ${p.type==="prestataire"?"selected":""}>🤝 Prestataire</option></select></td>
-<td><input data-field="name" value="${prospectEsc(p.name)}" placeholder="Château, traiteur…"></td>
-<td><input data-field="city" value="${prospectEsc(p.city)}" placeholder="Orléans"></td>
-<td><input data-field="contact" value="${prospectEsc(p.contact)}" placeholder="Nom du contact"></td>
-<td><input data-field="phone" value="${prospectEsc(p.phone)}" placeholder="06…"></td>
-<td><input data-field="email" value="${prospectEsc(p.email)}" placeholder="email / site"></td>
-<td><select data-field="status">${prospectStatuses.map(x=>`<option ${p.status===x?"selected":""}>${x}</option>`).join("")}</select></td>
-<td><select data-field="potential"><option ${p.potential==="Faible"?"selected":""}>Faible</option><option ${p.potential==="Moyen"?"selected":""}>Moyen</option><option ${p.potential==="Fort"?"selected":""}>Fort</option></select></td>
-<td><input data-field="next" value="${prospectEsc(p.next)}" placeholder="Appeler vendredi…"></td>
-<td><textarea data-field="notes" placeholder="Historique / infos utiles…">${prospectEsc(p.notes)}</textarea></td>
-<td style="white-space:nowrap"><button class="btn prospect-duplicate" title="Dupliquer">⧉</button> <button class="btn danger prospect-delete" title="Supprimer">✕</button></td>`;
+            <td><span class="prospect-badge ${prospectTypeClass(p.type)}">${prospectTypeLabel(p.type)}</span></td>
+            <td><strong>${prospectEsc(p.name||"Sans nom")}</strong></td>
+            <td>${prospectEsc(p.city||"—")}</td>
+            <td>${prospectEsc(p.contact||"—")}</td>
+            <td>${prospectEsc(p.phone||"—")}</td>
+            <td><span class="prospect-badge">${prospectEsc(p.status)}</span></td>
+            <td><span class="prospect-badge">${prospectEsc(p.potential)}</span></td>
+            <td><div class="prospect-summary" title="${prospectEsc(p.next||"")}">${prospectEsc(p.next||"—")}</div></td>
+            <td>
+                <div class="prospect-actions">
+                    <button class="btn prospect-open">Ouvrir</button>
+                    <button class="btn prospect-duplicate" title="Dupliquer">⧉</button>
+                </div>
+            </td>`;
+
         body.appendChild(tr);
-        tr.querySelectorAll("input,select,textarea").forEach(el=>el.addEventListener("change",()=>{
-            const item=prospects.find(x=>x.id===p.id); if(!item) return;
-            item[el.dataset.field]=el.value; saveProspects(); updateProspectKPIs();
-        }));
-        tr.querySelector(".prospect-delete").addEventListener("click",()=>{
-            if(confirm(`Supprimer « ${p.name||"ce prospect"} » ?`)){ prospects=prospects.filter(x=>x.id!==p.id); saveProspects(); renderProspects(); }
+
+        tr.addEventListener("click",()=>openProspect(p.id));
+
+        tr.querySelector(".prospect-open")?.addEventListener("click",e=>{
+            e.stopPropagation();
+            openProspect(p.id);
         });
-        tr.querySelector(".prospect-duplicate").addEventListener("click",()=>{
-            prospects.push({...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter"}); saveProspects(); renderProspects();
+
+        tr.querySelector(".prospect-duplicate")?.addEventListener("click",e=>{
+            e.stopPropagation();
+            const copy={...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+            prospects.unshift(copy);
+            saveProspects();
+            renderProspects();
+            openProspect(copy.id);
         });
     });
-    empty.style.display=list.length?"none":"block";
+
+    if(empty) empty.style.display=list.length ? "none" : "block";
     updateProspectKPIs();
 }
+
 function updateProspectKPIs(){
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const set=(id,v)=>{
+        const e=document.getElementById(id);
+        if(e) e.textContent=v;
+    };
+
     set("prospectCount",prospects.length);
     set("prospectVenueCount",prospects.filter(p=>p.type==="lieu").length);
     set("prospectClientCount",prospects.filter(p=>p.type==="client").length);
@@ -3728,10 +4089,13 @@ function updateProspectKPIs(){
 }
 
 document.getElementById("addProspectBtn")?.addEventListener("click",()=>{
-    prospects.unshift({id:prospectId(),type:"client",name:"",city:"",contact:"",phone:"",email:"",status:"À contacter",potential:"Moyen",next:"",notes:""});
-    saveProspects(); renderProspects();
-    document.getElementById("page-prospects")?.scrollIntoView({behavior:"smooth",block:"start"});
+    const p=createEmptyProspect("client");
+    prospects.unshift(p);
+    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
+    renderProspects();
+    openProspect(p.id);
 });
+
 document.getElementById("prospectSearch")?.addEventListener("input",renderProspects);
 document.getElementById("prospectFilterType")?.addEventListener("change",renderProspects);
 document.getElementById("prospectFilterStatus")?.addEventListener("change",renderProspects);
