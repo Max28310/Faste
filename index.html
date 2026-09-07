@@ -732,6 +732,36 @@ tr:hover td{
 }
 
 /* =========================================================
+   MODE EDITION — COCKPIT EVOLUTIF
+========================================================= */
+.edit-mode-btn{
+    border-color:var(--accent);
+}
+.editable-text{
+    outline:none;
+    border-radius:6px;
+    transition:background .15s, box-shadow .15s;
+}
+.edit-mode .editable-text{
+    cursor:text;
+}
+.edit-mode .editable-text:hover{
+    background:rgba(215,180,106,.07);
+    box-shadow:0 0 0 1px rgba(215,180,106,.18);
+}
+.edit-mode .editable-text:focus{
+    background:rgba(215,180,106,.10);
+    box-shadow:0 0 0 1px var(--accent);
+}
+.edit-hint{
+    display:none;
+    font-size:11px;
+    color:var(--muted);
+    margin-right:8px;
+}
+.edit-mode .edit-hint{display:inline;}
+
+/* =========================================================
    FASTE AUTHENTIFICATION
 ========================================================= */
 .auth-box{margin-bottom:12px;padding:12px;border:1px solid #213650;border-radius:12px;background:#12243a}
@@ -810,6 +840,8 @@ tr:hover td{
     </div>
 
     <div class="topbar-actions">
+        <span class="edit-hint">✏️ Clique sur les textes pour les modifier</span>
+        <button class="btn edit-mode-btn" id="editModeBtn">✏️ Modifier</button>
         <button class="btn" id="resetBtn">Réinitialiser</button>
         <button class="btn primary" id="exportBtn">Exporter</button>
     </div>
@@ -2942,12 +2974,66 @@ function setCloudStatus(text, type="ok"){
 }
 
 function collectBusinessData(){
-    const data = {};
+    const data = { inputs:{}, texts:{} };
     document.querySelectorAll("input").forEach(input=>{
-        if(input.id) data[input.id] = input.value;
+        if(input.id) data.inputs[input.id] = input.value;
+    });
+    document.querySelectorAll(".editable-text[data-edit-key]").forEach(el=>{
+        data.texts[el.dataset.editKey] = el.innerHTML;
     });
     return data;
 }
+
+function applyBusinessData(data){
+    const inputs = data?.inputs || data || {};
+    Object.entries(inputs).forEach(([id,value])=>{
+        const input=document.getElementById(id);
+        if(input) input.value=value;
+    });
+    const texts = data?.texts || {};
+    Object.entries(texts).forEach(([key,value])=>{
+        const el=document.querySelector(`.editable-text[data-edit-key="${CSS.escape(key)}"]`);
+        if(el) el.innerHTML=value;
+    });
+}
+
+function setupEditableTexts(){
+    const candidates=document.querySelectorAll(".page h1,.page h2,.page h3,.page h4,.page p,.page li,.page td");
+    let index=0;
+    candidates.forEach(el=>{
+        if(el.closest("button,select,input,textarea") || el.querySelector("input,select,textarea,button") || el.classList.contains("calculated") || el.classList.contains("kpi-value")) return;
+        if(el.matches("td") && el.children.length) return;
+        if(!el.textContent.trim()) return;
+        el.classList.add("editable-text");
+        el.dataset.editKey = `text_${index++}`;
+        el.setAttribute("contenteditable","false");
+        el.addEventListener("blur",()=>{
+            if(document.body.classList.contains("edit-mode")) saveData();
+        });
+        el.addEventListener("keydown",e=>{
+            if(e.key === "Enter" && !e.shiftKey && el.tagName !== "P"){
+                e.preventDefault();
+                el.blur();
+            }
+        });
+    });
+}
+
+function setEditMode(enabled){
+    document.body.classList.toggle("edit-mode",enabled);
+    document.querySelectorAll(".editable-text").forEach(el=>{
+        el.setAttribute("contenteditable", enabled ? "true" : "false");
+    });
+    const btn=document.getElementById("editModeBtn");
+    if(btn) btn.textContent=enabled ? "✓ Terminer" : "✏️ Modifier";
+    if(enabled){
+        setCloudStatus("Mode édition activé", "warn");
+    }else{
+        saveData();
+        setCloudStatus("Synchronisé pour les 2 associés");
+    }
+}
+
 
 async function cloudLoad(){
     if(fasteRemoteLoading) return;
@@ -2966,10 +3052,7 @@ async function cloudLoad(){
         fasteRemoteUpdatedAt = row.updated_at || null;
         const payload = row.data || {};
         const business = payload.business_data || {};
-        Object.entries(business).forEach(([id,value])=>{
-            const input=document.getElementById(id);
-            if(input) input.value=value;
-        });
+        applyBusinessData(business);
         if(Array.isArray(payload.materials)){
             materials = normalizeMaterials(payload.materials);
             renderMaterials();
@@ -3127,10 +3210,7 @@ function loadData(){
     if(!raw) return;
     try{
         const data = JSON.parse(raw);
-        Object.keys(data).forEach(id=>{
-            const input=document.getElementById(id);
-            if(input) input.value=data[id];
-        });
+        applyBusinessData(data);
     }catch(e){ console.log("Impossible de charger les données locales"); }
 }
 
@@ -3460,16 +3540,9 @@ document.querySelectorAll("input").forEach(input=>{
 
 document.getElementById("exportBtn").addEventListener("click",()=>{
 
-    const data = {};
-
-    document.querySelectorAll("input").forEach(input=>{
-
-        if(input.id){
-            data[input.id] = input.value;
-        }
-
-    });
-
+    const business = collectBusinessData();
+    const data = business.inputs;
+    data.texts = business.texts;
     data.materials = materials;
     data.exportDate = new Date().toISOString();
 
@@ -3676,6 +3749,12 @@ document.getElementById("addMaterialBtn")?.addEventListener("click",()=>{
 /* =========================================================
    INITIALISATION
 ========================================================= */
+
+setupEditableTexts();
+
+document.getElementById("editModeBtn")?.addEventListener("click",()=>{
+    setEditMode(!document.body.classList.contains("edit-mode"));
+});
 
 loadMaterials();
 loadData();
