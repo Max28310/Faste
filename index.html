@@ -774,6 +774,18 @@ tr:hover td{
 .auth-modal-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:11px;border-radius:9px;border:1px solid #34506f;background:#07111f;color:#edf4ff}
 .auth-actions{display:flex;gap:8px;margin-top:10px}.auth-actions button{flex:1}
 .auth-message{min-height:20px;margin-top:10px;color:#d7b46a;font-size:12px}
+
+/* PROSPECTION */
+.prospect-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.prospect-toolbar input,.prospect-toolbar select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;min-width:170px}
+.prospect-table{width:100%;border-collapse:collapse;min-width:1050px}
+.prospect-table th,.prospect-table td{padding:11px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;font-size:12px}
+.prospect-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.prospect-table input,.prospect-table select,.prospect-table textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 8px;min-width:90px}
+.prospect-table textarea{min-height:44px;resize:vertical}
+.prospect-empty{text-align:center;padding:35px;color:var(--muted);border:1px dashed var(--border);border-radius:12px;margin-top:15px}
+.prospect-badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:700;background:var(--panel2);color:var(--muted)}
+
 </style>
 </head>
 
@@ -802,6 +814,7 @@ tr:hover td{
         <button class="nav-btn" data-page="offres">▣ Offres & Prix</button>
         <button class="nav-btn" data-page="business">◈ Business Model</button>
         <button class="nav-btn" data-page="commercial">↗ Commercial</button>
+        <button class="nav-btn" data-page="prospects">◎ Prospects</button>
         <button class="nav-btn" data-page="marketing">✦ Marketing</button>
         <button class="nav-btn" data-page="materiel">▤ Matériel</button>
         <button class="nav-btn" data-page="investissements">€ Investissements</button>
@@ -1735,6 +1748,65 @@ et évolution du marché.
 
 </div>
 
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- PROSPECTS -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-prospects">
+
+<div class="hero">
+<div class="eyebrow">08 — PROSPECTION</div>
+<h1>Prospects & partenaires</h1>
+<p>Centralisez les lieux à démarcher et les prestataires avec lesquels FASTE peut créer un réseau.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Trois types de prospection</div>
+<div class="retain-grid">
+<div class="retain-item"><strong>🏰 Lieux</strong><br>Châteaux, domaines, salles, hôtels, lieux de réception…</div>
+<div class="retain-item"><strong>👤 Clients</strong><br>Particuliers, entreprises, agences ou organisateurs qui peuvent réserver FASTE.</div>
+<div class="retain-item"><strong>🤝 Prestataires</strong><br>Traiteurs, photographes, vidéastes, wedding planners, fleuristes, DJ, décorateurs…</div>
+<div class="retain-item">Ajoutez autant de prospects que nécessaire et faites évoluer leur statut.</div>
+<div class="retain-item">Les modifications sont sauvegardées automatiquement et partagées entre vous deux.</div>
+</div>
+</div>
+
+<div class="grid grid-5 prospect-kpis">
+<div class="card kpi"><div class="card-title">Total prospects</div><div class="card-value gold" id="prospectCount">0</div><div class="card-note">Lieux + clients + prestataires</div></div>
+<div class="card kpi"><div class="card-title">Lieux</div><div class="card-value blue" id="prospectVenueCount">0</div><div class="card-note">Châteaux, domaines, salles…</div></div>
+<div class="card kpi"><div class="card-title">Clients</div><div class="card-value purple" id="prospectClientCount">0</div><div class="card-note">Prospects commerciaux</div></div>
+<div class="card kpi"><div class="card-title">Prestataires</div><div class="card-value green" id="prospectPartnerCount">0</div><div class="card-note">Réseau à développer</div></div>
+<div class="card kpi"><div class="card-title">À contacter</div><div class="card-value orange" id="prospectToContactCount">0</div><div class="card-note">Statut « À contacter »</div></div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+<div class="card-header">
+<div>
+<h3>Base de prospection</h3>
+<p style="color:var(--muted);font-size:12px;line-height:1.5;">Un fichier vivant : ajoutez un contact, mettez à jour son statut, notez vos échanges et indiquez la prochaine action.</p>
+</div>
+<div class="prospect-toolbar">
+<input id="prospectSearch" placeholder="🔎 Rechercher…">
+<select id="prospectFilterType"><option value="all">Tous</option><option value="lieu">🏰 Lieux</option><option value="client">👤 Clients</option><option value="prestataire">🤝 Prestataires</option></select>
+<select id="prospectFilterStatus"><option value="all">Tous les statuts</option><option>À contacter</option><option>Contacté</option><option>RDV pris</option><option>Relance</option><option>Partenaire</option><option>Gagné</option><option>Perdu</option></select>
+<button class="btn primary" id="addProspectBtn">＋ Ajouter un prospect</button>
+</div>
+</div>
+
+<div class="table-wrap">
+<table class="prospect-table">
+<thead><tr>
+<th>Type</th><th>Nom / entreprise</th><th>Ville</th><th>Contact</th><th>Téléphone</th><th>Email / site</th><th>Statut</th><th>Potentiel</th><th>Prochaine action</th><th>Notes</th><th>Actions</th>
+</tr></thead>
+<tbody id="prospectTableBody"></tbody>
+</table>
+</div>
+<div id="prospectEmpty" class="prospect-empty" style="display:none;">Aucun prospect trouvé. Cliquez sur <strong>＋ Ajouter un prospect</strong> pour commencer.</div>
 </div>
 
 </section>
@@ -3057,6 +3129,10 @@ async function cloudLoad(){
             materials = normalizeMaterials(payload.materials);
             renderMaterials();
         }
+        if(Array.isArray(payload.prospects)){
+            prospects = normalizeProspects(payload.prospects);
+            renderProspects();
+        }
         calculateSimulation();
         calculateScenarios();
         calculateOfferMargins();
@@ -3077,6 +3153,7 @@ async function cloudSaveNow(force=false){
     const payload = {
         business_data: collectBusinessData(),
         materials: materials,
+        prospects: prospects,
         client_updated_at: new Date().toISOString()
     };
     setCloudStatus("Sauvegarde en cours…", "warn");
@@ -3098,6 +3175,7 @@ async function cloudSaveNow(force=false){
         fasteRemoteUpdatedAt=rows?.[0]?.updated_at || new Date().toISOString();
         localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
         localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
         setCloudStatus("Synchronisé pour les 2 associés");
     }catch(e){
         console.error("FASTE Supabase save:",e);
@@ -3217,12 +3295,15 @@ function loadData(){
 function resetData(){
     if(confirm("Réinitialiser les données FASTE partagées ?")){
         materials = normalizeMaterials(defaultMaterials);
+        prospects = [];
+        localStorage.removeItem(prospectStorageKey);
         document.querySelectorAll("input").forEach(input=>{
             if(input.id) input.value="";
         });
         saveMaterials();
         saveData();
         renderMaterials();
+        renderProspects();
         calculateSimulation();
         calculateScenarios();
         calculateOfferMargins();
@@ -3573,6 +3654,89 @@ document.getElementById("exportBtn").addEventListener("click",()=>{
 
 
 /* =========================================================
+   PROSPECTION — LIEUX & PRESTATAIRES
+========================================================= */
+
+const prospectStorageKey = "faste_prospects";
+const prospectStatuses = ["À contacter","Contacté","RDV pris","Relance","Partenaire","Gagné","Perdu"];
+let prospects = [];
+
+function prospectId(){ return "pros_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function normalizeProspects(list){
+    return (Array.isArray(list)?list:[]).map(p=>({
+        id:p.id||prospectId(), type:["lieu","client","prestataire"].includes(p.type)?p.type:"lieu", name:p.name||"", city:p.city||"", contact:p.contact||"", phone:p.phone||"", email:p.email||"", status:p.status||"À contacter", potential:p.potential||"Moyen", next:p.next||"", notes:p.notes||""
+    }));
+}
+function loadProspects(){
+    try{ const raw=localStorage.getItem(prospectStorageKey); prospects=raw?normalizeProspects(JSON.parse(raw)):[]; }catch(e){ prospects=[]; }
+    renderProspects();
+}
+function saveProspects(){
+    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
+    queueCloudSave();
+    updateProspectKPIs();
+}
+function prospectEsc(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function renderProspects(){
+    const body=document.getElementById("prospectTableBody"), empty=document.getElementById("prospectEmpty");
+    if(!body) return;
+    const q=(document.getElementById("prospectSearch")?.value||"").toLowerCase().trim();
+    const ft=document.getElementById("prospectFilterType")?.value||"all";
+    const fs=document.getElementById("prospectFilterStatus")?.value||"all";
+    const list=prospects.filter(p=>{
+        const hay=[p.type,p.name,p.city,p.contact,p.phone,p.email,p.status,p.potential,p.next,p.notes].join(" ").toLowerCase();
+        return (!q||hay.includes(q))&&(ft==="all"||p.type===ft)&&(fs==="all"||p.status===fs);
+    });
+    body.innerHTML="";
+    list.forEach(p=>{
+        const tr=document.createElement("tr");
+        tr.dataset.id=p.id;
+        tr.innerHTML=`
+<td><select data-field="type"><option value="lieu" ${p.type==="lieu"?"selected":""}>🏰 Lieu</option><option value="client" ${p.type==="client"?"selected":""}>👤 Client</option><option value="prestataire" ${p.type==="prestataire"?"selected":""}>🤝 Prestataire</option></select></td>
+<td><input data-field="name" value="${prospectEsc(p.name)}" placeholder="Château, traiteur…"></td>
+<td><input data-field="city" value="${prospectEsc(p.city)}" placeholder="Orléans"></td>
+<td><input data-field="contact" value="${prospectEsc(p.contact)}" placeholder="Nom du contact"></td>
+<td><input data-field="phone" value="${prospectEsc(p.phone)}" placeholder="06…"></td>
+<td><input data-field="email" value="${prospectEsc(p.email)}" placeholder="email / site"></td>
+<td><select data-field="status">${prospectStatuses.map(x=>`<option ${p.status===x?"selected":""}>${x}</option>`).join("")}</select></td>
+<td><select data-field="potential"><option ${p.potential==="Faible"?"selected":""}>Faible</option><option ${p.potential==="Moyen"?"selected":""}>Moyen</option><option ${p.potential==="Fort"?"selected":""}>Fort</option></select></td>
+<td><input data-field="next" value="${prospectEsc(p.next)}" placeholder="Appeler vendredi…"></td>
+<td><textarea data-field="notes" placeholder="Historique / infos utiles…">${prospectEsc(p.notes)}</textarea></td>
+<td style="white-space:nowrap"><button class="btn prospect-duplicate" title="Dupliquer">⧉</button> <button class="btn danger prospect-delete" title="Supprimer">✕</button></td>`;
+        body.appendChild(tr);
+        tr.querySelectorAll("input,select,textarea").forEach(el=>el.addEventListener("change",()=>{
+            const item=prospects.find(x=>x.id===p.id); if(!item) return;
+            item[el.dataset.field]=el.value; saveProspects(); updateProspectKPIs();
+        }));
+        tr.querySelector(".prospect-delete").addEventListener("click",()=>{
+            if(confirm(`Supprimer « ${p.name||"ce prospect"} » ?`)){ prospects=prospects.filter(x=>x.id!==p.id); saveProspects(); renderProspects(); }
+        });
+        tr.querySelector(".prospect-duplicate").addEventListener("click",()=>{
+            prospects.push({...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter"}); saveProspects(); renderProspects();
+        });
+    });
+    empty.style.display=list.length?"none":"block";
+    updateProspectKPIs();
+}
+function updateProspectKPIs(){
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set("prospectCount",prospects.length);
+    set("prospectVenueCount",prospects.filter(p=>p.type==="lieu").length);
+    set("prospectClientCount",prospects.filter(p=>p.type==="client").length);
+    set("prospectPartnerCount",prospects.filter(p=>p.type==="prestataire").length);
+    set("prospectToContactCount",prospects.filter(p=>p.status==="À contacter").length);
+}
+
+document.getElementById("addProspectBtn")?.addEventListener("click",()=>{
+    prospects.unshift({id:prospectId(),type:"client",name:"",city:"",contact:"",phone:"",email:"",status:"À contacter",potential:"Moyen",next:"",notes:""});
+    saveProspects(); renderProspects();
+    document.getElementById("page-prospects")?.scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.getElementById("prospectSearch")?.addEventListener("input",renderProspects);
+document.getElementById("prospectFilterType")?.addEventListener("change",renderProspects);
+document.getElementById("prospectFilterStatus")?.addEventListener("change",renderProspects);
+
+/* =========================================================
    PARC MATÉRIEL — INVENTAIRE DYNAMIQUE
 ========================================================= */
 
@@ -3757,6 +3921,7 @@ document.getElementById("editModeBtn")?.addEventListener("click",()=>{
 });
 
 loadMaterials();
+loadProspects();
 loadData();
 calculateSimulation();
 calculateScenarios();
