@@ -3782,10 +3782,44 @@ function loadProspects(){
     renderProspects();
 }
 
-function saveProspects(){
+async function saveProspects(){
     localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
     updateProspectKPIs();
-    queueCloudSave();
+
+    // Sauvegarde immédiate des prospects dans le même enregistrement Supabase.
+    // On relit la ligne avant le PATCH afin de ne pas écraser les autres données
+    // (business plan, matériel, devis/factures, paramètres…).
+    if(!fasteReady){
+        setTimeout(()=>{ if(fasteReady) saveProspects(); },1200);
+        return;
+    }
+
+    try{
+        const res=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=id,data,updated_at`,{
+            headers:await getAuthHeaders()
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows=await res.json();
+        if(!rows.length) throw new Error("Ligne FASTE introuvable");
+
+        const remoteData=rows[0].data || {};
+        remoteData.prospects=prospects;
+        const now=new Date().toISOString();
+
+        const save=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}`,{
+            method:"PATCH",
+            headers:{...getAuthHeaders(),"Content-Type":"application/json",Prefer:"return=representation"},
+            body:JSON.stringify({data:remoteData,updated_at:now})
+        });
+        if(!save.ok) throw new Error(`HTTP ${save.status}: ${await save.text()}`);
+        fasteRemoteUpdatedAt=now;
+        setCloudStatus("Prospects synchronisés ☁️");
+    }catch(e){
+        console.error("FASTE prospects save:",e);
+        // On conserve la copie locale et on retentera au prochain chargement
+        // dès que la connexion cloud sera disponible.
+        setCloudStatus("Prospects : copie locale conservée", "error");
+    }
 }
 
 function prospectEsc(v){
