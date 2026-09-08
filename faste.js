@@ -1,11 +1,12 @@
 'use strict';
 
 const db = fasteAuth.client;
-const state = { contacts: [], services: [], documents: [], lines: [], materials: [], settings: {}, strategic: {}, crmFilter: 'all', docFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null };
+const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
 const pageMeta = {
   dashboard: ['Dashboard', 'L’essentiel de l’activité FASTE.'],
   crm: ['CRM', 'Contacts, clients, lieux et prestataires.'],
   documents: ['Devis & Factures', 'Créer, suivre, convertir et encaisser.'],
+  events: ['Événements', 'Pense-bêtes opérationnels générés depuis les devis acceptés.'],
   prestations: ['Prestations', 'Catalogue de services et tarifs par défaut.'],
   materials: ['Matériel', 'Inventaire partagé et toujours à jour.'],
   strategy: ['Pilotage stratégique', 'Vision, hypothèses et trajectoire FASTE.'],
@@ -84,18 +85,25 @@ async function loadData({ quiet = false } = {}) {
       db.from('prestations').select('*').order('active', { ascending: false }).order('name'),
       db.from('documents').select('*').order('created_at', { ascending: false }),
       db.from('document_lines').select('*').order('position'),
+      db.from('event_sheets').select('*').order('event_date', { ascending: true, nullsFirst: false }),
+      db.from('event_tasks').select('*').order('position'),
       db.from('materiel').select('*').order('nom'),
       db.from('company_settings').select('*').eq('id', 1).maybeSingle(),
       db.from('faste_data').select('data').eq('id', 1).maybeSingle()
     ]);
     const failed = queries.find(result => result.error);
     if (failed) throw failed.error;
-    [state.contacts, state.services, state.documents, state.lines, state.materials] = queries.slice(0, 5).map(result => result.data || []);
-    state.settings = queries[5].data || {};
-    state.strategic = queries[6].data?.data?.business_data || {};
+    [state.contacts, state.services, state.documents, state.lines, state.events, state.eventTasks, state.materials] = queries.slice(0, 7).map(result => result.data || []);
+    state.settings = queries[7].data || {};
+    state.strategic = queries[8].data?.data?.business_data || {};
     state.documents.forEach(doc => {
       doc.lines = state.lines.filter(line => line.document_id === doc.id).sort((a, b) => a.position - b.position);
       doc.contact = state.contacts.find(contact => contact.id === doc.contact_id) || null;
+    });
+    state.events.forEach(event => {
+      event.tasks = state.eventTasks.filter(task => task.event_sheet_id === event.id).sort((a, b) => a.position - b.position);
+      event.quote = state.documents.find(doc => doc.id === event.source_quote_id) || null;
+      event.contact = state.contacts.find(contact => contact.id === event.contact_id) || null;
     });
     renderAll();
     setSync('ok');
@@ -110,6 +118,7 @@ function renderAll() {
   renderDashboard();
   renderContacts();
   renderDocuments();
+  renderEvents();
   renderServices();
   renderMaterials();
   renderSettings();
@@ -303,6 +312,115 @@ async function convertDocument() {
   closeModal('documentModal'); await loadData({ quiet: true }); toast(`Facture ${data.number} créée.`); openDocument(data.id);
 }
 
+function eventStatusLabel(status) {
+  return ({ preparation: 'À préparer', confirmed: 'Confirmé', completed: 'Terminé' })[status] || status || '—';
+}
+
+function renderEvents() {
+  const container = $('#eventsGrid');
+  if (!container) return;
+  const query = ($('#eventSearch')?.value || '').toLowerCase().trim();
+  let list = state.events.filter(event => `${event.title} ${event.venue || ''} ${event.contact?.name || ''} ${event.quote?.number || ''}`.toLowerCase().includes(query));
+  if (state.eventFilter === 'upcoming') list = list.filter(event => event.event_date && event.event_date >= today() && event.status !== 'completed');
+  else if (state.eventFilter !== 'all') list = list.filter(event => event.status === state.eventFilter);
+  list.sort((a, b) => (a.event_date || '9999-12-31').localeCompare(b.event_date || '9999-12-31'));
+  $('#eventCount').textContent = `${list.length} fiche${list.length > 1 ? 's' : ''}`;
+  container.innerHTML = list.length ? list.map(event => {
+    const total = event.tasks.length;
+    const done = event.tasks.filter(task => task.is_done).length;
+    const progress = total ? Math.round((done / total) * 100) : 0;
+    return `<button class="event-card" data-edit-event="${event.id}"><span class="event-card-top"><h3>${esc(event.title)}</h3><span class="badge ${esc(event.status)}">${esc(eventStatusLabel(event.status))}</span></span><span class="event-card-meta"><span>◷ ${dateFr(event.event_date)}${event.venue ? ` · ${esc(event.venue)}` : ''}</span><span>◎ ${esc(event.contact?.name || 'Contact à préciser')}${event.assigned_to ? ` · ${esc(event.assigned_to)}` : ''}</span></span><span class="event-progress"><span style="width:${progress}%"></span></span><span class="event-progress-label"><span>${done}/${total} tâches</span><span>${progress} %</span></span></button>`;
+  }).join('') : '<div class="empty-state panel">Aucune fiche événement dans cette vue. Elle apparaîtra automatiquement dès qu’un devis sera accepté.</div>';
+}
+
+function renderEventTasks(tasks = []) {
+  const list = $('#eventTaskList');
+  list.innerHTML = '';
+  tasks.forEach(task => addEventTask(task));
+}
+
+function addEventTask(task = {}) {
+  const row = document.createElement('div');
+  row.className = `task-item${task.is_done ? ' done' : ''}`;
+  row.dataset.taskId = task.id || '';
+  row.dataset.sourceKey = task.source_key || `manual:${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`}`;
+  row.dataset.category = task.category || 'general';
+  row.innerHTML = `<input class="task-done" type="checkbox" aria-label="Tâche terminée" ${task.is_done ? 'checked' : ''}><input class="task-label" type="text" aria-label="Tâche" value="${esc(task.label || '')}" placeholder="Nouvelle tâche"><select class="task-owner" aria-label="Responsable"><option value="">Non attribué</option><option value="Maxime">Maxime</option><option value="Paul">Paul</option><option value="Les deux">Les deux</option></select><button class="task-delete" type="button" aria-label="Supprimer">✕</button>`;
+  $('.task-owner', row).value = task.assigned_to || '';
+  $('.task-done', row).addEventListener('change', event => row.classList.toggle('done', event.target.checked));
+  $('.task-delete', row).addEventListener('click', () => row.remove());
+  $('#eventTaskList').appendChild(row);
+}
+
+function readEventTasks() {
+  return $$('.task-item', $('#eventTaskList')).map((row, position) => ({
+    id: row.dataset.taskId || null,
+    source_key: row.dataset.sourceKey,
+    category: row.dataset.category || 'general',
+    label: $('.task-label', row).value.trim(),
+    is_done: $('.task-done', row).checked,
+    assigned_to: $('.task-owner', row).value || null,
+    position
+  })).filter(task => task.label);
+}
+
+function openEvent(id) {
+  const event = state.events.find(item => item.id === id);
+  if (!event) return;
+  state.editingEvent = event.id;
+  $('#eventModalTitle').textContent = event.title;
+  $('#eventModalSubtitle').textContent = `${event.quote?.number || 'Devis accepté'} · ${event.contact?.name || 'Contact à préciser'}`;
+  const quoteLines = event.quote?.lines?.map(line => line.description).filter(Boolean) || [];
+  $('#eventFields').innerHTML = [
+    field('Nom de l’événement', 'title', event.title, { required: true, full: true }),
+    field('Statut', 'status', event.status, { choices: [['preparation', 'À préparer'], ['confirmed', 'Confirmé'], ['completed', 'Terminé']], required: true }),
+    field('Responsable', 'assigned_to', event.assigned_to || '', { choices: [['', 'Non attribué'], ['Maxime', 'Maxime'], ['Paul', 'Paul'], ['Les deux', 'Les deux']] }),
+    field('Date', 'event_date', event.event_date, { type: 'date' }),
+    field('Lieu', 'venue', event.venue),
+    field('Contact sur place', 'contact_on_site', event.contact_on_site),
+    field('Téléphone sur place', 'contact_on_site_phone', event.contact_on_site_phone, { type: 'tel' }),
+    field('Arrivée / installation', 'setup_time', event.setup_time, { type: 'time' }),
+    field('Début', 'start_time', event.start_time, { type: 'time' }),
+    field('Fin', 'end_time', event.end_time, { type: 'time' }),
+    field('Démontage', 'teardown_time', event.teardown_time, { type: 'time' })
+  ].join('') + `<div class="quote-summary"><strong>Base issue du devis ${esc(event.quote?.number || '')}</strong>${quoteLines.length ? ` · ${quoteLines.map(esc).join(' · ')}` : ''}</div>`;
+  $('#eventNotes').innerHTML = [
+    ['Déroulé / horaires', 'schedule_notes'],
+    ['Musique et moments clés', 'music_notes'],
+    ['Technique', 'technical_notes'],
+    ['Accès, stationnement et contraintes', 'access_notes'],
+    ['Autres informations utiles', 'general_notes']
+  ].map(([label, name]) => `<label>${label}<textarea name="${name}" rows="3">${esc(event[name] || '')}</textarea></label>`).join('');
+  renderEventTasks(event.tasks);
+  openModal('eventModal');
+}
+
+async function saveEvent(event) {
+  event.preventDefault();
+  const sheet = state.events.find(item => item.id === state.editingEvent);
+  if (!sheet) return;
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  $$('textarea[name]', $('#eventNotes')).forEach(input => { values[input.name] = input.value; });
+  Object.keys(values).forEach(key => { if (values[key] === '') values[key] = null; });
+  const tasks = readEventTasks();
+  const retainedIds = new Set(tasks.map(task => task.id).filter(Boolean));
+  const removedIds = sheet.tasks.filter(task => !retainedIds.has(task.id)).map(task => task.id);
+  setSync('loading');
+  const sheetResult = await db.from('event_sheets').update(values).eq('id', sheet.id);
+  if (sheetResult.error) return handleError(sheetResult.error);
+  if (removedIds.length) {
+    const result = await db.from('event_tasks').delete().in('id', removedIds);
+    if (result.error) return handleError(result.error);
+  }
+  const existing = tasks.filter(task => task.id);
+  const created = tasks.filter(task => !task.id).map(({ id, ...task }) => ({ ...task, event_sheet_id: sheet.id }));
+  const results = await Promise.all(existing.map(({ id, ...task }) => db.from('event_tasks').update(task).eq('id', id)));
+  if (created.length) results.push(await db.from('event_tasks').insert(created));
+  const failed = results.find(result => result.error);
+  if (failed) return handleError(failed.error);
+  closeModal('eventModal'); toast('Fiche événement enregistrée.'); await loadData({ quiet: true });
+}
+
 function renderServices() {
   $('#servicesBody').innerHTML = state.services.length ? state.services.map(service => `<tr><td><span class="cell-title">${esc(service.name)}</span></td><td>${esc(service.description || '—')}</td><td><strong>${euro(service.default_price_ht)}</strong></td><td>${num(service.vat_rate)} %</td><td><span class="badge ${service.active ? 'active' : 'inactive'}">${service.active ? 'Active' : 'Inactive'}</span></td><td><div class="row-actions"><button class="mini-btn" data-edit-service="${service.id}">Modifier</button></div></td></tr>`).join('') : '<tr><td colspan="6"><div class="empty-state">Aucune prestation.</div></td></tr>';
 }
@@ -420,6 +538,7 @@ function bindEvents() {
     const contact = event.target.closest('[data-edit-contact]')?.dataset.editContact; if (contact) openContact(contact);
     const service = event.target.closest('[data-edit-service]')?.dataset.editService; if (service) openService(service);
     const material = event.target.closest('[data-edit-material]')?.dataset.editMaterial; if (material) openMaterial(material);
+    const eventId = event.target.closest('[data-edit-event]')?.dataset.editEvent; if (eventId) openEvent(eventId);
     const documentId = event.target.closest('[data-edit-document]')?.dataset.editDocument || event.target.closest('[data-document]')?.dataset.document; if (documentId) openDocument(documentId);
     const pdfId = event.target.closest('[data-pdf-document]')?.dataset.pdfDocument; if (pdfId) { const doc = state.documents.find(item => item.id === pdfId); if (doc) generatePdf(doc); }
     const go = event.target.closest('[data-go]')?.dataset.go; if (go) navigate(go);
@@ -427,11 +546,13 @@ function bindEvents() {
   });
   $('#crmFilters').addEventListener('click', event => { const button = event.target.closest('button[data-filter]'); if (!button) return; $$('#crmFilters button').forEach(item => item.classList.toggle('active', item === button)); state.crmFilter = button.dataset.filter; renderContacts(); });
   $('#docFilters').addEventListener('click', event => { const button = event.target.closest('button[data-filter]'); if (!button) return; $$('#docFilters button').forEach(item => item.classList.toggle('active', item === button)); state.docFilter = button.dataset.filter; renderDocuments(); });
-  $('#contactSearch').addEventListener('input', renderContacts); $('#documentSearch').addEventListener('input', renderDocuments);
+  $('#eventFilters').addEventListener('click', event => { const button = event.target.closest('button[data-filter]'); if (!button) return; $$('#eventFilters button').forEach(item => item.classList.toggle('active', item === button)); state.eventFilter = button.dataset.filter; renderEvents(); });
+  $('#contactSearch').addEventListener('input', renderContacts); $('#documentSearch').addEventListener('input', renderDocuments); $('#eventSearch').addEventListener('input', renderEvents);
   $('#contactForm').addEventListener('submit', saveContact); $('#deleteContactBtn').addEventListener('click', deleteContact);
   $('#serviceForm').addEventListener('submit', saveService); $('#deleteServiceBtn').addEventListener('click', disableService);
   $('#materialForm').addEventListener('submit', saveMaterial); $('#deleteMaterialBtn').addEventListener('click', deleteMaterial);
   $('#documentForm').addEventListener('submit', saveDocument); $('#deleteDocumentBtn').addEventListener('click', deleteDocument); $('#convertDocumentBtn').addEventListener('click', convertDocument); $('#pdfDocumentBtn').addEventListener('click', () => { const doc = state.documents.find(item => item.id === state.editingDocument); if (doc) generatePdf(doc); });
+  $('#eventForm').addEventListener('submit', saveEvent); $('#addTaskBtn').addEventListener('click', () => addEventTask());
   $('#catalogBtn').addEventListener('click', openCatalog); $('#freeLineBtn').addEventListener('click', () => addDocumentLine()); $('#settingsForm').addEventListener('submit', saveSettings);
   $$('#simEvents,#simPrice,#simVariable,#simFixed').forEach(input => input.addEventListener('input', calculateSimulator));
   window.addEventListener('hashchange', () => navigate(location.hash.slice(1))); document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData({ quiet: true }); });
