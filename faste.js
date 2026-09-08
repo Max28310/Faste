@@ -154,14 +154,15 @@ function renderContacts() {
 
 function openContact(id = null) {
   const contact = id ? state.contacts.find(item => item.id === id) : null;
+  const displayName = contact?.company || contact?.name || '';
+  const primaryContact = contact?.contact_name || (contact?.company ? contact.name : '');
   state.editingContact = contact?.id || null;
-  $('#contactModalTitle').textContent = contact ? contact.name : 'Nouveau contact';
+  $('#contactModalTitle').textContent = contact ? displayName : 'Nouveau contact';
   $('#contactForm').innerHTML = [
     field('Type', 'type', contact?.type || 'client', { choices: [['client', 'Client'], ['lieu', 'Lieu'], ['prestataire', 'Prestataire']], required: true }),
     field('Statut commercial', 'relation_status', contact?.relation_status || 'prospect', { choices: [['prospect', 'Prospect'], ['client', 'Client'], ['partenaire', 'Partenaire'], ['ancien_client', 'Ancien client'], ['perdu', 'Perdu']], required: true }),
-    field('Nom', 'name', contact?.name, { required: true, placeholder: 'Nom principal' }),
-    field('Entreprise', 'company', contact?.company, { placeholder: 'Raison sociale' }),
-    field('Nom du contact', 'contact_name', contact?.contact_name),
+    field('Nom du client / de la structure', 'name', displayName, { required: true, placeholder: 'Ex. AVC ou M. Bonnet' }),
+    field('Interlocuteur principal', 'contact_name', primaryContact, { placeholder: 'Facultatif pour un particulier' }),
     field('Source', 'source', contact?.source, { placeholder: 'Recommandation, Google…' }),
     field('E-mail', 'email', contact?.email, { type: 'email' }),
     field('Téléphone', 'phone', contact?.phone, { type: 'tel' }),
@@ -179,6 +180,7 @@ function openContact(id = null) {
 async function saveContact(event) {
   event.preventDefault();
   const values = Object.fromEntries(new FormData(event.currentTarget));
+  values.company = null;
   Object.keys(values).forEach(key => { if (values[key] === '') values[key] = null; });
   setSync('loading');
   const result = state.editingContact ? await db.from('contacts').update(values).eq('id', state.editingContact) : await db.from('contacts').insert(values);
