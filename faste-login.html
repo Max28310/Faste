@@ -9,10 +9,10 @@
   </style>
 </head>
 <body><main class="box"><div class="mark">F</div><div class="brand">FASTE</div><div class="sub">Espace privé — accès réservé aux associés</div><form id="loginForm"><div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn" id="submitBtn" type="submit">Se connecter</button></form><div class="msg" id="msg" role="status"></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script><script src="faste-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script><script src="faste-auth.js?v=20260908-3"></script>
 <script>
 const form=document.getElementById('loginForm'),msg=document.getElementById('msg'),button=document.getElementById('submitBtn');
-const next=new URLSearchParams(location.search).get('next')||'faste-app.html';
+const next=new URLSearchParams(location.search).get('next')||'faste-app.html?v=20260908-3';
 (async()=>{try{if(await fasteAuth.session())location.replace(next)}catch(e){console.error(e)}})();
 form.addEventListener('submit',async e=>{e.preventDefault();msg.className='msg';msg.textContent='Connexion…';button.disabled=true;try{const {error}=await fasteAuth.client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error)throw error;msg.className='msg ok';msg.textContent='Connexion réussie.';location.replace(next)}catch(error){msg.textContent=error?.message==='Invalid login credentials'?'Identifiants incorrects.':(error?.message||'Connexion impossible.');button.disabled=false}});
 </script></body></html>
