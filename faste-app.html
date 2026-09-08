@@ -13,6 +13,7 @@
       <button class="nav-link active" data-page="dashboard"><span>◈</span> Dashboard</button>
       <button class="nav-link" data-page="crm"><span>◎</span> CRM</button>
       <button class="nav-link" data-page="documents"><span>▣</span> Devis & Factures</button>
+      <button class="nav-link" data-page="events"><span>◆</span> Événements</button>
       <button class="nav-link" data-page="prestations"><span>✦</span> Prestations</button>
       <button class="nav-link" data-page="materials"><span>▤</span> Matériel</button>
       <div class="nav-separator"><span>Pilotage</span></div>
@@ -39,6 +40,11 @@
       <section class="page" id="page-documents">
         <div class="page-actions"><div class="filters pills" id="docFilters"><button class="active" data-filter="all">Tous</button><button data-filter="devis">Devis</button><button data-filter="facture">Factures</button><button data-filter="pending">En attente</button><button data-filter="unpaid">À encaisser</button></div><button class="btn primary" data-action="new-document">＋ Nouveau devis</button></div>
         <article class="panel"><div class="table-tools"><input class="search" id="documentSearch" placeholder="Rechercher un numéro, un client ou un événement…"><span class="count" id="documentCount"></span></div><div class="table-wrap"><table><thead><tr><th>Numéro</th><th>Type</th><th>Client</th><th>Événement</th><th>Date</th><th>Total TTC</th><th>Statut</th><th></th></tr></thead><tbody id="documentsBody"></tbody></table></div></article>
+      </section>
+
+      <section class="page" id="page-events">
+        <div class="page-actions"><div class="filters pills" id="eventFilters"><button class="active" data-filter="all">Tous</button><button data-filter="preparation">À préparer</button><button data-filter="confirmed">Confirmés</button><button data-filter="completed">Terminés</button></div><p class="section-intro">Une fiche est créée automatiquement dès qu’un devis est accepté.</p></div>
+        <article class="panel"><div class="table-tools"><input class="search" id="eventSearch" placeholder="Rechercher un client, un lieu ou un événement…"><span class="count" id="eventCount"></span></div><div id="eventsGrid" class="events-grid"></div></article>
       </section>
 
       <section class="page" id="page-prestations">
@@ -73,6 +79,8 @@
 <div class="modal" id="documentModal" aria-hidden="true"><div class="modal-card document-card"><div class="modal-head sticky"><div><span class="eyebrow" id="documentEyebrow">DEVIS</span><h2 id="documentModalTitle">Nouveau devis</h2></div><button class="icon-btn" data-close="documentModal">✕</button></div><form id="documentForm"><div id="documentFields" class="form-grid"></div><div class="lines-head"><div><h3>Prestations</h3><p>Ajoutez depuis le catalogue ou saisissez une ligne libre.</p></div><div><button class="btn ghost" id="catalogBtn" type="button">✦ Ajouter une prestation</button><button class="btn ghost" id="freeLineBtn" type="button">＋ Ligne libre</button></div></div><div class="doc-lines" id="documentLines"></div><div class="document-bottom"><label class="notes-field">Notes / conditions<textarea id="docNotes" rows="5"></textarea></label><div class="totals"><div><span>Total HT</span><strong id="docTotalHt">0 €</strong></div><div><span>TVA</span><strong id="docTotalVat">0 €</strong></div><div class="grand"><span>Total TTC</span><strong id="docTotalTtc">0 €</strong></div><div class="invoice-payment hidden" id="remainingRow"><span>Reste à payer</span><strong id="docRemaining">0 €</strong></div></div></div></form><div class="modal-actions sticky-bottom"><button class="btn danger hidden" id="deleteDocumentBtn" type="button">Supprimer</button><button class="btn ghost hidden" id="convertDocumentBtn" type="button">Transformer en facture</button><span></span><button class="btn ghost hidden" id="pdfDocumentBtn" type="button">PDF</button><button class="btn ghost" type="button" data-close="documentModal">Annuler</button><button class="btn primary" form="documentForm">Enregistrer</button></div></div></div>
 
 <div class="modal" id="catalogModal" aria-hidden="true"><div class="modal-card compact"><div class="modal-head"><div><span class="eyebrow">CATALOGUE</span><h2>Ajouter une prestation</h2></div><button class="icon-btn" data-close="catalogModal">✕</button></div><div class="catalog-list" id="catalogList"></div></div></div>
+
+<div class="modal" id="eventModal" aria-hidden="true"><div class="modal-card document-card"><div class="modal-head sticky"><div><span class="eyebrow">PENSE-BÊTE OPÉRATIONNEL</span><h2 id="eventModalTitle">Fiche événement</h2><p id="eventModalSubtitle" class="modal-subtitle"></p></div><button class="icon-btn" data-close="eventModal">✕</button></div><form id="eventForm"><div id="eventFields" class="form-grid"></div><div class="event-detail-grid"><div><div class="lines-head"><div><h3>Checklist</h3><p>Préremplie depuis le devis, puis entièrement adaptable.</p></div><button class="btn ghost" id="addTaskBtn" type="button">＋ Ajouter</button></div><div class="task-list" id="eventTaskList"></div></div><div><div class="lines-head"><div><h3>Notes du jour J</h3><p>Uniquement ce qui peut éviter un oubli.</p></div></div><div id="eventNotes" class="event-notes"></div></div></div></form><div class="modal-actions sticky-bottom"><span></span><span></span><button class="btn ghost" type="button" data-close="eventModal">Fermer</button><button class="btn primary" form="eventForm">Enregistrer la fiche</button></div></div></div>
 
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
