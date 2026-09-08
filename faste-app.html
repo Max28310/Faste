@@ -1,0 +1,4350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FASTE — Business Plan & Pilotage</title>
+
+<style>
+:root{
+    --bg:#07111f;
+    --panel:#0d1b2d;
+    --panel2:#12243a;
+    --border:#213650;
+    --text:#edf4ff;
+    --muted:#8fa4bd;
+    --accent:#d7b46a;
+    --accent2:#f0d38a;
+    --green:#42d392;
+    --orange:#f3ad4f;
+    --red:#ef6b73;
+    --blue:#5da9ff;
+    --white:#ffffff;
+    --shadow:0 20px 50px rgba(0,0,0,.25);
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:
+        radial-gradient(circle at 10% 0%,rgba(215,180,106,.08),transparent 30%),
+        radial-gradient(circle at 90% 20%,rgba(93,169,255,.07),transparent 30%),
+        var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
+
+button,input,select,textarea{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.app{
+    display:flex;
+    min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    width:260px;
+    background:rgba(7,17,31,.96);
+    border-right:1px solid var(--border);
+    padding:25px 18px;
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    overflow-y:auto;
+    z-index:50;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:5px 10px 25px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:20px;
+}
+
+.logo-mark{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),#7d6332);
+    display:grid;
+    place-items:center;
+    color:#111;
+    font-weight:900;
+    font-size:19px;
+}
+
+.logo-title{
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:1px;
+}
+
+.logo-sub{
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    margin-top:3px;
+}
+
+.nav{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.nav button{
+    border:0;
+    background:transparent;
+    color:var(--muted);
+    text-align:left;
+    padding:12px 14px;
+    border-radius:10px;
+    transition:.2s;
+}
+
+.nav button:hover,
+.nav button.active{
+    background:var(--panel2);
+    color:var(--white);
+}
+
+.nav button.active{
+    border-left:3px solid var(--accent);
+}
+
+.sidebar-bottom{
+    margin-top:25px;
+    border-top:1px solid var(--border);
+    padding-top:18px;
+}
+
+.status{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:13px;
+    font-size:12px;
+    color:var(--muted);
+}
+
+.status-dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    background:var(--green);
+    border-radius:50%;
+    margin-right:7px;
+}
+
+/* MAIN */
+
+.main{
+    margin-left:260px;
+    width:calc(100% - 260px);
+}
+
+.topbar{
+    height:72px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 35px;
+    position:sticky;
+    top:0;
+    z-index:30;
+    background:rgba(7,17,31,.88);
+    backdrop-filter:blur(15px);
+}
+
+.topbar-title{
+    font-size:14px;
+    color:var(--muted);
+}
+
+.topbar-actions{
+    display:flex;
+    gap:10px;
+}
+
+.btn{
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    padding:9px 14px;
+    border-radius:9px;
+    transition:.2s;
+}
+
+.btn:hover{
+    border-color:var(--accent);
+}
+
+.btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#111;
+    font-weight:700;
+}
+
+.content{
+    padding:35px;
+    max-width:1600px;
+    margin:auto;
+}
+
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+.hero{
+    padding:20px 0 35px;
+}
+
+.eyebrow{
+    color:var(--accent);
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-weight:700;
+    margin-bottom:10px;
+}
+
+h1{
+    font-size:42px;
+    line-height:1.05;
+    margin-bottom:12px;
+}
+
+h2{
+    font-size:25px;
+    margin-bottom:15px;
+}
+
+h3{
+    font-size:17px;
+    margin-bottom:10px;
+}
+
+.hero p{
+    color:var(--muted);
+    max-width:850px;
+    line-height:1.7;
+}
+
+.section-title{
+    margin:35px 0 18px;
+}
+
+.retain{
+    border:1px solid rgba(215,180,106,.35);
+    background:linear-gradient(135deg,rgba(215,180,106,.08),rgba(215,180,106,.02));
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:22px;
+}
+
+.retain-title{
+    color:var(--accent);
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:1.7px;
+    font-weight:800;
+    margin-bottom:14px;
+}
+
+.retain-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+}
+
+.retain-item{
+    background:rgba(0,0,0,.12);
+    border-radius:10px;
+    padding:12px;
+    color:#d9e4f2;
+    font-size:13px;
+    line-height:1.5;
+}
+
+/* CARDS */
+
+.grid{
+    display:grid;
+    gap:18px;
+}
+
+.grid-2{
+    grid-template-columns:repeat(2,1fr);
+}
+
+.grid-3{
+    grid-template-columns:repeat(3,1fr);
+}
+
+.grid-4{
+    grid-template-columns:repeat(4,1fr);
+}
+
+.grid-5{
+    grid-template-columns:repeat(5,1fr);
+}
+
+.card{
+    background:linear-gradient(145deg,rgba(18,36,58,.9),rgba(13,27,45,.9));
+    border:1px solid var(--border);
+    border-radius:15px;
+    padding:20px;
+    box-shadow:var(--shadow);
+}
+
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.card-title{
+    font-size:14px;
+    color:var(--muted);
+}
+
+.card-value{
+    font-size:30px;
+    font-weight:800;
+    margin-top:6px;
+}
+
+.card-note{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:6px;
+}
+
+.kpi{
+    min-height:130px;
+}
+
+.green{
+    color:var(--green);
+}
+
+.orange{
+    color:var(--orange);
+}
+
+.red{
+    color:var(--red);
+}
+
+.gold{
+    color:var(--accent2);
+}
+
+.blue{
+    color:var(--blue);
+}
+
+.purple{
+    color:#b88cff;
+}
+
+/* TABLE */
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+
+th{
+    color:var(--muted);
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    padding:12px;
+    border-bottom:1px solid var(--border);
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid rgba(33,54,80,.65);
+    vertical-align:middle;
+}
+
+tr:hover td{
+    background:rgba(255,255,255,.015);
+}
+
+/* INPUTS */
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+}
+
+.field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.field label{
+    font-size:11px;
+    color:var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea{
+    width:100%;
+    background:#081525;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:11px;
+    outline:none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+    border-color:var(--accent);
+}
+
+.field small{
+    color:var(--muted);
+    font-size:10px;
+}
+
+/* PROGRESS */
+
+.progress{
+    width:100%;
+    height:8px;
+    border-radius:20px;
+    background:#07111f;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    border-radius:20px;
+    background:var(--accent);
+}
+
+/* BADGES */
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    border-radius:20px;
+    padding:5px 9px;
+    font-size:10px;
+    font-weight:700;
+}
+
+.badge.green{
+    background:rgba(66,211,146,.1);
+}
+
+.badge.orange{
+    background:rgba(243,173,79,.1);
+}
+
+.badge.red{
+    background:rgba(239,107,115,.1);
+}
+
+/* CHARTS */
+
+.chart{
+    width:100%;
+    height:280px;
+    position:relative;
+}
+
+.chart svg{
+    width:100%;
+    height:100%;
+}
+
+.axis{
+    stroke:#29405c;
+    stroke-width:1;
+}
+
+.line{
+    fill:none;
+    stroke:var(--accent);
+    stroke-width:3;
+}
+
+.area{
+    fill:rgba(215,180,106,.08);
+}
+
+.point{
+    fill:var(--accent);
+}
+
+.chart-label{
+    fill:#8fa4bd;
+    font-size:10px;
+}
+
+/* TIMELINE */
+
+.timeline{
+    display:flex;
+    gap:0;
+    margin-top:20px;
+}
+
+.timeline-item{
+    flex:1;
+    position:relative;
+    padding:20px 10px 0;
+    border-top:2px solid var(--border);
+}
+
+.timeline-item:before{
+    content:"";
+    position:absolute;
+    top:-7px;
+    left:10px;
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:var(--accent);
+}
+
+.timeline-item strong{
+    font-size:13px;
+}
+
+.timeline-item p{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.5;
+    margin-top:7px;
+}
+
+/* DECISION */
+
+.decision{
+    border-left:4px solid var(--accent);
+}
+
+.decision-number{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    background:rgba(215,180,106,.15);
+    color:var(--accent);
+    display:grid;
+    place-items:center;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+/* SWOT */
+
+.swot{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.swot-box{
+    min-height:180px;
+    padding:18px;
+    border-radius:13px;
+    border:1px solid var(--border);
+}
+
+.swot-box ul{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.swot-box li{
+    font-size:12px;
+    color:#b7c7d9;
+    line-height:1.5;
+}
+
+.swot-box li:before{
+    content:"•";
+    color:var(--accent);
+    margin-right:8px;
+}
+
+/* FOOTER */
+
+.footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:11px;
+    padding:50px 0 20px;
+}
+
+
+/* MATERIAL MANAGER */
+.material-table{min-width:1250px;}
+.material-table th{white-space:nowrap;}
+.material-table td{padding:9px 7px;}
+.material-input,.material-select{
+    width:100%;
+    min-width:105px;
+    background:#081525;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:7px;
+    padding:9px 8px;
+    outline:none;
+}
+.material-input:focus,.material-select:focus{border-color:var(--accent);}
+.material-name{min-width:180px;}
+.material-qty{min-width:70px;max-width:85px;}
+.material-number{min-width:125px;}
+.material-actions{display:flex;gap:6px;white-space:nowrap;}
+.material-action{
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    border-radius:7px;
+    padding:7px 9px;
+    cursor:pointer;
+}
+.material-action:hover{border-color:var(--accent);}
+.material-action.delete:hover{border-color:var(--red);color:var(--red);}
+.material-empty{
+    padding:30px;
+    text-align:center;
+    color:var(--muted);
+    border-top:1px solid var(--border);
+}
+.material-kpis{margin-bottom:20px;}
+
+/* MOBILE */
+
+.mobile-menu{
+    display:none;
+}
+
+@media(max-width:1100px){
+    .retain-grid,
+    .grid-4,
+    .grid-5{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .form-grid,
+    .grid-3{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:800px){
+    .sidebar{
+        transform:translateX(-100%);
+        transition:.25s;
+    }
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+
+    .main{
+        margin-left:0;
+        width:100%;
+    }
+
+    .mobile-menu{
+        display:block;
+        margin-right:10px;
+    }
+
+    .topbar{
+        padding:0 15px;
+    }
+
+    .content{
+        padding:20px 15px;
+    }
+
+    h1{
+        font-size:32px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4,
+    .grid-5,
+    .form-grid,
+    .swot,
+    .retain-grid{
+        grid-template-columns:1fr;
+    }
+
+    .timeline{
+        flex-direction:column;
+    }
+
+    .timeline-item{
+        border-top:0;
+        border-left:2px solid var(--border);
+        padding:5px 10px 20px 25px;
+    }
+
+    .timeline-item:before{
+        left:-7px;
+        top:5px;
+    }
+}
+
+/* =========================================================
+   MODE EDITION — COCKPIT EVOLUTIF
+========================================================= */
+.edit-mode-btn{
+    border-color:var(--accent);
+}
+.editable-text{
+    outline:none;
+    border-radius:6px;
+    transition:background .15s, box-shadow .15s;
+}
+.edit-mode .editable-text{
+    cursor:text;
+}
+.edit-mode .editable-text:hover{
+    background:rgba(215,180,106,.07);
+    box-shadow:0 0 0 1px rgba(215,180,106,.18);
+}
+.edit-mode .editable-text:focus{
+    background:rgba(215,180,106,.10);
+    box-shadow:0 0 0 1px var(--accent);
+}
+.edit-hint{
+    display:none;
+    font-size:11px;
+    color:var(--muted);
+    margin-right:8px;
+}
+.edit-mode .edit-hint{display:inline;}
+
+/* =========================================================
+   FASTE AUTHENTIFICATION
+========================================================= */
+.auth-box{margin-bottom:12px;padding:12px;border:1px solid #213650;border-radius:12px;background:#12243a}
+.auth-user{font-size:11px;color:#8fa4bd;margin:4px 0 9px;word-break:break-all}
+.auth-btn{width:100%;border:0;border-radius:9px;padding:9px 10px;background:#d7b46a;color:#07111f;font-weight:700;cursor:pointer}
+.auth-btn.secondary{margin-top:7px;background:#213650;color:#edf4ff}
+.auth-modal-card{width:min(420px,calc(100vw - 32px));background:#12243a;border:1px solid #34506f;border-radius:16px;padding:24px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
+.auth-modal-card h2{margin:0 0 8px;color:#edf4ff}
+.auth-modal-card p{color:#8fa4bd;font-size:13px}
+.auth-modal-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:11px;border-radius:9px;border:1px solid #34506f;background:#07111f;color:#edf4ff}
+.auth-actions{display:flex;gap:8px;margin-top:10px}.auth-actions button{flex:1}
+.auth-message{min-height:20px;margin-top:10px;color:#d7b46a;font-size:12px}
+
+/* PROSPECTION */
+.prospect-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.prospect-toolbar input,.prospect-toolbar select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;min-width:170px}
+.prospect-table{width:100%;border-collapse:collapse;min-width:900px}
+.prospect-table th,.prospect-table td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;font-size:12px}
+.prospect-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.prospect-table tbody tr{cursor:pointer;transition:.15s}
+.prospect-table tbody tr:hover td{background:rgba(255,255,255,.025)}
+.prospect-empty{text-align:center;padding:35px;color:var(--muted);border:1px dashed var(--border);border-radius:12px;margin-top:15px}
+.prospect-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:700;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.prospect-summary{max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prospect-actions{display:flex;gap:6px;white-space:nowrap}
+.prospect-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.prospect-modal.open{display:flex}
+.prospect-modal-card{width:min(1050px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:0 25px 90px rgba(0,0,0,.5)}
+.prospect-modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding:22px 24px;background:rgba(13,27,45,.97);border-bottom:1px solid var(--border)}
+.prospect-modal-head h2{margin:0 0 5px}
+.prospect-modal-head p{font-size:12px;color:var(--muted);line-height:1.5}
+.prospect-modal-close{font-size:20px;padding:7px 11px}
+.prospect-form{padding:22px 24px}
+.prospect-form-section{margin-bottom:24px}
+.prospect-form-section:last-child{margin-bottom:0}
+.prospect-form-section h3{display:flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--accent)}
+.prospect-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.prospect-field{display:flex;flex-direction:column;gap:6px}
+.prospect-field.wide{grid-column:span 2}
+.prospect-field.full{grid-column:1/-1}
+.prospect-field label{font-size:11px;color:var(--muted)}
+.prospect-field input,.prospect-field select,.prospect-field textarea{width:100%;background:#081525;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px;outline:none}
+.prospect-field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.prospect-field input:focus,.prospect-field select:focus,.prospect-field textarea:focus{border-color:var(--accent)}
+.prospect-modal-foot{display:flex;justify-content:space-between;gap:10px;padding:18px 24px;border-top:1px solid var(--border);background:rgba(7,17,31,.5);position:sticky;bottom:0}
+.prospect-modal-foot-left,.prospect-modal-foot-right{display:flex;gap:8px}
+.prospect-type-client{background:rgba(184,140,255,.12);color:#c7a8ff}
+.prospect-type-lieu{background:rgba(93,169,255,.12);color:var(--blue)}
+.prospect-type-prestataire{background:rgba(66,211,146,.12);color:var(--green)}
+@media(max-width:900px){.prospect-form-grid{grid-template-columns:repeat(2,1fr)}.prospect-field.wide{grid-column:span 2}}
+@media(max-width:600px){.prospect-form-grid{grid-template-columns:1fr}.prospect-field.wide,.prospect-field.full{grid-column:1}.prospect-modal{padding:8px}.prospect-form,.prospect-modal-head,.prospect-modal-foot{padding:16px}.prospect-modal-foot{flex-direction:column}.prospect-modal-foot-left,.prospect-modal-foot-right{width:100%}.prospect-modal-foot button{flex:1}}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="logo">
+        <div class="logo-mark">F</div>
+        <div>
+            <div class="logo-title">FASTE</div>
+            <div class="logo-sub">Business cockpit</div>
+        </div>
+    </div>
+
+    <nav class="nav">
+
+        <button class="nav-btn active" data-page="dashboard">◈ Dashboard</button>
+        <button class="nav-btn" data-page="projet">◆ Le projet</button>
+        <button class="nav-btn" data-page="marche">◎ Marché</button>
+        <button class="nav-btn" data-page="concurrence">◇ Concurrence</button>
+        <button class="nav-btn" data-page="offres">▣ Offres & Prix</button>
+        <button class="nav-btn" data-page="business">◈ Business Model</button>
+        <button class="nav-btn" data-page="commercial">↗ Commercial</button>
+        <button class="nav-btn" data-page="prospects">◎ Prospects</button>
+        <button class="nav-btn" type="button" onclick="window.open('faste-devis.html', '_blank', 'noopener,noreferrer')">💰 Devis & Factures ↗</button>
+        <button class="nav-btn" data-page="marketing">✦ Marketing</button>
+        <button class="nav-btn" data-page="materiel">▤ Matériel</button>
+        <button class="nav-btn" data-page="investissements">€ Investissements</button>
+        <button class="nav-btn" data-page="simulateur">∑ Simulateur</button>
+        <button class="nav-btn" data-page="scenarios">◐ Scénarios</button>
+        <button class="nav-btn" data-page="vision">⌁ Vision 5 ans</button>
+        <button class="nav-btn" data-page="saison">◌ Saison</button>
+        <button class="nav-btn" data-page="associes">♙ Associés</button>
+        <button class="nav-btn" data-page="risques">⚠ Risques</button>
+        <button class="nav-btn" data-page="swot">✚ SWOT</button>
+        <button class="nav-btn" data-page="actions">✓ Plan d'action</button>
+        <button class="nav-btn" data-page="decision">★ Décisions</button>
+        <button class="nav-btn" data-page="donnees">⚙ Données</button>
+        <button class="nav-btn" type="button" onclick="window.location.href='faste-parametres.html'">⚙️ Paramètres</button>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+        <div class="status">
+            <span class="status-dot"></span>
+            ☁ Données partagées FASTE
+        </div>
+    </div>
+
+</aside>
+
+
+<!-- MAIN -->
+
+<main class="main">
+
+<header class="topbar">
+
+    <div>
+        <button class="btn mobile-menu" id="mobileMenu">☰</button>
+        <span class="topbar-title">FASTE / Cockpit stratégique</span>
+    </div>
+
+    <div class="topbar-actions">
+        <span class="edit-hint">✏️ Clique sur les textes pour les modifier</span>
+        <button class="btn edit-mode-btn" id="editModeBtn">✏️ Modifier</button>
+        <button class="btn" id="resetBtn">Réinitialiser</button>
+        <button class="btn primary" id="exportBtn">Exporter</button>
+    </div>
+
+</header>
+
+
+<div class="content">
+
+
+<!-- ========================================================= -->
+<!-- DASHBOARD -->
+<!-- ========================================================= -->
+
+<section class="page active" id="page-dashboard">
+
+<div class="hero">
+    <div class="eyebrow">FASTE — BUSINESS PLAN</div>
+    <h1>Transformer FASTE en entreprise pilotable.</h1>
+    <p>
+        Dashboard stratégique destiné à piloter le projet FASTE :
+        positionnement premium, événements privés, mariages, corporate,
+        DJ, sonorisation, éclairage, scénographie et production événementielle.
+    </p>
+</div>
+
+<div class="retain">
+
+    <div class="retain-title">Ce qu'il faut retenir</div>
+
+    <div class="retain-grid">
+
+        <div class="retain-item">
+            <strong>01.</strong><br>
+            FASTE doit vendre une expérience et non uniquement une prestation DJ.
+        </div>
+
+        <div class="retain-item">
+            <strong>02.</strong><br>
+            La priorité initiale est de valider le marché avant de surinvestir.
+        </div>
+
+        <div class="retain-item">
+            <strong>03.</strong><br>
+            Le matériel existant constitue un avantage mais sa valeur reste à documenter.
+        </div>
+
+        <div class="retain-item">
+            <strong>04.</strong><br>
+            La croissance devra être déclenchée par des seuils économiques mesurables.
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="grid grid-4">
+
+    <div class="card kpi">
+        <div class="card-title">CA annuel simulé</div>
+        <div class="card-value gold" id="dashCA">0 €</div>
+        <div class="card-note">Selon hypothèses actuelles</div>
+    </div>
+
+    <div class="card kpi">
+        <div class="card-title">Événements / an</div>
+        <div class="card-value" id="dashEvents">0</div>
+        <div class="card-note">Volume simulé</div>
+    </div>
+
+    <div class="card kpi">
+        <div class="card-title">Résultat simulé</div>
+        <div class="card-value green" id="dashResult">0 €</div>
+        <div class="card-note">Avant fiscalité personnelle</div>
+    </div>
+
+    <div class="card kpi">
+        <div class="card-title">Seuil de rentabilité</div>
+        <div class="card-value blue" id="dashBreakEven">0</div>
+        <div class="card-note">Événements / an</div>
+    </div>
+
+</div>
+
+
+<div class="section-title">
+    <h2>Vision stratégique</h2>
+</div>
+
+<div class="grid grid-3">
+
+    <div class="card">
+        <h3>🎯 Positionnement</h3>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7;">
+            Construire une marque événementielle premium capable de combiner
+            production technique, DJ et accompagnement client.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>🏰 Territoire</h3>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7;">
+            Orléans → Loiret → Val de Loire → Sologne,
+            puis extension progressive selon la demande.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>📈 Stratégie</h3>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7;">
+            Valider → vendre → rentabiliser → réinvestir → structurer → scaler.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="section-title">
+    <h2>Trajectoire recommandée</h2>
+</div>
+
+<div class="timeline">
+
+    <div class="timeline-item">
+        <strong>0–3 mois</strong>
+        <p>Validation du marché, offres, premiers partenaires, premiers événements.</p>
+    </div>
+
+    <div class="timeline-item">
+        <strong>3–6 mois</strong>
+        <p>Optimisation commerciale, acquisition, premiers investissements ciblés.</p>
+    </div>
+
+    <div class="timeline-item">
+        <strong>6–12 mois</strong>
+        <p>Industrialisation des offres et constitution d'un réseau de prestataires.</p>
+    </div>
+
+    <div class="timeline-item">
+        <strong>Année 2</strong>
+        <p>Renforcement matériel et développement corporate.</p>
+    </div>
+
+    <div class="timeline-item">
+        <strong>Années 3–5</strong>
+        <p>PME événementielle, équipe, véhicule, stockage puis extension géographique.</p>
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- PROJET -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-projet">
+
+<div class="hero">
+    <div class="eyebrow">01 — CONCEPT</div>
+    <h1>Le projet FASTE</h1>
+    <p>Définition stratégique du projet et séparation entre acquis, potentiel et éléments à développer.</p>
+</div>
+
+<div class="retain">
+    <div class="retain-title">Ce qu'il faut retenir</div>
+    <div class="retain-grid">
+        <div class="retain-item">FASTE vise un positionnement premium.</div>
+        <div class="retain-item">Deux associés permettent une forte polyvalence initiale.</div>
+        <div class="retain-item">Le matériel déjà détenu réduit une partie du besoin initial.</div>
+        <div class="retain-item">L'organisation complète doit être construite progressivement.</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+<h3>Mission</h3>
+<p style="line-height:1.7;color:var(--muted);">
+Créer des expériences événementielles élégantes, maîtrisées et mémorables,
+en combinant accompagnement humain, ambiance musicale et production technique.
+</p>
+</div>
+
+<div class="card">
+<h3>Vision</h3>
+<p style="line-height:1.7;color:var(--muted);">
+Devenir un acteur événementiel premium reconnu dans le Val de Loire,
+puis développer une structure régionale capable de gérer plusieurs événements.
+</p>
+</div>
+
+</div>
+
+<div class="section-title"><h2>Ce qui est acquis / à construire</h2></div>
+
+<div class="table-wrap card">
+
+<table>
+
+<thead>
+<tr>
+<th>Élément</th>
+<th>Statut</th>
+<th>Analyse</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Deux associés</td>
+<td><span class="badge green">ACQUIS</span></td>
+<td>Permet de répartir commercial, technique et gestion.</td>
+</tr>
+
+<tr>
+<td>Matériel audio</td>
+<td><span class="badge green">ACQUIS</span></td>
+<td>Quantité connue, valeur à renseigner.</td>
+</tr>
+
+<tr>
+<td>DJ / FLX10</td>
+<td><span class="badge green">ACQUIS</span></td>
+<td>Permet d'envisager une première offre DJ.</td>
+</tr>
+
+<tr>
+<td>Éclairage</td>
+<td><span class="badge green">ACQUIS</span></td>
+<td>Lyres déjà disponibles.</td>
+</tr>
+
+<tr>
+<td>Marque FASTE</td>
+<td><span class="badge orange">À STRUCTURER</span></td>
+<td>Positionnement, charte et discours commercial à formaliser.</td>
+</tr>
+
+<tr>
+<td>Organisation complète</td>
+<td><span class="badge orange">À DÉVELOPPER</span></td>
+<td>Prestations complémentaires potentiellement sous-traitées.</td>
+</tr>
+
+<tr>
+<td>Base clients</td>
+<td><span class="badge red">À CRÉER</span></td>
+<td>Priorité commerciale majeure.</td>
+</tr>
+
+<tr>
+<td>Partenaires lieux</td>
+<td><span class="badge red">À CRÉER</span></td>
+<td>Châteaux, domaines, traiteurs, wedding planners.</td>
+</tr>
+
+</tbody>
+</table>
+
+</div>
+
+<div class="section-title"><h2>Promesse de marque</h2></div>
+
+<div class="card">
+<h3>FASTE ne doit pas être présenté comme « un DJ avec du matériel ».</h3>
+<p style="color:var(--muted);line-height:1.8;margin-top:10px;">
+Le positionnement recommandé est celui d'un partenaire de production événementielle :
+musique + ambiance + technique + accompagnement + esthétique.
+</p>
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- MARCHE -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-marche">
+
+<div class="hero">
+<div class="eyebrow">02 — ÉTUDE DE MARCHÉ</div>
+<h1>Marché & territoire</h1>
+<p>Structure d'analyse destinée à être complétée avec les données officielles et les recherches terrain.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le territoire initial doit rester concentré.</div>
+<div class="retain-item">Le mariage offre un potentiel élevé mais fortement saisonnier.</div>
+<div class="retain-item">Le corporate permet de lisser l'activité.</div>
+<div class="retain-item">Les lieux premium peuvent devenir des apporteurs d'affaires.</div>
+</div>
+</div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3>📍 Zone 1</h3>
+<strong>Orléans</strong>
+<p class="card-note">Zone commerciale prioritaire</p>
+</div>
+
+<div class="card">
+<h3>📍 Zone 2</h3>
+<strong>Loiret / Sologne</strong>
+<p class="card-note">Développement naturel</p>
+</div>
+
+<div class="card">
+<h3>📍 Zone 3</h3>
+<strong>Val de Loire</strong>
+<p class="card-note">Positionnement premium / patrimoine</p>
+</div>
+
+</div>
+
+<div class="section-title"><h2>Segments</h2></div>
+
+<div class="table-wrap card">
+
+<table>
+
+<thead>
+<tr>
+<th>Segment</th>
+<th>Potentiel</th>
+<th>Saisonnalité</th>
+<th>Marge potentielle</th>
+<th>Priorité</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Mariages</td>
+<td>Élevé</td>
+<td>Forte</td>
+<td>Élevée</td>
+<td><span class="badge green">1</span></td>
+</tr>
+
+<tr>
+<td>Corporate</td>
+<td>Élevé</td>
+<td>Moyenne</td>
+<td>Élevée</td>
+<td><span class="badge green">1</span></td>
+</tr>
+
+<tr>
+<td>Soirées privées</td>
+<td>Moyen</td>
+<td>Moyenne</td>
+<td>Moyenne</td>
+<td><span class="badge orange">2</span></td>
+</tr>
+
+<tr>
+<td>Location matériel</td>
+<td>Moyen</td>
+<td>Moyenne</td>
+<td>Variable</td>
+<td><span class="badge orange">3</span></td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="section-title"><h2>Données à rechercher</h2></div>
+
+<div class="grid grid-2">
+
+<div class="card">
+<h3>Sources prioritaires</h3>
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>INSEE</li>
+<li>Tourisme Loiret</li>
+<li>Tourisme Centre-Val de Loire</li>
+<li>Statistiques mariage</li>
+<li>Statistiques entreprises</li>
+<li>Données sur le tourisme</li>
+<li>Études événementielles</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>À compléter</h3>
+<p style="color:var(--muted);line-height:1.8;font-size:13px;">
+Nombre de mariages annuels, dépenses moyennes, nombre de lieux,
+nombre d'entreprises ciblables, concurrence locale, prix publics
+et évolution du marché.
+</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- CONCURRENCE -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-concurrence">
+
+<div class="hero">
+<div class="eyebrow">03 — CONCURRENCE</div>
+<h1>Cartographie concurrentielle</h1>
+<p>La concurrence doit être étudiée acteur par acteur avant de figer les prix FASTE.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le marché DJ est généralement concurrentiel.</div>
+<div class="retain-item">La différenciation doit dépasser le simple matériel.</div>
+<div class="retain-item">Le réseau de lieux peut devenir un avantage défendable.</div>
+<div class="retain-item">Les tarifs publics doivent être relevés régulièrement.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Concurrent</th>
+<th>Type</th>
+<th>Positionnement</th>
+<th>Prix public</th>
+<th>Forces</th>
+<th>Faiblesses</th>
+<th>Source</th>
+</tr>
+</thead>
+
+<tbody id="competitorTable">
+
+<tr>
+<td>À rechercher</td>
+<td>DJ</td>
+<td>À rechercher</td>
+<td>À rechercher</td>
+<td>À analyser</td>
+<td>À analyser</td>
+<td>À compléter</td>
+</tr>
+
+<tr>
+<td>À rechercher</td>
+<td>Agence</td>
+<td>Premium</td>
+<td>À rechercher</td>
+<td>À analyser</td>
+<td>À analyser</td>
+<td>À compléter</td>
+</tr>
+
+<tr>
+<td>À rechercher</td>
+<td>Son / lumière</td>
+<td>Technique</td>
+<td>À rechercher</td>
+<td>À analyser</td>
+<td>À analyser</td>
+<td>À compléter</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="section-title"><h2>Positionnement FASTE</h2></div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3>DJ seul</h3>
+<p class="card-note">Fort niveau de concurrence.</p>
+<div class="progress" style="margin-top:15px;"><div class="progress-bar" style="width:45%"></div></div>
+</div>
+
+<div class="card">
+<h3>Production événementielle</h3>
+<p class="card-note">Différenciation supérieure.</p>
+<div class="progress" style="margin-top:15px;"><div class="progress-bar" style="width:80%"></div></div>
+</div>
+
+<div class="card">
+<h3>Spécialiste lieux premium</h3>
+<p class="card-note">Positionnement potentiellement défendable.</p>
+<div class="progress" style="margin-top:15px;"><div class="progress-bar" style="width:90%"></div></div>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- OFFRES -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-offres">
+
+<div class="hero">
+<div class="eyebrow">04 — OFFRES</div>
+<h1>Architecture commerciale</h1>
+<p>Les tarifs ci-dessous sont des hypothèses de travail modifiables.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">L'offre d'entrée doit être simple à vendre.</div>
+<div class="retain-item">Les options doivent augmenter le panier moyen.</div>
+<div class="retain-item">La production complète doit être vendue sur devis.</div>
+<div class="retain-item">Les prix doivent être recalibrés après benchmark réel.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Offre</th>
+<th>Contenu</th>
+<th>Prix hypothétique</th>
+<th>Coût variable</th>
+<th>Marge</th>
+<th>Cible</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td><strong>FASTE DJ</strong></td>
+<td>DJ + régie</td>
+<td><input class="offer-input" data-offer="1" type="number" value="900"></td>
+<td><input class="offer-cost" data-offer="1" type="number" value="150"></td>
+<td id="margin1">—</td>
+<td>Soirées privées</td>
+</tr>
+
+<tr>
+<td><strong>FASTE SOUND</strong></td>
+<td>DJ + son</td>
+<td><input class="offer-input" data-offer="2" type="number" value="1300"></td>
+<td><input class="offer-cost" data-offer="2" type="number" value="250"></td>
+<td id="margin2">—</td>
+<td>Mariages</td>
+</tr>
+
+<tr>
+<td><strong>FASTE SIGNATURE</strong></td>
+<td>DJ + son + lumière</td>
+<td><input class="offer-input" data-offer="3" type="number" value="1800"></td>
+<td><input class="offer-cost" data-offer="3" type="number" value="350"></td>
+<td id="margin3">—</td>
+<td>Mariages premium</td>
+</tr>
+
+<tr>
+<td><strong>FASTE CORPORATE</strong></td>
+<td>Production entreprise</td>
+<td><input class="offer-input" data-offer="4" type="number" value="2200"></td>
+<td><input class="offer-cost" data-offer="4" type="number" value="500"></td>
+<td id="margin4">—</td>
+<td>Entreprises</td>
+</tr>
+
+<tr>
+<td><strong>FASTE PRODUCTION</strong></td>
+<td>Production complète</td>
+<td><input class="offer-input" data-offer="5" type="number" value="3500"></td>
+<td><input class="offer-cost" data-offer="5" type="number" value="1000"></td>
+<td id="margin5">—</td>
+<td>Événements premium</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<p style="margin-top:15px;color:var(--muted);font-size:11px;">
+⚠️ Les prix affichés sont uniquement des hypothèses de travail. Ils doivent être confrontés au marché local.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- BUSINESS MODEL -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-business">
+
+<div class="hero">
+<div class="eyebrow">05 — BUSINESS MODEL</div>
+<h1>Business Model Canvas</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">La valeur vient de l'intégration des prestations.</div>
+<div class="retain-item">Les partenaires sont stratégiques.</div>
+<div class="retain-item">La marge doit être pilotée par prestation.</div>
+<div class="retain-item">La récurrence corporate est un levier majeur.</div>
+</div>
+</div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3>👥 Clients</h3>
+<p class="card-note">Mariés, particuliers premium, entreprises, agences, lieux.</p>
+</div>
+
+<div class="card">
+<h3>💎 Valeur</h3>
+<p class="card-note">Expérience premium, simplicité, technique maîtrisée.</p>
+</div>
+
+<div class="card">
+<h3>📣 Canaux</h3>
+<p class="card-note">Référencement, réseaux sociaux, partenaires, prospection.</p>
+</div>
+
+<div class="card">
+<h3>🤝 Relation</h3>
+<p class="card-note">Accompagnement humain et suivi personnalisé.</p>
+</div>
+
+<div class="card">
+<h3>💰 Revenus</h3>
+<p class="card-note">DJ, production, son, lumière, coordination, location.</p>
+</div>
+
+<div class="card">
+<h3>🔧 Ressources</h3>
+<p class="card-note">Associés, matériel, marque, réseau, savoir-faire.</p>
+</div>
+
+<div class="card">
+<h3>⚙ Activités</h3>
+<p class="card-note">Prospection, préparation, production, événement, suivi.</p>
+</div>
+
+<div class="card">
+<h3>🏰 Partenaires</h3>
+<p class="card-note">Domaines, châteaux, traiteurs, photographes, wedding planners.</p>
+</div>
+
+<div class="card">
+<h3>📉 Coûts</h3>
+<p class="card-note">Transport, assurance, marketing, sous-traitance, matériel.</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- COMMERCIAL -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-commercial">
+
+<div class="hero">
+<div class="eyebrow">06 — COMMERCIAL</div>
+<h1>Machine commerciale</h1>
+<p>Objectif : transformer FASTE en pipeline prévisible.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le partenariat local est probablement le canal le plus stratégique.</div>
+<div class="retain-item">La prospection B2B permet de réduire la dépendance aux réseaux sociaux.</div>
+<div class="retain-item">Chaque devis doit être suivi jusqu'à décision.</div>
+<div class="retain-item">Les KPI doivent être mesurés chaque semaine.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Étape</th>
+<th>KPI</th>
+<th>Objectif initial</th>
+<th>Mesure</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Prospects</td>
+<td>Contacts qualifiés</td>
+<td>À définir</td>
+<td>Hebdomadaire</td>
+</tr>
+
+<tr>
+<td>Contact</td>
+<td>Taux de réponse</td>
+<td>À mesurer</td>
+<td>Hebdomadaire</td>
+</tr>
+
+<tr>
+<td>Rendez-vous</td>
+<td>Taux RDV</td>
+<td>À mesurer</td>
+<td>Hebdomadaire</td>
+</tr>
+
+<tr>
+<td>Devis</td>
+<td>Taux devis / RDV</td>
+<td>À mesurer</td>
+<td>Hebdomadaire</td>
+</tr>
+
+<tr>
+<td>Signature</td>
+<td>Taux conversion</td>
+<td>À mesurer</td>
+<td>Mensuel</td>
+</tr>
+
+<tr>
+<td>Prestation</td>
+<td>Panier moyen</td>
+<td>À définir</td>
+<td>Mensuel</td>
+</tr>
+
+<tr>
+<td>Recommandation</td>
+<td>Avis / recommandation</td>
+<td>À mesurer</td>
+<td>Mensuel</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="section-title"><h2>Canaux prioritaires</h2></div>
+
+<div class="grid grid-4">
+
+<div class="card"><h3>🏰 Lieux</h3><p class="card-note">Priorité maximale</p></div>
+<div class="card"><h3>💼 Corporate</h3><p class="card-note">Priorité maximale</p></div>
+<div class="card"><h3>📱 Instagram</h3><p class="card-note">Preuve sociale</p></div>
+<div class="card"><h3>🔎 Google</h3><p class="card-note">Acquisition intentionniste</p></div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- MARKETING -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-marketing">
+
+<div class="hero">
+<div class="eyebrow">07 — MARKETING</div>
+<h1>Plan marketing 12 mois</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le contenu doit montrer le résultat, pas seulement le matériel.</div>
+<div class="retain-item">Les lieux premium sont des actifs marketing.</div>
+<div class="retain-item">Google doit devenir un canal d'acquisition.</div>
+<div class="retain-item">Aucun ROI marketing ne doit être présenté comme garanti.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Canal</th>
+<th>Objectif</th>
+<th>Fréquence</th>
+<th>Budget hypothétique</th>
+<th>KPI</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Instagram</td>
+<td>Image / preuve</td>
+<td>3–5 contenus / semaine</td>
+<td>À définir</td>
+<td>Leads</td>
+</tr>
+
+<tr>
+<td>Facebook</td>
+<td>Local / événements</td>
+<td>2–3 / semaine</td>
+<td>À définir</td>
+<td>Leads</td>
+</tr>
+
+<tr>
+<td>TikTok</td>
+<td>Notoriété</td>
+<td>2–4 / semaine</td>
+<td>À définir</td>
+<td>Portée</td>
+</tr>
+
+<tr>
+<td>Google SEO</td>
+<td>Acquisition</td>
+<td>Continu</td>
+<td>Temps interne</td>
+<td>Trafic qualifié</td>
+</tr>
+
+<tr>
+<td>Google Ads</td>
+<td>Leads</td>
+<td>Continu</td>
+<td>À définir</td>
+<td>CPL / CA</td>
+</tr>
+
+<tr>
+<td>Partenariats</td>
+<td>Apport d'affaires</td>
+<td>Continu</td>
+<td>Faible</td>
+<td>Leads / partenaire</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- PROSPECTS -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-prospects">
+
+<div class="hero">
+<div class="eyebrow">08 — PROSPECTION</div>
+<h1>Prospects & réseau FASTE</h1>
+<p>Une base commerciale structurée pour distinguer clairement les lieux, les clients et les prestataires.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Trois catégories à ne pas mélanger</div>
+<div class="retain-grid">
+<div class="retain-item"><strong>🏰 Lieux</strong><br>Châteaux, domaines, salles, hôtels et lieux de réception. Ils peuvent devenir partenaires ou apporteurs d'affaires.</div>
+<div class="retain-item"><strong>👤 Clients</strong><br>Particuliers, entreprises, agences ou organisateurs qui achètent directement les prestations FASTE.</div>
+<div class="retain-item"><strong>🤝 Prestataires</strong><br>Traiteurs, photographes, vidéastes, wedding planners, fleuristes, décorateurs, DJ et autres partenaires.</div>
+<div class="retain-item">Chaque contact possède maintenant sa propre fiche détaillée.</div>
+<div class="retain-item">Le tableau sert uniquement de vue d'ensemble : on clique sur une ligne pour ouvrir la fiche.</div>
+</div>
+</div>
+
+<div class="grid grid-5 prospect-kpis">
+<div class="card kpi"><div class="card-title">Total</div><div class="card-value gold" id="prospectCount">0</div><div class="card-note">Toute la base</div></div>
+<div class="card kpi"><div class="card-title">Lieux</div><div class="card-value blue" id="prospectVenueCount">0</div><div class="card-note">Partenaires / apporteurs</div></div>
+<div class="card kpi"><div class="card-title">Clients</div><div class="card-value purple" id="prospectClientCount">0</div><div class="card-note">Prospects commerciaux</div></div>
+<div class="card kpi"><div class="card-title">Prestataires</div><div class="card-value green" id="prospectPartnerCount">0</div><div class="card-note">Réseau FASTE</div></div>
+<div class="card kpi"><div class="card-title">À contacter</div><div class="card-value orange" id="prospectToContactCount">0</div><div class="card-note">Première action à faire</div></div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+<div class="card-header">
+<div>
+<h3>Base de prospection</h3>
+<p style="color:var(--muted);font-size:12px;line-height:1.5;">Ajoutez un contact, ouvrez sa fiche et complétez progressivement les informations utiles. Les modifications sont sauvegardées automatiquement et partagées entre vous deux.</p>
+</div>
+<div class="prospect-toolbar">
+<input id="prospectSearch" placeholder="🔎 Rechercher…">
+<select id="prospectFilterType"><option value="all">Tous les types</option><option value="lieu">🏰 Lieux</option><option value="client">👤 Clients</option><option value="prestataire">🤝 Prestataires</option></select>
+<select id="prospectFilterStatus"><option value="all">Tous les statuts</option><option>À contacter</option><option>Contacté</option><option>RDV pris</option><option>Relance</option><option>Partenaire</option><option>Gagné</option><option>Perdu</option></select>
+<button class="btn primary" id="addProspectBtn">＋ Ajouter un prospect</button>
+</div>
+</div>
+
+<div class="table-wrap">
+<table class="prospect-table">
+<thead><tr>
+<th>Type</th><th>Nom / entreprise</th><th>Ville</th><th>Contact</th><th>Téléphone</th><th>Statut</th><th>Potentiel</th><th>Prochaine action</th><th>Actions</th>
+</tr></thead>
+<tbody id="prospectTableBody"></tbody>
+</table>
+</div>
+<div id="prospectEmpty" class="prospect-empty" style="display:none;">Aucun prospect trouvé. Cliquez sur <strong>＋ Ajouter un prospect</strong> pour commencer.</div>
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- MATERIEL -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-materiel">
+
+<div class="hero">
+<div class="eyebrow">08 — PARC MATÉRIEL</div>
+<h1>Inventaire FASTE</h1>
+<p>Un inventaire entièrement modifiable : ajoutez, supprimez et valorisez chaque référence de votre parc.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Chaque matériel peut avoir son propre nom, sa quantité et ses valeurs.</div>
+<div class="retain-item">Les données restent enregistrées automatiquement dans votre navigateur.</div>
+<div class="retain-item">Vous pouvez ajouter autant de références que nécessaire.</div>
+<div class="retain-item">Les valeurs inconnues restent volontairement à renseigner.</div>
+</div>
+</div>
+
+<div class="grid grid-4 material-kpis">
+<div class="card kpi"><div class="card-title">Références</div><div class="card-value gold" id="materialRefCount">0</div><div class="card-note">Types de matériel</div></div>
+<div class="card kpi"><div class="card-title">Unités possédées</div><div class="card-value" id="materialUnitCount">0</div><div class="card-note">Toutes références</div></div>
+<div class="card kpi"><div class="card-title">Valeur d'achat</div><div class="card-value blue" id="materialPurchaseValue">À renseigner</div><div class="card-note">Selon les données saisies</div></div>
+<div class="card kpi"><div class="card-title">Valeur actuelle</div><div class="card-value green" id="materialCurrentValue">À renseigner</div><div class="card-note">Selon les données saisies</div></div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+<div class="card-header">
+<div>
+<h3>Parc matériel</h3>
+<p style="color:var(--muted);font-size:12px;line-height:1.5;">Chaque ligne est modifiable. Les montants sont unitaires : la valeur totale est calculée automatiquement avec la quantité.</p>
+</div>
+<button class="btn primary" id="addMaterialBtn">＋ Ajouter du matériel</button>
+</div>
+
+<div class="table-wrap">
+<table class="material-table">
+<thead>
+<tr>
+<th>Matériel / Référence</th>
+<th>Catégorie</th>
+<th>Qté</th>
+<th>Prix achat unitaire</th>
+<th>Valeur actuelle unitaire</th>
+<th>État</th>
+<th>Utilisation</th>
+<th>Maintenance</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="materialTableBody"></tbody>
+</table>
+</div>
+
+<div id="materialEmpty" class="material-empty" style="display:none;">
+Aucun matériel enregistré. Cliquez sur <strong>＋ Ajouter du matériel</strong> pour créer votre première référence.
+</div>
+</div>
+
+<div class="section-title"><h2>Règle d'investissement</h2></div>
+
+<div class="card decision">
+<h3>ACHETER SI...</h3>
+<p style="color:var(--muted);line-height:1.8;">
+L'équipement permet de réaliser davantage de prestations, augmente le panier moyen,
+réduit suffisamment les coûts de location ou devient nécessaire opérationnellement.
+</p>
+<p style="color:var(--accent);margin-top:12px;font-size:12px;">
+Formule recommandée : coût d'achat ÷ marge supplémentaire générée = délai de récupération.
+</p>
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- INVESTISSEMENTS -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-investissements">
+
+<div class="hero">
+<div class="eyebrow">09 — INVESTISSEMENTS</div>
+<h1>Plan d'investissement</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Pas d'achat sans besoin commercial ou opérationnel.</div>
+<div class="retain-item">Priorité à ce qui augmente la capacité vendable.</div>
+<div class="retain-item">La trésorerie doit rester protégée.</div>
+<div class="retain-item">Le véhicule et le local doivent être déclenchés par des seuils.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Période</th>
+<th>Investissement</th>
+<th>Prix</th>
+<th>Priorité</th>
+<th>Condition</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>0–3 mois</td>
+<td>Matériel critique manquant</td>
+<td>À rechercher</td>
+<td>🔴</td>
+<td>Besoin confirmé par devis</td>
+</tr>
+
+<tr>
+<td>3–6 mois</td>
+<td>Accessoires / consommables</td>
+<td>À rechercher</td>
+<td>🟠</td>
+<td>Utilisation régulière</td>
+</tr>
+
+<tr>
+<td>6–12 mois</td>
+<td>Renforcement production</td>
+<td>À rechercher</td>
+<td>🟠</td>
+<td>Volume de prestations</td>
+</tr>
+
+<tr>
+<td>12–24 mois</td>
+<td>Véhicule éventuel</td>
+<td>À rechercher</td>
+<td>🟠</td>
+<td>Coût location > coût possession</td>
+</tr>
+
+<tr>
+<td>24–36 mois</td>
+<td>Stockage / local</td>
+<td>À rechercher</td>
+<td>🟠</td>
+<td>Volume matériel</td>
+</tr>
+
+<tr>
+<td>36–60 mois</td>
+<td>Développement équipe</td>
+<td>À rechercher</td>
+<td>🟢</td>
+<td>Charge opérationnelle récurrente</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SIMULATEUR -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-simulateur">
+
+<div class="hero">
+<div class="eyebrow">10 — SIMULATEUR</div>
+<h1>Simulateur de rentabilité</h1>
+<p>Modifiez les hypothèses. Tous les résultats sont recalculés automatiquement.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le simulateur n'est pas une prévision comptable.</div>
+<div class="retain-item">Il sert à comprendre les mécanismes économiques.</div>
+<div class="retain-item">La marge par événement est le KPI central.</div>
+<div class="retain-item">Le volume seul ne suffit pas si le panier moyen est trop faible.</div>
+</div>
+</div>
+
+<div class="card">
+
+<h3>Hypothèses de travail</h3>
+
+<div class="form-grid">
+
+<div class="field">
+<label>Événements / mois</label>
+<input id="eventsMonth" type="number" value="3" min="0">
+<small>Hypothèse</small>
+</div>
+
+<div class="field">
+<label>Prix moyen / événement (€)</label>
+<input id="avgPrice" type="number" value="1800" min="0">
+<small>Hypothèse</small>
+</div>
+
+<div class="field">
+<label>Coût variable / événement (€)</label>
+<input id="variableCost" type="number" value="450" min="0">
+<small>Hypothèse</small>
+</div>
+
+<div class="field">
+<label>Charges fixes mensuelles (€)</label>
+<input id="fixedCosts" type="number" value="500" min="0">
+<small>Hypothèse</small>
+</div>
+
+<div class="field">
+<label>Marketing mensuel (€)</label>
+<input id="marketingCost" type="number" value="300" min="0">
+<small>Hypothèse</small>
+</div>
+
+<div class="field">
+<label>Autres charges mensuelles (€)</label>
+<input id="otherCosts" type="number" value="300" min="0">
+<small>Hypothèse</small>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="section-title">
+<h2>Résultats</h2>
+</div>
+
+<div class="grid grid-4">
+
+<div class="card kpi">
+<div class="card-title">CA annuel</div>
+<div class="card-value gold" id="simCA">0 €</div>
+</div>
+
+<div class="card kpi">
+<div class="card-title">Marge brute</div>
+<div class="card-value green" id="simGross">0 €</div>
+</div>
+
+<div class="card kpi">
+<div class="card-title">Résultat</div>
+<div class="card-value blue" id="simResult">0 €</div>
+</div>
+
+<div class="card kpi">
+<div class="card-title">Seuil annuel</div>
+<div class="card-value orange" id="simBreakEven">0</div>
+</div>
+
+</div>
+
+
+<div class="section-title"><h2>Économie d'un événement</h2></div>
+
+<div class="card">
+
+<div class="grid grid-3">
+
+<div>
+<div class="card-title">Prix</div>
+<div class="card-value" id="unitPrice">0 €</div>
+</div>
+
+<div>
+<div class="card-title">Coût</div>
+<div class="card-value" id="unitCost">0 €</div>
+</div>
+
+<div>
+<div class="card-title">Marge</div>
+<div class="card-value green" id="unitMargin">0 €</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SCENARIOS -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-scenarios">
+
+<div class="hero">
+<div class="eyebrow">11 — SCÉNARIOS</div>
+<h1>Pessimiste / Réaliste / Ambitieux</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le scénario réaliste doit être construit à partir de preuves.</div>
+<div class="retain-item">Le scénario pessimiste sert à tester la survie.</div>
+<div class="retain-item">Le scénario ambitieux sert à préparer la capacité.</div>
+<div class="retain-item">Les investissements doivent rester compatibles avec le scénario bas.</div>
+</div>
+</div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3 class="red">🔴 Pessimiste</h3>
+
+<div class="field" style="margin-top:15px;">
+<label>Événements / mois</label>
+<input class="scenario-events" id="pessEvents" value="1" type="number">
+</div>
+
+<div class="field" style="margin-top:10px;">
+<label>Panier moyen</label>
+<input class="scenario-price" id="pessPrice" value="1400" type="number">
+</div>
+
+<div style="margin-top:20px;">
+<div class="card-title">CA annuel</div>
+<div class="card-value red" id="pessCA">0 €</div>
+</div>
+
+<div style="margin-top:15px;">
+<div class="card-title">Résultat simulé</div>
+<div class="card-value" id="pessResult">0 €</div>
+</div>
+
+</div>
+
+
+<div class="card">
+<h3 class="orange">🟠 Réaliste</h3>
+
+<div class="field" style="margin-top:15px;">
+<label>Événements / mois</label>
+<input class="scenario-events" id="realEvents" value="3" type="number">
+</div>
+
+<div class="field" style="margin-top:10px;">
+<label>Panier moyen</label>
+<input class="scenario-price" id="realPrice" value="1800" type="number">
+</div>
+
+<div style="margin-top:20px;">
+<div class="card-title">CA annuel</div>
+<div class="card-value orange" id="realCA">0 €</div>
+</div>
+
+<div style="margin-top:15px;">
+<div class="card-title">Résultat simulé</div>
+<div class="card-value" id="realResult">0 €</div>
+</div>
+
+</div>
+
+
+<div class="card">
+<h3 class="green">🟢 Ambitieux</h3>
+
+<div class="field" style="margin-top:15px;">
+<label>Événements / mois</label>
+<input class="scenario-events" id="ambEvents" value="6" type="number">
+</div>
+
+<div class="field" style="margin-top:10px;">
+<label>Panier moyen</label>
+<input class="scenario-price" id="ambPrice" value="2300" type="number">
+</div>
+
+<div style="margin-top:20px;">
+<div class="card-title">CA annuel</div>
+<div class="card-value green" id="ambCA">0 €</div>
+</div>
+
+<div style="margin-top:15px;">
+<div class="card-title">Résultat simulé</div>
+<div class="card-value" id="ambResult">0 €</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="section-title"><h2>Comparaison</h2></div>
+
+<div class="card">
+
+<div class="chart" id="scenarioChart"></div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- VISION -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-vision">
+
+<div class="hero">
+<div class="eyebrow">12 — VISION 5 ANS</div>
+<h1>Trajectoire FASTE</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Année 1 : validation.</div>
+<div class="retain-item">Année 2 : structuration.</div>
+<div class="retain-item">Année 3 : capacité.</div>
+<div class="retain-item">Années 4–5 : changement d'échelle.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Année</th>
+<th>CA cible*</th>
+<th>Événements</th>
+<th>Panier</th>
+<th>Équipe</th>
+<th>Matériel</th>
+<th>Zone</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td><strong>1</strong></td>
+<td>À définir</td>
+<td>À définir</td>
+<td>À définir</td>
+<td>2 associés</td>
+<td>Parc actuel + achats ciblés</td>
+<td>Orléans / Loiret</td>
+</tr>
+
+<tr>
+<td><strong>2</strong></td>
+<td>À définir</td>
+<td>À définir</td>
+<td>À définir</td>
+<td>2 + freelances</td>
+<td>Renforcement</td>
+<td>Val de Loire</td>
+</tr>
+
+<tr>
+<td><strong>3</strong></td>
+<td>À définir</td>
+<td>À définir</td>
+<td>À définir</td>
+<td>2 + renforts réguliers</td>
+<td>Production renforcée</td>
+<td>Centre-Val de Loire</td>
+</tr>
+
+<tr>
+<td><strong>4</strong></td>
+<td>À définir</td>
+<td>À définir</td>
+<td>À définir</td>
+<td>Premiers salariés éventuels</td>
+<td>Parc professionnel</td>
+<td>Régional</td>
+</tr>
+
+<tr>
+<td><strong>5</strong></td>
+<td>À définir</td>
+<td>À définir</td>
+<td>À définir</td>
+<td>Petite PME</td>
+<td>Parc complet</td>
+<td>Régional / IDF ciblée</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<p style="color:var(--muted);font-size:11px;margin-top:15px;">
+* Les objectifs financiers définitifs doivent être calculés à partir des données commerciales réelles.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SAISON -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-saison">
+
+<div class="hero">
+<div class="eyebrow">13 — SAISONNALITÉ</div>
+<h1>Calendrier commercial</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Les mariages créent une concentration sur printemps / été.</div>
+<div class="retain-item">Le corporate peut compenser certaines périodes.</div>
+<div class="retain-item">Les offres privées doivent servir à remplir les creux.</div>
+<div class="retain-item">La prospection doit être plus forte avant les périodes fortes.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Mois</th>
+<th>Mariages</th>
+<th>Corporate</th>
+<th>Privé</th>
+<th>Location</th>
+<th>Stratégie</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr><td>Janvier</td><td>Faible</td><td>Moyen</td><td>Moyen</td><td>Moyen</td><td>Prospection + préparation</td></tr>
+<tr><td>Février</td><td>Faible</td><td>Moyen</td><td>Moyen</td><td>Moyen</td><td>Acquisition</td></tr>
+<tr><td>Mars</td><td>Montée</td><td>Fort</td><td>Moyen</td><td>Moyen</td><td>Vente printemps</td></tr>
+<tr><td>Avril</td><td>Fort</td><td>Fort</td><td>Moyen</td><td>Moyen</td><td>Production</td></tr>
+<tr><td>Mai</td><td>Très fort</td><td>Fort</td><td>Fort</td><td>Fort</td><td>Production</td></tr>
+<tr><td>Juin</td><td>Très fort</td><td>Fort</td><td>Fort</td><td>Fort</td><td>Production</td></tr>
+<tr><td>Juillet</td><td>Très fort</td><td>Moyen</td><td>Fort</td><td>Fort</td><td>Production</td></tr>
+<tr><td>Août</td><td>Fort</td><td>Faible</td><td>Fort</td><td>Moyen</td><td>Production / vacances</td></tr>
+<tr><td>Septembre</td><td>Fort</td><td>Très fort</td><td>Fort</td><td>Fort</td><td>Production</td></tr>
+<tr><td>Octobre</td><td>Moyen</td><td>Fort</td><td>Moyen</td><td>Moyen</td><td>Corporate</td></tr>
+<tr><td>Novembre</td><td>Faible</td><td>Fort</td><td>Moyen</td><td>Moyen</td><td>Corporate</td></tr>
+<tr><td>Décembre</td><td>Faible</td><td>Très fort</td><td>Fort</td><td>Fort</td><td>Soirées entreprises</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- ASSOCIES -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-associes">
+
+<div class="hero">
+<div class="eyebrow">14 — ORGANISATION</div>
+<h1>Les deux associés</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Les responsabilités doivent être séparées.</div>
+<div class="retain-item">Les décisions stratégiques restent communes.</div>
+<div class="retain-item">Les règles entre associés doivent être écrites.</div>
+<div class="retain-item">La dépendance à une seule personne doit être réduite.</div>
+</div>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>👤 Associé 1 — Direction commerciale & développement</h3>
+
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>Prospection</li>
+<li>Rendez-vous clients</li>
+<li>Devis</li>
+<li>Partenariats</li>
+<li>Développement commercial</li>
+<li>Marketing</li>
+<li>Suivi CRM</li>
+<li>Stratégie</li>
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>👤 Associé 2 — Production & technique</h3>
+
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>DJ</li>
+<li>Technique</li>
+<li>Préparation matériel</li>
+<li>Logistique</li>
+<li>Installation</li>
+<li>Maintenance</li>
+<li>Production événementielle</li>
+<li>Qualité prestation</li>
+</ul>
+
+</div>
+
+</div>
+
+<div class="section-title"><h2>Matrice de responsabilités</h2></div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Domaine</th>
+<th>Associé 1</th>
+<th>Associé 2</th>
+<th>Commun</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr><td>Commercial</td><td>Lead</td><td>Support</td><td>—</td></tr>
+<tr><td>Prospection</td><td>Lead</td><td>Support</td><td>—</td></tr>
+<tr><td>Relation client</td><td>Lead</td><td>Support</td><td>✓</td></tr>
+<tr><td>DJ</td><td>Support</td><td>Lead</td><td>—</td></tr>
+<tr><td>Technique</td><td>Support</td><td>Lead</td><td>✓</td></tr>
+<tr><td>Marketing</td><td>Lead</td><td>Support</td><td>✓</td></tr>
+<tr><td>Finance</td><td>Lead</td><td>Support</td><td>✓</td></tr>
+<tr><td>Stratégie</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td>Achats importants</td><td>✓</td><td>✓</td><td>✓</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="section-title"><h2>Sujets à formaliser</h2></div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3>Capital</h3>
+<p class="card-note">Répartition, apports, matériel apporté.</p>
+</div>
+
+<div class="card">
+<h3>Décisions</h3>
+<p class="card-note">Seuils nécessitant accord des deux associés.</p>
+</div>
+
+<div class="card">
+<h3>Départ</h3>
+<p class="card-note">Sortie, valorisation, rachat éventuel.</p>
+</div>
+
+<div class="card">
+<h3>Rémunération</h3>
+<p class="card-note">Règles à valider avec expert-comptable.</p>
+</div>
+
+<div class="card">
+<h3>Dividendes</h3>
+<p class="card-note">Politique à définir.</p>
+</div>
+
+<div class="card">
+<h3>Matériel</h3>
+<p class="card-note">Propriété et valorisation à formaliser.</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- RISQUES -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-risques">
+
+<div class="hero">
+<div class="eyebrow">15 — RISQUES</div>
+<h1>Matrice des risques</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">La trésorerie est un risque majeur au démarrage.</div>
+<div class="retain-item">La dépendance aux deux associés doit être anticipée.</div>
+<div class="retain-item">Le matériel doit être sécurisé et assuré.</div>
+<div class="retain-item">Les conflits entre associés doivent être traités avant qu'ils arrivent.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Risque</th>
+<th>Probabilité</th>
+<th>Impact</th>
+<th>Niveau</th>
+<th>Prévention</th>
+<th>Plan B</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>Manque de clients</td>
+<td>Élevée</td>
+<td>Élevé</td>
+<td><span class="badge red">CRITIQUE</span></td>
+<td>Prospection + partenaires</td>
+<td>Réduction coûts</td>
+</tr>
+
+<tr>
+<td>Saisonnalité</td>
+<td>Élevée</td>
+<td>Moyen</td>
+<td><span class="badge orange">FORT</span></td>
+<td>Corporate</td>
+<td>Offres creuses</td>
+</tr>
+
+<tr>
+<td>Panne matériel</td>
+<td>Moyenne</td>
+<td>Élevé</td>
+<td><span class="badge orange">FORT</span></td>
+<td>Maintenance + backup</td>
+<td>Location urgence</td>
+</tr>
+
+<tr>
+<td>Conflit associés</td>
+<td>Variable</td>
+<td>Très élevé</td>
+<td><span class="badge red">CRITIQUE</span></td>
+<td>Pacte / règles</td>
+<td>Médiation / sortie</td>
+</tr>
+
+<tr>
+<td>Investissement trop rapide</td>
+<td>Moyenne</td>
+<td>Élevé</td>
+<td><span class="badge orange">FORT</span></td>
+<td>Seuils d'achat</td>
+<td>Location</td>
+</tr>
+
+<tr>
+<td>Annulation client</td>
+<td>Moyenne</td>
+<td>Élevé</td>
+<td><span class="badge orange">FORT</span></td>
+<td>CGV / acompte</td>
+<td>Remplacement</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SWOT -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-swot">
+
+<div class="hero">
+<div class="eyebrow">16 — SWOT</div>
+<h1>Analyse stratégique</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Le matériel et la polyvalence sont des forces.</div>
+<div class="retain-item">L'absence de clientèle historique est une faiblesse.</div>
+<div class="retain-item">Les lieux premium constituent une opportunité.</div>
+<div class="retain-item">La concurrence prix constitue une menace.</div>
+</div>
+</div>
+
+<div class="swot">
+
+<div class="swot-box">
+<h3 class="green">FORCES</h3>
+<ul>
+<li>Deux associés</li>
+<li>Parc matériel existant</li>
+<li>Compétences commerciales</li>
+<li>DJ + technique</li>
+<li>Souplesse d'une petite structure</li>
+<li>Positionnement premium possible</li>
+</ul>
+</div>
+
+<div class="swot-box">
+<h3 class="red">FAIBLESSES</h3>
+<ul>
+<li>Notoriété inexistante au départ</li>
+<li>Portefeuille clients à construire</li>
+<li>Capacité opérationnelle limitée à deux</li>
+<li>Valeur du parc à documenter</li>
+<li>Dépendance aux associés</li>
+</ul>
+</div>
+
+<div class="swot-box">
+<h3 class="gold">OPPORTUNITÉS</h3>
+<ul>
+<li>Marché mariage</li>
+<li>Corporate</li>
+<li>Châteaux et domaines</li>
+<li>Partenariats locaux</li>
+<li>SEO local</li>
+<li>Montée en gamme</li>
+</ul>
+</div>
+
+<div class="swot-box">
+<h3 class="orange">MENACES</h3>
+<ul>
+<li>Concurrence DJ</li>
+<li>Guerre des prix</li>
+<li>Saisonnalité</li>
+<li>Hausse des coûts</li>
+<li>Pannes</li>
+<li>Annulations</li>
+</ul>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- ACTIONS -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-actions">
+
+<div class="hero">
+<div class="eyebrow">17 — ROADMAP</div>
+<h1>Plan d'action 12 mois</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Les 90 premiers jours doivent servir à vendre.</div>
+<div class="retain-item">La priorité n'est pas d'acheter beaucoup de matériel.</div>
+<div class="retain-item">Chaque mois doit produire des preuves.</div>
+<div class="retain-item">Les KPI doivent être suivis à deux.</div>
+</div>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Mois</th>
+<th>Priorité</th>
+<th>Action</th>
+<th>Responsable</th>
+<th>KPI</th>
+<th>Statut</th>
+</tr>
+</thead>
+
+<tbody id="actionTable">
+
+<tr><td>M1</td><td>Fondations</td><td>Finaliser offres + tarifs</td><td>Commun</td><td>Offres validées</td><td>À faire</td></tr>
+<tr><td>M2</td><td>Acquisition</td><td>Contacter lieux + partenaires</td><td>Associé 1</td><td>Contacts</td><td>À faire</td></tr>
+<tr><td>M3</td><td>Vente</td><td>Prospection intensive</td><td>Associé 1</td><td>RDV / devis</td><td>À faire</td></tr>
+<tr><td>M4</td><td>Preuve</td><td>Obtenir photos / vidéos prestations</td><td>Associé 2</td><td>Contenus</td><td>À faire</td></tr>
+<tr><td>M5</td><td>Partenariats</td><td>Développer réseau mariage</td><td>Commun</td><td>Partenaires</td><td>À faire</td></tr>
+<tr><td>M6</td><td>Optimisation</td><td>Analyser marges</td><td>Commun</td><td>Marge / prestation</td><td>À faire</td></tr>
+<tr><td>M7</td><td>Corporate</td><td>Prospection entreprises</td><td>Associé 1</td><td>RDV</td><td>À faire</td></tr>
+<tr><td>M8</td><td>Production</td><td>Optimiser process technique</td><td>Associé 2</td><td>Temps installation</td><td>À faire</td></tr>
+<tr><td>M9</td><td>Google</td><td>SEO local</td><td>Associé 1</td><td>Trafic / leads</td><td>À faire</td></tr>
+<tr><td>M10</td><td>Investissement</td><td>Analyser besoins matériel</td><td>Commun</td><td>ROI achat</td><td>À faire</td></tr>
+<tr><td>M11</td><td>Finance</td><td>Préparer année suivante</td><td>Commun</td><td>Trésorerie</td><td>À faire</td></tr>
+<tr><td>M12</td><td>Bilan</td><td>Décider accélération</td><td>Commun</td><td>CA / marge</td><td>À faire</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- DECISION -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-decision">
+
+<div class="hero">
+<div class="eyebrow">18 — CENTRE DE DÉCISION</div>
+<h1>Que devons-nous faire maintenant ?</h1>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Vendre avant d'investir lourdement.</div>
+<div class="retain-item">Construire les preuves commerciales.</div>
+<div class="retain-item">Mesurer la marge réelle.</div>
+<div class="retain-item">Formaliser la relation entre associés.</div>
+</div>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card decision">
+<div class="decision-number">1</div>
+<h3>Valider les offres</h3>
+<p class="card-note">Pourquoi : impossible de piloter le CA sans architecture commerciale claire.</p>
+<p class="card-note">Responsable : Commun</p>
+</div>
+
+<div class="card decision">
+<div class="decision-number">2</div>
+<h3>Construire le réseau de partenaires</h3>
+<p class="card-note">Pourquoi : canal potentiellement très puissant dans le mariage premium.</p>
+<p class="card-note">Responsable : Associé 1</p>
+</div>
+
+<div class="card decision">
+<div class="decision-number">3</div>
+<h3>Obtenir les premières prestations</h3>
+<p class="card-note">Pourquoi : le marché réel doit valider les hypothèses.</p>
+<p class="card-note">Responsable : Commun</p>
+</div>
+
+<div class="card decision">
+<div class="decision-number">4</div>
+<h3>Documenter le matériel</h3>
+<p class="card-note">Pourquoi : connaître la valeur de départ et les besoins d'assurance.</p>
+<p class="card-note">Responsable : Associé 2</p>
+</div>
+
+<div class="card decision">
+<div class="decision-number">5</div>
+<h3>Construire le tableau de bord</h3>
+<p class="card-note">Pourquoi : piloter sur les données et non les impressions.</p>
+<p class="card-note">Responsable : Commun</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>GO / NO GO</h2>
+</div>
+
+<div class="card">
+
+<h2 style="color:var(--orange);">🟠 GO CONDITIONNEL</h2>
+
+<p style="color:var(--muted);line-height:1.9;margin-top:15px;">
+Le projet présente suffisamment d'éléments intéressants pour être testé,
+mais le lancement à grande échelle ne doit pas être décidé avant validation
+commerciale, économique et organisationnelle.
+</p>
+
+<p style="color:var(--muted);line-height:1.9;margin-top:10px;">
+<strong style="color:var(--text);">Condition :</strong>
+obtenir des ventes réelles, mesurer les marges, sécuriser la trésorerie
+et formaliser la relation entre les associés.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- DONNEES -->
+<!-- ========================================================= -->
+
+<section class="page" id="page-donnees">
+
+<div class="hero">
+<div class="eyebrow">19 — DATA ROOM</div>
+<h1>Données à fournir</h1>
+<p>Cette page distingue les données indispensables des informations secondaires.</p>
+</div>
+
+<div class="retain">
+<div class="retain-title">Ce qu'il faut retenir</div>
+<div class="retain-grid">
+<div class="retain-item">Sans coûts réels, le prévisionnel reste une simulation.</div>
+<div class="retain-item">Le matériel doit être valorisé.</div>
+<div class="retain-item">Les objectifs personnels des associés sont essentiels.</div>
+<div class="retain-item">Les données réelles remplaceront progressivement les hypothèses.</div>
+</div>
+</div>
+
+<div class="grid grid-3">
+
+<div class="card">
+<h3 class="red">🔴 Indispensables</h3>
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>Valeur d'achat du matériel</li>
+<li>Valeur actuelle estimée</li>
+<li>État du matériel</li>
+<li>Disponibilité des deux associés</li>
+<li>Objectif de rémunération</li>
+<li>Capital disponible</li>
+<li>Tarifs réellement envisagés</li>
+<li>Coûts de transport</li>
+<li>Assurance</li>
+<li>Coûts de stockage</li>
+</ul>
+</div>
+
+<div class="card">
+<h3 class="orange">🟠 Importantes</h3>
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>Nombre d'événements visé</li>
+<li>Zone exacte</li>
+<li>Disponibilité week-end</li>
+<li>Réseau professionnel</li>
+<li>Partenaires existants</li>
+<li>Historique de prestations</li>
+<li>Budget marketing</li>
+<li>Objectif de CA</li>
+</ul>
+</div>
+
+<div class="card">
+<h3 class="green">🟢 Utiles</h3>
+<ul style="padding-left:18px;color:var(--muted);line-height:2;font-size:13px;">
+<li>Préférences musicales</li>
+<li>Types d'événements préférés</li>
+<li>Objectif géographique</li>
+<li>Ambition personnelle</li>
+<li>Type de véhicule souhaité</li>
+<li>Préférence local / stockage</li>
+</ul>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Données réelles vs hypothèses</h2>
+</div>
+
+<div class="card">
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Élément</th>
+<th>Statut actuel</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>12 enceintes</td>
+<td><span class="badge green">DONNÉE RÉELLE</span></td>
+<td>Valoriser</td>
+</tr>
+
+<tr>
+<td>1 portique</td>
+<td><span class="badge green">DONNÉE RÉELLE</span></td>
+<td>Valoriser</td>
+</tr>
+
+<tr>
+<td>2 lyres</td>
+<td><span class="badge green">DONNÉE RÉELLE</span></td>
+<td>Valoriser</td>
+</tr>
+
+<tr>
+<td>2 petites lyres</td>
+<td><span class="badge green">DONNÉE RÉELLE</span></td>
+<td>Valoriser</td>
+</tr>
+
+<tr>
+<td>Pioneer FLX10</td>
+<td><span class="badge green">DONNÉE RÉELLE</span></td>
+<td>Valoriser</td>
+</tr>
+
+<tr>
+<td>Prix des prestations</td>
+<td><span class="badge orange">HYPOTHÈSE</span></td>
+<td>Benchmark</td>
+</tr>
+
+<tr>
+<td>Nombre d'événements</td>
+<td><span class="badge orange">HYPOTHÈSE</span></td>
+<td>Tester</td>
+</tr>
+
+<tr>
+<td>Charges</td>
+<td><span class="badge red">À RECHERCHER</span></td>
+<td>Comptable / devis</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<div class="footer">
+FASTE — Business Plan & Strategic Cockpit<br>
+Version de travail • Les hypothèses financières doivent être remplacées par les données réelles.
+</div>
+
+</div>
+</main>
+</div>
+
+
+<script>
+
+/* =========================================================
+   SUPABASE — SYNCHRONISATION PARTAGÉE
+========================================================= */
+
+const FASTE_SUPABASE_URL = "https://jmaswyffmeaaauymapmi.supabase.co";
+const FASTE_SUPABASE_KEY = "sb_publishable_pERmayuxuRzMADUxvJDI2w_vwDCMS9c";
+const FASTE_ROW_ID = 1;
+let fasteRemoteUpdatedAt = null;
+let fasteSaveTimer = null;
+let fasteRemoteLoading = false;
+let fasteReady = false;
+function getAuthHeaders(){
+    return {
+        apikey: FASTE_SUPABASE_KEY,
+        Authorization: `Bearer ${FASTE_SUPABASE_KEY}`
+    };
+}
+
+function setCloudStatus(text, type="ok"){
+    const el = document.querySelector(".sidebar-bottom .status");
+    if(!el) return;
+    el.innerHTML = `<span class="status-dot"></span>${text}`;
+    el.dataset.status = type;
+}
+
+function collectBusinessData(){
+    const data = { inputs:{}, texts:{} };
+    document.querySelectorAll("input").forEach(input=>{
+        if(input.id) data.inputs[input.id] = input.value;
+    });
+    document.querySelectorAll(".editable-text[data-edit-key]").forEach(el=>{
+        data.texts[el.dataset.editKey] = el.innerHTML;
+    });
+    return data;
+}
+
+function applyBusinessData(data){
+    const inputs = data?.inputs || data || {};
+    Object.entries(inputs).forEach(([id,value])=>{
+        const input=document.getElementById(id);
+        if(input) input.value=value;
+    });
+    const texts = data?.texts || {};
+    Object.entries(texts).forEach(([key,value])=>{
+        const el=document.querySelector(`.editable-text[data-edit-key="${CSS.escape(key)}"]`);
+        if(el) el.innerHTML=value;
+    });
+}
+
+function setupEditableTexts(){
+    const candidates=document.querySelectorAll(".page h1,.page h2,.page h3,.page h4,.page p,.page li,.page td");
+    let index=0;
+    candidates.forEach(el=>{
+        if(el.closest("button,select,input,textarea") || el.querySelector("input,select,textarea,button") || el.classList.contains("calculated") || el.classList.contains("kpi-value")) return;
+        if(el.matches("td") && el.children.length) return;
+        if(!el.textContent.trim()) return;
+        el.classList.add("editable-text");
+        el.dataset.editKey = `text_${index++}`;
+        el.setAttribute("contenteditable","false");
+        el.addEventListener("blur",()=>{
+            if(document.body.classList.contains("edit-mode")) saveData();
+        });
+        el.addEventListener("keydown",e=>{
+            if(e.key === "Enter" && !e.shiftKey && el.tagName !== "P"){
+                e.preventDefault();
+                el.blur();
+            }
+        });
+    });
+}
+
+function setEditMode(enabled){
+    document.body.classList.toggle("edit-mode",enabled);
+    document.querySelectorAll(".editable-text").forEach(el=>{
+        el.setAttribute("contenteditable", enabled ? "true" : "false");
+    });
+    const btn=document.getElementById("editModeBtn");
+    if(btn) btn.textContent=enabled ? "✓ Terminer" : "✏️ Modifier";
+    if(enabled){
+        setCloudStatus("Mode édition activé", "warn");
+    }else{
+        saveData();
+        setCloudStatus("Synchronisé pour les 2 associés");
+    }
+}
+
+
+async function cloudLoad(){
+    if(fasteRemoteLoading) return;
+    fasteRemoteLoading = true;
+    try{
+        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=id,data,updated_at`, {
+            headers:await getAuthHeaders()
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        if(!rows.length){
+            await cloudSaveNow(true);
+            return;
+        }
+        const row = rows[0];
+        fasteRemoteUpdatedAt = row.updated_at || null;
+        const payload = row.data || {};
+        const business = payload.business_data || {};
+        applyBusinessData(business);
+        if(Array.isArray(payload.materials)){
+            materials = normalizeMaterials(payload.materials);
+            renderMaterials();
+        }
+        if(Array.isArray(payload.prospects)){
+            prospects = normalizeProspects(payload.prospects);
+            localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
+            renderProspects();
+        }
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
+        localStorage.setItem(storageKey, JSON.stringify(business));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        setCloudStatus("Synchronisé ☁️");
+        fasteReady = true;
+    }catch(e){
+        console.error("FASTE Supabase load:",e);
+        setCloudStatus("Connexion cloud impossible — mode local", "error");
+    }finally{
+        fasteRemoteLoading = false;
+    }
+}
+
+async function cloudSaveNow(force=false){
+    if(!fasteReady && !force) return;
+    const payload = {
+        business_data: collectBusinessData(),
+        materials: materials,
+        prospects: prospects,
+        client_updated_at: new Date().toISOString()
+    };
+    setCloudStatus("Sauvegarde en cours…", "warn");
+    try{
+        const now = new Date().toISOString();
+        const res = await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}`, {
+            method:"PATCH",
+            headers:{
+                ...getAuthHeaders(),
+                Prefer:"return=representation"
+            },
+            body:JSON.stringify({data:payload,updated_at:now})
+        });
+        if(!res.ok){
+            const msg=await res.text();
+            throw new Error(`${res.status} ${msg}`);
+        }
+        const rows=await res.json();
+        fasteRemoteUpdatedAt=rows?.[0]?.updated_at || now;
+        localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
+        fasteReady = true;
+        setCloudStatus("Synchronisé pour les 2 associés");
+    }catch(e){
+        console.error("FASTE Supabase save:",e);
+        localStorage.setItem(storageKey, JSON.stringify(payload.business_data));
+        localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+        localStorage.setItem(prospectStorageKey, JSON.stringify(prospects));
+        setCloudStatus("Cloud indisponible — copie locale conservée", "error");
+    }
+}
+
+function queueCloudSave(){
+    if(!fasteReady) return;
+    clearTimeout(fasteSaveTimer);
+    fasteSaveTimer=setTimeout(()=>cloudSaveNow(),700);
+}
+
+async function cloudCheckForChanges(){
+    if(!fasteReady || fasteRemoteLoading) return;
+    try{
+        const res=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=updated_at`,{
+            headers:await getAuthHeaders()
+        });
+        if(!res.ok) return;
+        const rows=await res.json();
+        const remote=rows?.[0]?.updated_at;
+        if(remote && remote!==fasteRemoteUpdatedAt){
+            await cloudLoad();
+        }
+    }catch(e){ console.warn("FASTE cloud check:",e); }
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+const navButtons = document.querySelectorAll(".nav-btn");
+const pages = document.querySelectorAll(".page");
+
+navButtons.forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+        const page = btn.dataset.page;
+
+        navButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        pages.forEach(p => p.classList.remove("active"));
+
+        const target = document.getElementById("page-" + page);
+
+        if(target){
+            target.classList.add("active");
+        }
+
+        document.getElementById("sidebar").classList.remove("open");
+
+        window.scrollTo({
+            top:0,
+            behavior:"smooth"
+        });
+
+    });
+
+});
+
+
+document.getElementById("mobileMenu").addEventListener("click",()=>{
+    document.getElementById("sidebar").classList.toggle("open");
+});
+
+
+/* =========================================================
+   FORMATTERS
+========================================================= */
+
+function euro(value){
+
+    return new Intl.NumberFormat("fr-FR",{
+        style:"currency",
+        currency:"EUR",
+        maximumFractionDigits:0
+    }).format(value || 0);
+
+}
+
+function number(value){
+
+    return new Intl.NumberFormat("fr-FR",{
+        maximumFractionDigits:0
+    }).format(value || 0);
+
+}
+
+
+/* =========================================================
+   LOCAL STORAGE + FALLBACK
+========================================================= */
+
+const storageKey = "faste_business_cockpit";
+
+function saveData(){
+    const data = collectBusinessData();
+    localStorage.setItem(storageKey,JSON.stringify(data));
+    queueCloudSave();
+}
+
+function loadData(){
+    const raw = localStorage.getItem(storageKey);
+    if(!raw) return;
+    try{
+        const data = JSON.parse(raw);
+        applyBusinessData(data);
+    }catch(e){ console.log("Impossible de charger les données locales"); }
+}
+
+function resetData(){
+    if(confirm("Réinitialiser les données FASTE partagées ?")){
+        materials = normalizeMaterials(defaultMaterials);
+        prospects = [];
+        localStorage.removeItem(prospectStorageKey);
+        document.querySelectorAll("input").forEach(input=>{
+            if(input.id) input.value="";
+        });
+        saveMaterials();
+        saveData();
+        renderMaterials();
+        renderProspects();
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
+    }
+}
+
+document.getElementById("resetBtn")?.addEventListener("click",resetData);
+
+/* =========================================================
+   SIMULATEUR
+========================================================= */
+
+function calculateSimulation(){
+
+    const eventsMonth =
+        parseFloat(document.getElementById("eventsMonth").value) || 0;
+
+    const avgPrice =
+        parseFloat(document.getElementById("avgPrice").value) || 0;
+
+    const variableCost =
+        parseFloat(document.getElementById("variableCost").value) || 0;
+
+    const fixedCosts =
+        parseFloat(document.getElementById("fixedCosts").value) || 0;
+
+    const marketingCost =
+        parseFloat(document.getElementById("marketingCost").value) || 0;
+
+    const otherCosts =
+        parseFloat(document.getElementById("otherCosts").value) || 0;
+
+
+    const eventsYear = eventsMonth * 12;
+
+    const ca = eventsYear * avgPrice;
+
+    const variableTotal = eventsYear * variableCost;
+
+    const grossMargin = ca - variableTotal;
+
+    const annualFixed =
+        (fixedCosts + marketingCost + otherCosts) * 12;
+
+    const result = grossMargin - annualFixed;
+
+    const unitMargin = avgPrice - variableCost;
+
+    let breakEven = 0;
+
+    if(unitMargin > 0){
+        breakEven = Math.ceil(annualFixed / unitMargin);
+    }
+
+
+    document.getElementById("simCA").textContent = euro(ca);
+
+    document.getElementById("simGross").textContent =
+        euro(grossMargin);
+
+    document.getElementById("simResult").textContent =
+        euro(result);
+
+    document.getElementById("simBreakEven").textContent =
+        number(breakEven);
+
+
+    document.getElementById("unitPrice").textContent =
+        euro(avgPrice);
+
+    document.getElementById("unitCost").textContent =
+        euro(variableCost);
+
+    document.getElementById("unitMargin").textContent =
+        euro(unitMargin);
+
+
+    const dashCA = document.getElementById("dashCA");
+    const dashEvents = document.getElementById("dashEvents");
+    const dashResult = document.getElementById("dashResult");
+    const dashBreakEven = document.getElementById("dashBreakEven");
+
+    if(dashCA) dashCA.textContent = euro(ca);
+    if(dashEvents) dashEvents.textContent = number(eventsYear);
+    if(dashResult) dashResult.textContent = euro(result);
+    if(dashBreakEven) dashBreakEven.textContent = number(breakEven);
+
+
+    if(result < 0){
+        document.getElementById("simResult").className =
+            "card-value red";
+    }else{
+        document.getElementById("simResult").className =
+            "card-value green";
+    }
+
+}
+
+
+/* =========================================================
+   SCENARIOS
+========================================================= */
+
+function calculateScenario(eventsId,priceId,caId,resultId){
+
+    const events =
+        parseFloat(document.getElementById(eventsId).value) || 0;
+
+    const price =
+        parseFloat(document.getElementById(priceId).value) || 0;
+
+    const variable =
+        parseFloat(document.getElementById("variableCost").value) || 0;
+
+    const fixed =
+        parseFloat(document.getElementById("fixedCosts").value) || 0;
+
+    const marketing =
+        parseFloat(document.getElementById("marketingCost").value) || 0;
+
+    const other =
+        parseFloat(document.getElementById("otherCosts").value) || 0;
+
+    const annualEvents = events * 12;
+
+    const ca = annualEvents * price;
+
+    const result =
+        annualEvents * (price-variable)
+        - ((fixed+marketing+other)*12);
+
+    document.getElementById(caId).textContent =
+        euro(ca);
+
+    document.getElementById(resultId).textContent =
+        euro(result);
+
+    return {
+        ca,
+        result
+    };
+
+}
+
+function calculateScenarios(){
+
+    const pess = calculateScenario(
+        "pessEvents",
+        "pessPrice",
+        "pessCA",
+        "pessResult"
+    );
+
+    const real = calculateScenario(
+        "realEvents",
+        "realPrice",
+        "realCA",
+        "realResult"
+    );
+
+    const amb = calculateScenario(
+        "ambEvents",
+        "ambPrice",
+        "ambCA",
+        "ambResult"
+    );
+
+    renderScenarioChart([
+        pess.ca,
+        real.ca,
+        amb.ca
+    ]);
+
+}
+
+
+function renderScenarioChart(values){
+
+    const container =
+        document.getElementById("scenarioChart");
+
+    const labels = [
+        "Pessimiste",
+        "Réaliste",
+        "Ambitieux"
+    ];
+
+    const max =
+        Math.max(...values,1);
+
+    const width = 900;
+    const height = 260;
+
+    let bars = "";
+
+    values.forEach((value,index)=>{
+
+        const x = 90 + index*260;
+
+        const barHeight =
+            (value/max)*170;
+
+        const y =
+            210-barHeight;
+
+        bars += `
+            <rect
+                x="${x}"
+                y="${y}"
+                width="120"
+                height="${barHeight}"
+                rx="8"
+                fill="rgba(215,180,106,.65)"
+            />
+
+            <text
+                x="${x+60}"
+                y="${y-10}"
+                text-anchor="middle"
+                class="chart-label"
+            >
+                ${euro(value)}
+            </text>
+
+            <text
+                x="${x+60}"
+                y="235"
+                text-anchor="middle"
+                class="chart-label"
+            >
+                ${labels[index]}
+            </text>
+        `;
+
+    });
+
+    container.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}">
+            <line x1="50" y1="210" x2="850" y2="210" class="axis"/>
+            ${bars}
+        </svg>
+    `;
+
+}
+
+
+/* =========================================================
+   OFFERS MARGINS
+========================================================= */
+
+function calculateOfferMargins(){
+
+    document.querySelectorAll(".offer-input").forEach(input=>{
+
+        const id = input.dataset.offer;
+
+        const price =
+            parseFloat(input.value)||0;
+
+        const costInput =
+            document.querySelector(
+                `.offer-cost[data-offer="${id}"]`
+            );
+
+        const cost =
+            parseFloat(costInput.value)||0;
+
+        const margin =
+            price-cost;
+
+        const element =
+            document.getElementById("margin"+id);
+
+        if(element){
+
+            element.textContent =
+                euro(margin);
+
+            element.style.color =
+                margin > 0
+                ? "var(--green)"
+                : "var(--red)";
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   EVENT LISTENERS
+========================================================= */
+
+document.querySelectorAll("input").forEach(input=>{
+
+    input.addEventListener("input",()=>{
+
+        calculateSimulation();
+
+        calculateScenarios();
+
+        calculateOfferMargins();
+
+        saveData();
+
+    });
+
+});
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+document.getElementById("exportBtn").addEventListener("click",()=>{
+
+    const business = collectBusinessData();
+    const data = business.inputs;
+    data.texts = business.texts;
+    data.materials = materials;
+    data.exportDate = new Date().toISOString();
+
+    const blob = new Blob(
+        [JSON.stringify(data,null,2)],
+        {type:"application/json"}
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+        "FASTE-business-plan-data.json";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+});
+
+
+
+/* =========================================================
+   PROSPECTION — LIEUX / CLIENTS / PRESTATAIRES
+========================================================= */
+
+const prospectStorageKey = "faste_prospects";
+const prospectStatuses = ["À contacter","Contacté","RDV pris","Relance","Partenaire","Gagné","Perdu"];
+const prospectPotentials = ["Faible","Moyen","Fort"];
+let prospects = [];
+let activeProspectId = null;
+
+function prospectId(){
+    return "pros_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+function createEmptyProspect(type="client"){
+    const now = new Date().toISOString();
+    return {
+        id:prospectId(),
+        type,
+        name:"",
+        city:"",
+        address:"",
+        contact:"",
+        role:"",
+        phone:"",
+        email:"",
+        website:"",
+        instagram:"",
+        status:"À contacter",
+        potential:"Moyen",
+        source:"",
+
+        clientType:"",
+        eventType:"",
+        eventDate:"",
+        guests:"",
+        budget:"",
+        fasteNeeds:"",
+
+        venueType:"",
+        capacity:"",
+        constraints:"",
+
+        specialty:"",
+        serviceArea:"",
+        priceRange:"",
+        qualityTrust:"",
+        availability:"",
+        workingMethod:"",
+
+        next:"",
+        relaunchDate:"",
+        notes:"",
+        createdAt:now,
+        updatedAt:now
+    };
+}
+
+function normalizeProspects(list){
+    return (Array.isArray(list)?list:[]).map(p=>{
+        const type=["lieu","client","prestataire"].includes(p?.type) ? p.type : "client";
+        const base=createEmptyProspect(type);
+        return {
+            ...base,
+            ...p,
+            id:p?.id || base.id,
+            type,
+            name:p?.name || "",
+            city:p?.city || "",
+            status:prospectStatuses.includes(p?.status) ? p.status : "À contacter",
+            potential:prospectPotentials.includes(p?.potential) ? p.potential : "Moyen",
+            updatedAt:p?.updatedAt || base.updatedAt
+        };
+    });
+}
+
+function loadProspects(){
+    try{
+        const raw=localStorage.getItem(prospectStorageKey);
+        prospects=raw ? normalizeProspects(JSON.parse(raw)) : [];
+    }catch(e){
+        prospects=[];
+    }
+    renderProspects();
+}
+
+async function saveProspects(){
+    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
+    updateProspectKPIs();
+
+    // Sauvegarde immédiate des prospects dans le même enregistrement Supabase.
+    // On relit la ligne avant le PATCH afin de ne pas écraser les autres données
+    // (business plan, matériel, devis/factures, paramètres…).
+    if(!fasteReady){
+        setTimeout(()=>{ if(fasteReady) saveProspects(); },1200);
+        return;
+    }
+
+    try{
+        const res=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}&select=id,data,updated_at`,{
+            headers:await getAuthHeaders()
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows=await res.json();
+        if(!rows.length) throw new Error("Ligne FASTE introuvable");
+
+        const remoteData=rows[0].data || {};
+        remoteData.prospects=prospects;
+        const now=new Date().toISOString();
+
+        const save=await fetch(`${FASTE_SUPABASE_URL}/rest/v1/faste_data?id=eq.${FASTE_ROW_ID}`,{
+            method:"PATCH",
+            headers:{...getAuthHeaders(),"Content-Type":"application/json",Prefer:"return=representation"},
+            body:JSON.stringify({data:remoteData,updated_at:now})
+        });
+        if(!save.ok) throw new Error(`HTTP ${save.status}: ${await save.text()}`);
+        fasteRemoteUpdatedAt=now;
+        setCloudStatus("Prospects synchronisés ☁️");
+    }catch(e){
+        console.error("FASTE prospects save:",e);
+        // On conserve la copie locale et on retentera au prochain chargement
+        // dès que la connexion cloud sera disponible.
+        setCloudStatus("Prospects : copie locale conservée", "error");
+    }
+}
+
+function prospectEsc(v){
+    return String(v??"")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+}
+
+function prospectTypeLabel(type){
+    if(type==="lieu") return "🏰 Lieu";
+    if(type==="prestataire") return "🤝 Prestataire";
+    return "👤 Client";
+}
+
+function prospectTypeClass(type){
+    return type==="lieu" ? "prospect-type-lieu" : type==="prestataire" ? "prospect-type-prestataire" : "prospect-type-client";
+}
+
+function prospectField(label,key,value,type="text",placeholder="",wide=false){
+    return `<div class="prospect-field ${wide?"wide":""}">
+        <label>${label}</label>
+        <input data-prospect-field="${key}" type="${type}" value="${prospectEsc(value)}" placeholder="${prospectEsc(placeholder)}">
+    </div>`;
+}
+
+function prospectTextarea(label,key,value,placeholder="",full=true){
+    return `<div class="prospect-field ${full?"full":"wide"}">
+        <label>${label}</label>
+        <textarea data-prospect-field="${key}" placeholder="${prospectEsc(placeholder)}">${prospectEsc(value)}</textarea>
+    </div>`;
+}
+
+function prospectSelect(label,key,value,options,wide=false){
+    return `<div class="prospect-field ${wide?"wide":""}">
+        <label>${label}</label>
+        <select data-prospect-field="${key}">
+            ${options.map(o=>`<option value="${prospectEsc(o)}" ${value===o?"selected":""}>${prospectEsc(o)}</option>`).join("")}
+        </select>
+    </div>`;
+}
+
+function readProspectFormIntoObject(p){
+    const form=document.getElementById("prospectForm");
+    if(!form) return;
+    form.querySelectorAll("[data-prospect-field]").forEach(el=>{
+        p[el.dataset.prospectField]=el.value;
+    });
+    p.updatedAt=new Date().toISOString();
+}
+
+function ensureProspectModal(){
+    if(document.getElementById("prospectModal")) return;
+
+    const modal=document.createElement("div");
+    modal.id="prospectModal";
+    modal.className="prospect-modal";
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click",e=>{
+        if(e.target===modal) closeProspectModal();
+    });
+}
+
+function renderProspectModal(p){
+    ensureProspectModal();
+
+    const modal=document.getElementById("prospectModal");
+    const typeDescription = p.type==="lieu"
+        ? "Fiche d'un lieu de réception, partenaire potentiel ou apporteur d'affaires."
+        : p.type==="prestataire"
+            ? "Fiche d'un prestataire avec lequel FASTE peut collaborer."
+            : "Fiche d'un prospect ou client qui peut acheter une prestation FASTE.";
+
+    let specificHtml="";
+
+    if(p.type==="client"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>👤 Projet / besoin client</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Type de client","clientType",p.clientType,"text","Particulier, entreprise, agence…")}
+                ${prospectField("Type d'événement","eventType",p.eventType,"text","Mariage, soirée, corporate…")}
+                ${prospectField("Date de l'événement","eventDate",p.eventDate,"date")}
+                ${prospectField("Nombre d'invités","guests",p.guests,"number","Ex. 150")}
+                ${prospectField("Budget estimé","budget",p.budget,"text","Ex. 2 500 €")}
+                ${prospectField("Besoins FASTE","fasteNeeds",p.fasteNeeds,"text","DJ, son, lumière…",true)}
+            </div>
+        </div>`;
+    }
+
+    if(p.type==="lieu"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>🏰 Informations sur le lieu</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Type de lieu","venueType",p.venueType,"text","Château, domaine, salle, hôtel…",true)}
+                ${prospectField("Capacité","capacity",p.capacity,"text","Ex. 180 personnes")}
+                ${prospectField("Contraintes / conditions","constraints",p.constraints,"text","Prestataires imposés, horaires, accès…",true)}
+            </div>
+        </div>`;
+    }
+
+    if(p.type==="prestataire"){
+        specificHtml=`
+        <div class="prospect-form-section">
+            <h3>🤝 Informations partenaire</h3>
+            <div class="prospect-form-grid">
+                ${prospectField("Spécialité","specialty",p.specialty,"text","Traiteur, photo, vidéo, wedding planner…",true)}
+                ${prospectField("Zone d'intervention","serviceArea",p.serviceArea,"text","Loiret, Centre-Val de Loire…")}
+                ${prospectField("Fourchette tarifaire","priceRange",p.priceRange,"text","Ex. 800–1 500 €")}
+                ${prospectField("Qualité / confiance","qualityTrust",p.qualityTrust,"text","À tester, recommandé, premium…")}
+                ${prospectField("Disponibilité","availability",p.availability,"text","Sur réservation, week-end…")}
+                ${prospectField("Mode de travail","workingMethod",p.workingMethod,"text","Commission, recommandation, sous-traitance…",true)}
+            </div>
+        </div>`;
+    }
+
+    modal.innerHTML=`
+        <div class="prospect-modal-card">
+            <div class="prospect-modal-head">
+                <div>
+                    <h2>${p.name ? prospectEsc(p.name) : "Nouveau prospect"}</h2>
+                    <p>${typeDescription}</p>
+                </div>
+                <button class="btn prospect-modal-close" id="prospectModalClose">✕</button>
+            </div>
+
+            <form class="prospect-form" id="prospectForm">
+                <div class="prospect-form-section">
+                    <h3>📇 Identité & contact</h3>
+                    <div class="prospect-form-grid">
+                        ${prospectSelect("Type de fiche","type",p.type,["client","lieu","prestataire"])}
+                        ${prospectField("Nom / entreprise","name",p.name,"text","Nom du lieu, entreprise, personne…",true)}
+                        ${prospectField("Ville","city",p.city,"text","Orléans")}
+                        ${prospectField("Adresse","address",p.address,"text","Adresse complète",true)}
+                        ${prospectField("Nom du contact","contact",p.contact,"text","Prénom Nom")}
+                        ${prospectField("Rôle / fonction","role",p.role,"text","Dirigeant, responsable événementiel…")}
+                        ${prospectField("Téléphone","phone",p.phone,"tel","06…")}
+                        ${prospectField("E-mail","email",p.email,"email","contact@…")}
+                        ${prospectField("Site internet","website",p.website,"url","https://…")}
+                        ${prospectField("Instagram","instagram",p.instagram,"text","@…")}
+                        ${prospectSelect("Statut","status",p.status,prospectStatuses)}
+                        ${prospectSelect("Potentiel","potential",p.potential,prospectPotentials)}
+                        ${prospectField("Source","source",p.source,"text","Recommandation, salon, Google, prospection…",true)}
+                    </div>
+                </div>
+
+                ${specificHtml}
+
+                <div class="prospect-form-section">
+                    <h3>📅 Suivi commercial</h3>
+                    <div class="prospect-form-grid">
+                        ${prospectField("Prochaine action","next",p.next,"text","Appeler vendredi, envoyer devis…",true)}
+                        ${prospectField("Date de relance","relaunchDate",p.relaunchDate,"date")}
+                        ${prospectTextarea("Notes & historique des échanges","notes",p.notes,"Compte-rendu des appels, informations utiles, historique…",true)}
+                    </div>
+                </div>
+            </form>
+
+            <div class="prospect-modal-foot">
+                <div class="prospect-modal-foot-left">
+                    <button class="btn danger" id="prospectDeleteBtn">🗑 Supprimer</button>
+                    <button class="btn" id="prospectDuplicateBtn">⧉ Dupliquer</button>
+                </div>
+                <div class="prospect-modal-foot-right">
+                    <button class="btn" id="prospectCancelBtn">Annuler</button>
+                    <button class="btn primary" id="prospectSaveBtn">✓ Enregistrer</button>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById("prospectModalClose")?.addEventListener("click",closeProspectModal);
+    document.getElementById("prospectCancelBtn")?.addEventListener("click",closeProspectModal);
+
+    document.getElementById("prospectSaveBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        readProspectFormIntoObject(p);
+        saveProspects();
+        renderProspects();
+        closeProspectModal();
+    });
+
+    document.getElementById("prospectDeleteBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        if(confirm(`Supprimer « ${p.name||"ce prospect"} » ?`)){
+            prospects=prospects.filter(x=>x.id!==p.id);
+            saveProspects();
+            renderProspects();
+            closeProspectModal();
+        }
+    });
+
+    document.getElementById("prospectDuplicateBtn")?.addEventListener("click",e=>{
+        e.preventDefault();
+        readProspectFormIntoObject(p);
+        const copy={...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+        prospects.unshift(copy);
+        saveProspects();
+        renderProspects();
+        activeProspectId=copy.id;
+        renderProspectModal(copy);
+        document.getElementById("prospectModal")?.classList.add("open");
+    });
+
+    document.querySelector('#prospectForm [data-prospect-field="type"]')?.addEventListener("change",e=>{
+        readProspectFormIntoObject(p);
+        p.type=e.target.value;
+        renderProspectModal(p);
+        document.getElementById("prospectModal")?.classList.add("open");
+    });
+}
+
+function openProspect(id){
+    const p=prospects.find(x=>x.id===id);
+    if(!p) return;
+    activeProspectId=id;
+    renderProspectModal(p);
+    document.getElementById("prospectModal")?.classList.add("open");
+}
+
+function closeProspectModal(){
+    document.getElementById("prospectModal")?.classList.remove("open");
+    activeProspectId=null;
+}
+
+function renderProspects(){
+    const body=document.getElementById("prospectTableBody");
+    const empty=document.getElementById("prospectEmpty");
+    if(!body) return;
+
+    const q=(document.getElementById("prospectSearch")?.value||"").toLowerCase().trim();
+    const ft=document.getElementById("prospectFilterType")?.value||"all";
+    const fs=document.getElementById("prospectFilterStatus")?.value||"all";
+
+    const list=prospects.filter(p=>{
+        const hay=[
+            p.type,p.name,p.city,p.address,p.contact,p.role,p.phone,p.email,
+            p.website,p.instagram,p.status,p.potential,p.source,p.clientType,
+            p.eventType,p.venueType,p.specialty,p.serviceArea,p.next,p.relaunchDate,p.notes
+        ].join(" ").toLowerCase();
+        return (!q||hay.includes(q)) &&
+               (ft==="all"||p.type===ft) &&
+               (fs==="all"||p.status===fs);
+    });
+
+    body.innerHTML="";
+
+    list.forEach(p=>{
+        const tr=document.createElement("tr");
+        tr.dataset.id=p.id;
+        tr.innerHTML=`
+            <td><span class="prospect-badge ${prospectTypeClass(p.type)}">${prospectTypeLabel(p.type)}</span></td>
+            <td><strong>${prospectEsc(p.name||"Sans nom")}</strong></td>
+            <td>${prospectEsc(p.city||"—")}</td>
+            <td>${prospectEsc(p.contact||"—")}</td>
+            <td>${prospectEsc(p.phone||"—")}</td>
+            <td><span class="prospect-badge">${prospectEsc(p.status)}</span></td>
+            <td><span class="prospect-badge">${prospectEsc(p.potential)}</span></td>
+            <td><div class="prospect-summary" title="${prospectEsc(p.next||"")}">${prospectEsc(p.next||"—")}</div></td>
+            <td>
+                <div class="prospect-actions">
+                    <button class="btn prospect-open">Ouvrir</button>
+                    <button class="btn prospect-duplicate" title="Dupliquer">⧉</button>
+                </div>
+            </td>`;
+
+        body.appendChild(tr);
+
+        tr.addEventListener("click",()=>openProspect(p.id));
+
+        tr.querySelector(".prospect-open")?.addEventListener("click",e=>{
+            e.stopPropagation();
+            openProspect(p.id);
+        });
+
+        tr.querySelector(".prospect-duplicate")?.addEventListener("click",e=>{
+            e.stopPropagation();
+            const copy={...p,id:prospectId(),name:(p.name||"Prospect")+" — copie",status:"À contacter",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+            prospects.unshift(copy);
+            saveProspects();
+            renderProspects();
+            openProspect(copy.id);
+        });
+    });
+
+    if(empty) empty.style.display=list.length ? "none" : "block";
+    updateProspectKPIs();
+}
+
+function updateProspectKPIs(){
+    const set=(id,v)=>{
+        const e=document.getElementById(id);
+        if(e) e.textContent=v;
+    };
+
+    set("prospectCount",prospects.length);
+    set("prospectVenueCount",prospects.filter(p=>p.type==="lieu").length);
+    set("prospectClientCount",prospects.filter(p=>p.type==="client").length);
+    set("prospectPartnerCount",prospects.filter(p=>p.type==="prestataire").length);
+    set("prospectToContactCount",prospects.filter(p=>p.status==="À contacter").length);
+}
+
+document.getElementById("addProspectBtn")?.addEventListener("click",()=>{
+    const p=createEmptyProspect("client");
+    prospects.unshift(p);
+    localStorage.setItem(prospectStorageKey,JSON.stringify(prospects));
+    renderProspects();
+    openProspect(p.id);
+});
+
+document.getElementById("prospectSearch")?.addEventListener("input",renderProspects);
+document.getElementById("prospectFilterType")?.addEventListener("change",renderProspects);
+document.getElementById("prospectFilterStatus")?.addEventListener("change",renderProspects);
+
+/* =========================================================
+   PARC MATÉRIEL — INVENTAIRE DYNAMIQUE
+========================================================= */
+
+const materialStorageKey = "faste_material_inventory";
+
+const defaultMaterials = [
+    {name:"Enceinte — à préciser", category:"Enceinte", qty:12, purchase:"", current:"", state:"À renseigner", use:"Sonorisation", maintenance:"À définir"},
+    {name:"Portique", category:"Structure", qty:1, purchase:"", current:"", state:"À renseigner", use:"Structure", maintenance:"À définir"},
+    {name:"Lyre — à préciser", category:"Éclairage", qty:2, purchase:"", current:"", state:"À renseigner", use:"Éclairage", maintenance:"À définir"},
+    {name:"Petite lyre — à préciser", category:"Éclairage", qty:2, purchase:"", current:"", state:"À renseigner", use:"Éclairage", maintenance:"À définir"},
+    {name:"Pioneer FLX10", category:"DJ", qty:1, purchase:"", current:"", state:"À renseigner", use:"DJ", maintenance:"À définir"}
+];
+
+let materials = [];
+
+function materialId(){
+    return "mat_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+function normalizeMaterials(list){
+    return (Array.isArray(list) ? list : []).map(m => ({
+        id: m.id || materialId(),
+        name: m.name ?? "",
+        category: m.category ?? "Autre",
+        qty: Math.max(0, Number(m.qty) || 0),
+        purchase: m.purchase === "" || m.purchase == null ? "" : Number(m.purchase) || 0,
+        current: m.current === "" || m.current == null ? "" : Number(m.current) || 0,
+        state: m.state ?? "À renseigner",
+        use: m.use ?? "",
+        maintenance: m.maintenance ?? ""
+    }));
+}
+
+function loadMaterials(){
+    try{
+        const raw = localStorage.getItem(materialStorageKey);
+        materials = raw ? normalizeMaterials(JSON.parse(raw)) : normalizeMaterials(defaultMaterials);
+    }catch(e){ materials = normalizeMaterials(defaultMaterials); }
+    renderMaterials();
+}
+
+function saveMaterials(){
+    localStorage.setItem(materialStorageKey, JSON.stringify(materials));
+    updateMaterialKPIs();
+    queueCloudSave();
+}
+
+function materialEsc(value){
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+}
+
+function renderMaterials(){
+    const body = document.getElementById("materialTableBody");
+    const empty = document.getElementById("materialEmpty");
+    if(!body) return;
+
+    body.innerHTML = "";
+
+    materials.forEach((m,index)=>{
+        const tr = document.createElement("tr");
+        tr.dataset.materialId = m.id;
+        tr.innerHTML = `
+            <td><input class="material-input material-name" data-field="name" value="${materialEsc(m.name)}" placeholder="Ex. Yamaha DXR12"></td>
+            <td>
+                <select class="material-select" data-field="category">
+                    ${["Enceinte","Caisson","DJ","Éclairage","Structure","Câblage","Transport","Scénographie","Autre"].map(c=>`<option ${m.category===c?"selected":""}>${c}</option>`).join("")}
+                </select>
+            </td>
+            <td><input class="material-input material-qty" data-field="qty" type="number" min="0" step="1" value="${m.qty}"></td>
+            <td><input class="material-input material-number" data-field="purchase" type="number" min="0" step="0.01" value="${m.purchase}" placeholder="À renseigner"></td>
+            <td><input class="material-input material-number" data-field="current" type="number" min="0" step="0.01" value="${m.current}" placeholder="À renseigner"></td>
+            <td>
+                <select class="material-select" data-field="state">
+                    ${["Neuf","Très bon","Bon","Correct","À réparer","À remplacer","À renseigner"].map(c=>`<option ${m.state===c?"selected":""}>${c}</option>`).join("")}
+                </select>
+            </td>
+            <td><input class="material-input" data-field="use" value="${materialEsc(m.use)}" placeholder="Ex. Mariages"></td>
+            <td><input class="material-input" data-field="maintenance" value="${materialEsc(m.maintenance)}" placeholder="Ex. Annuel"></td>
+            <td>
+                <div class="material-actions">
+                    <button class="material-action duplicate" title="Dupliquer">⧉</button>
+                    <button class="material-action delete" title="Supprimer">🗑</button>
+                </div>
+            </td>
+        `;
+
+        tr.querySelectorAll("[data-field]").forEach(control=>{
+            control.addEventListener("input",()=>updateMaterialFromRow(tr));
+            control.addEventListener("change",()=>updateMaterialFromRow(tr));
+        });
+
+        tr.querySelector(".delete").addEventListener("click",()=>{
+            if(confirm(`Supprimer « ${m.name || "ce matériel"} » ?`)){
+                materials = materials.filter(x=>x.id !== m.id);
+                saveMaterials();
+                renderMaterials();
+            }
+        });
+
+        tr.querySelector(".duplicate").addEventListener("click",()=>{
+            const copy = {...m, id:materialId(), name:(m.name || "Matériel") + " — copie"};
+            materials.splice(index+1,0,copy);
+            saveMaterials();
+            renderMaterials();
+        });
+
+        body.appendChild(tr);
+    });
+
+    if(empty) empty.style.display = materials.length ? "none" : "block";
+    updateMaterialKPIs();
+}
+
+function updateMaterialFromRow(row){
+    const id = row.dataset.materialId;
+    const material = materials.find(m=>m.id===id);
+    if(!material) return;
+
+    row.querySelectorAll("[data-field]").forEach(control=>{
+        const field = control.dataset.field;
+        if(control.type === "number"){
+            material[field] = control.value === "" ? "" : Number(control.value);
+        }else{
+            material[field] = control.value;
+        }
+    });
+
+    saveMaterials();
+}
+
+function updateMaterialKPIs(){
+    const refs = materials.length;
+    const units = materials.reduce((sum,m)=>sum+(Number(m.qty)||0),0);
+    const purchaseKnown = materials.filter(m=>m.purchase!=="" && Number.isFinite(Number(m.purchase)));
+    const currentKnown = materials.filter(m=>m.current!=="" && Number.isFinite(Number(m.current)));
+    const purchase = purchaseKnown.reduce((sum,m)=>sum+(Number(m.purchase)||0)*(Number(m.qty)||0),0);
+    const current = currentKnown.reduce((sum,m)=>sum+(Number(m.current)||0)*(Number(m.qty)||0),0);
+
+    const set = (id,text)=>{const el=document.getElementById(id); if(el) el.textContent=text;};
+    set("materialRefCount",number(refs));
+    set("materialUnitCount",number(units));
+    set("materialPurchaseValue",purchaseKnown.length ? euro(purchase) : "À renseigner");
+    set("materialCurrentValue",currentKnown.length ? euro(current) : "À renseigner");
+}
+
+document.getElementById("addMaterialBtn")?.addEventListener("click",()=>{
+    const newMaterial = {
+        id:materialId(),
+        name:"Nouveau matériel",
+        category:"Autre",
+        qty:1,
+        purchase:"",
+        current:"",
+        state:"À renseigner",
+        use:"",
+        maintenance:""
+    };
+    materials.push(newMaterial);
+    saveMaterials();
+    renderMaterials();
+    requestAnimationFrame(()=>{
+        const row = document.querySelector(`[data-material-id="${newMaterial.id}"]`);
+        const input = row?.querySelector('[data-field="name"]');
+        input?.focus();
+        input?.select();
+    });
+});
+
+
+/* =========================================================
+   INITIALISATION
+========================================================= */
+
+setupEditableTexts();
+
+document.getElementById("editModeBtn")?.addEventListener("click",()=>{
+    setEditMode(!document.body.classList.contains("edit-mode"));
+});
+
+loadMaterials();
+loadProspects();
+loadData();
+calculateSimulation();
+calculateScenarios();
+calculateOfferMargins();
+
+/* Sauvegarde dès qu'une valeur est modifiée */
+document.querySelectorAll("input").forEach(input=>{
+    input.addEventListener("input",()=>{
+        calculateSimulation();
+        calculateScenarios();
+        calculateOfferMargins();
+        saveData();
+    });
+    input.addEventListener("change",saveData);
+});
+
+/* Connexion initiale + vérification des changements de l'autre associé */
+setCloudStatus("Connexion à FASTE…", "warn");
+cloudLoad().then(()=>{
+    setInterval(cloudCheckForChanges,3000);
+});
+
+</script>
+
+</body>
+</html>

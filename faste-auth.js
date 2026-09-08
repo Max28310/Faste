@@ -1,0 +1,4 @@
+// Authentification centralisée FASTE — le token réel est géré par Supabase Auth + service worker.
+const FASTE_SUPABASE_URL='https://jmaswyffmeaaauymapmi.supabase.co';
+const FASTE_SUPABASE_KEY='sb_publishable_pERmayuxuRzMADUxvJDI2w_vwDCMS9c';
+window.fasteLogout=async function(){localStorage.removeItem('faste_logged');try{navigator.serviceWorker?.controller?.postMessage({type:'LOGOUT'});const db=await new Promise((r,j)=>{const q=indexedDB.open('faste-auth',1);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});db.transaction('session','readwrite').objectStore('session').delete('token')}catch(e){}location.replace('faste-login.html')};
