@@ -656,7 +656,9 @@ function renderForecastChart(rows) {
   $('#forecastChart').innerHTML = forecastMonths.map((month, index) => {
     const forecastHeight = Math.max(1, forecastValues[index] / max * 100);
     const actualHeight = actualValues[index] ? Math.max(1, actualValues[index] / max * 100) : 0;
-    return `<div class="forecast-chart-month"><div class="forecast-bars"><span class="forecast-bar" style="height:${forecastHeight}%" title="${month} · Prévisionnel ${euro(forecastValues[index])}"></span><span class="actual-bar" style="height:${actualHeight}%" title="${month} · Réalisé ${euro(actualValues[index])}"></span></div><small>${month}</small></div>`;
+    const forecastTooltip = `${month} · Prévisionnel : ${euro(forecastValues[index])}`;
+    const actualTooltip = `${month} · Réalisé : ${euro(actualValues[index])}`;
+    return `<div class="forecast-chart-month"><div class="forecast-bars"><span class="forecast-bar" tabindex="0" style="height:${forecastHeight}%" data-tooltip="${esc(forecastTooltip)}" aria-label="${esc(forecastTooltip)}"></span><span class="actual-bar" tabindex="0" style="height:${actualHeight}%" data-tooltip="${esc(actualTooltip)}" aria-label="${esc(actualTooltip)}"></span></div><small>${month}</small></div>`;
   }).join('');
 }
 
