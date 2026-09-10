@@ -1,7 +1,7 @@
 'use strict';
 
 const db = fasteAuth.client;
-const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
+const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, forecast: null, forecastScenario: 'realistic', forecastChartMode: 'monthly', crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
 const pageMeta = {
   dashboard: ['Dashboard', 'L’essentiel de l’activité FASTE.'],
   crm: ['CRM', 'Contacts, clients, lieux et prestataires.'],
@@ -9,7 +9,7 @@ const pageMeta = {
   events: ['Événements', 'Pense-bêtes opérationnels générés depuis les devis acceptés.'],
   prestations: ['Prestations', 'Catalogue de services et tarifs par défaut.'],
   materials: ['Matériel', 'Inventaire partagé et toujours à jour.'],
-  strategy: ['Pilotage stratégique', 'Vision, hypothèses et trajectoire FASTE.'],
+  strategy: ['Prévisionnel', 'Simuler, comparer et piloter la trajectoire financière de FASTE.'],
   settings: ['Paramètres', 'Informations légales et coordonnées de l’entreprise.']
 };
 
@@ -89,13 +89,16 @@ async function loadData({ quiet = false } = {}) {
       db.from('event_tasks').select('*').order('position'),
       db.from('materiel').select('*').order('nom'),
       db.from('company_settings').select('*').eq('id', 1).maybeSingle(),
-      db.from('faste_data').select('data').eq('id', 1).maybeSingle()
+      db.from('faste_data').select('data').eq('id', 1).maybeSingle(),
+      db.from('forecast_settings').select('*').eq('id', 1).maybeSingle()
     ]);
     const failed = queries.find(result => result.error);
     if (failed) throw failed.error;
     [state.contacts, state.services, state.documents, state.lines, state.events, state.eventTasks, state.materials] = queries.slice(0, 7).map(result => result.data || []);
     state.settings = queries[7].data || {};
     state.strategic = queries[8].data?.data?.business_data || {};
+    state.forecast = normalizeForecast(queries[9].data?.data);
+    state.forecastScenario = state.forecast.activeScenario;
     state.documents.forEach(doc => {
       doc.lines = state.lines.filter(line => line.document_id === doc.id).sort((a, b) => a.position - b.position);
       doc.contact = state.contacts.find(contact => contact.id === doc.contact_id) || null;
@@ -122,7 +125,7 @@ function renderAll() {
   renderServices();
   renderMaterials();
   renderSettings();
-  renderSimulator();
+  renderForecast();
 }
 
 function renderDashboard() {
@@ -480,13 +483,194 @@ async function saveSettings(event) {
   const { error } = await db.from('company_settings').upsert({ id: 1, ...values }); if (error) return handleError(error); toast('Paramètres enregistrés.'); await loadData({ quiet: true });
 }
 
-function renderSimulator() {
-  const inputs = state.strategic.inputs || {};
-  $('#simEvents').value = inputs.eventsMonth || 3; $('#simPrice').value = inputs.avgPrice || 1800; $('#simVariable').value = inputs.variableCost || 450; $('#simFixed').value = inputs.fixedCosts || 500; calculateSimulator();
+const forecastMonths = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+
+function emptyForecastScenario(source = {}) {
+  return {
+    basket: num(source.basket),
+    variableCost: num(source.variableCost),
+    openingCash: num(source.openingCash),
+    taxRate: Math.min(100, Math.max(0, num(source.taxRate))),
+    maximePay: num(source.maximePay),
+    paulPay: num(source.paulPay),
+    monthlyEvents: Array.from({ length: 12 }, (_, index) => Math.max(0, Math.round(num(source.monthlyEvents?.[index])))),
+    expenses: Array.isArray(source.expenses) ? source.expenses.map(item => ({ id: item.id || `expense-${Date.now()}-${Math.random()}`, label: String(item.label || ''), monthlyAmount: Math.max(0, num(item.monthlyAmount)) })) : [],
+    investments: Array.isArray(source.investments) ? source.investments.map(item => ({ id: item.id || `investment-${Date.now()}-${Math.random()}`, label: String(item.label || ''), month: Math.min(11, Math.max(0, Math.round(num(item.month)))), amount: Math.max(0, num(item.amount)) })) : []
+  };
 }
 
-function calculateSimulator() {
-  const events = num($('#simEvents').value), price = num($('#simPrice').value), variable = num($('#simVariable').value), fixed = num($('#simFixed').value); $('#simRevenue').textContent = euro(events * price); $('#simMargin').textContent = euro(events * (price - variable) - fixed);
+function normalizeForecast(data = {}) {
+  const source = data && typeof data === 'object' ? data : {};
+  return {
+    version: 1,
+    year: Math.min(2100, Math.max(2024, Math.round(num(source.year) || new Date().getFullYear()))),
+    activeScenario: ['prudent', 'realistic', 'ambitious'].includes(source.activeScenario) ? source.activeScenario : 'realistic',
+    scenarios: {
+      prudent: emptyForecastScenario(source.scenarios?.prudent),
+      realistic: emptyForecastScenario(source.scenarios?.realistic),
+      ambitious: emptyForecastScenario(source.scenarios?.ambitious)
+    }
+  };
+}
+
+function activeForecast() {
+  return state.forecast.scenarios[state.forecastScenario];
+}
+
+function renderForecast() {
+  if (!$('#forecastYear')) return;
+  const model = activeForecast();
+  $('#forecastYear').value = state.forecast.year;
+  $$('#forecastScenarios button').forEach(button => button.classList.toggle('active', button.dataset.scenario === state.forecastScenario));
+  $('#forecastBasket').value = model.basket;
+  $('#forecastVariable').value = model.variableCost;
+  $('#forecastOpeningCash').value = model.openingCash;
+  $('#forecastTaxRate').value = model.taxRate;
+  $('#forecastMaximePay').value = model.maximePay;
+  $('#forecastPaulPay').value = model.paulPay;
+  $('#forecastMonthInputs').innerHTML = forecastMonths.map((month, index) => `<label><span>${month}</span><input type="number" min="0" step="1" value="${model.monthlyEvents[index]}" data-forecast-month="${index}" aria-label="Événements en ${month}"></label>`).join('');
+  renderForecastExpenses();
+  renderForecastInvestments();
+  $('#forecastSaveState').textContent = 'À jour';
+  $('#forecastSaveState').classList.remove('dirty');
+  calculateForecast();
+}
+
+function renderForecastExpenses() {
+  const model = activeForecast();
+  $('#forecastExpenses').innerHTML = model.expenses.length ? model.expenses.map(item => `<div class="forecast-line" data-forecast-expense="${esc(item.id)}"><input class="forecast-line-label" value="${esc(item.label)}" placeholder="Nom de la charge" aria-label="Nom de la charge"><label><span>Par mois</span><input class="forecast-line-amount" type="number" min="0" step="10" value="${num(item.monthlyAmount)}" aria-label="Montant mensuel"></label><button class="task-delete" type="button" data-remove-forecast-line aria-label="Supprimer">✕</button></div>`).join('') : '<div class="forecast-empty">Aucune charge renseignée.</div>';
+}
+
+function renderForecastInvestments() {
+  const model = activeForecast();
+  $('#forecastInvestments').innerHTML = model.investments.length ? model.investments.map(item => `<div class="forecast-line investment" data-forecast-investment="${esc(item.id)}"><input class="forecast-line-label" value="${esc(item.label)}" placeholder="Nom de l’investissement" aria-label="Nom de l’investissement"><select class="forecast-line-month" aria-label="Mois prévu">${forecastMonths.map((month, index) => `<option value="${index}" ${index === num(item.month) ? 'selected' : ''}>${month}</option>`).join('')}</select><label><span>Montant</span><input class="forecast-line-amount" type="number" min="0" step="50" value="${num(item.amount)}" aria-label="Montant de l’investissement"></label><button class="task-delete" type="button" data-remove-forecast-line aria-label="Supprimer">✕</button></div>`).join('') : '<div class="forecast-empty">Aucun investissement renseigné.</div>';
+}
+
+function readForecastInputs() {
+  const model = activeForecast();
+  model.basket = num($('#forecastBasket').value);
+  model.variableCost = num($('#forecastVariable').value);
+  model.openingCash = num($('#forecastOpeningCash').value);
+  model.taxRate = Math.min(100, Math.max(0, num($('#forecastTaxRate').value)));
+  model.maximePay = num($('#forecastMaximePay').value);
+  model.paulPay = num($('#forecastPaulPay').value);
+  model.monthlyEvents = $$('[data-forecast-month]').map(input => Math.max(0, Math.round(num(input.value))));
+  model.expenses = $$('[data-forecast-expense]').map(row => ({ id: row.dataset.forecastExpense, label: $('.forecast-line-label', row).value.trim(), monthlyAmount: Math.max(0, num($('.forecast-line-amount', row).value)) }));
+  model.investments = $$('[data-forecast-investment]').map(row => ({ id: row.dataset.forecastInvestment, label: $('.forecast-line-label', row).value.trim(), month: Math.round(num($('.forecast-line-month', row).value)), amount: Math.max(0, num($('.forecast-line-amount', row).value)) }));
+  state.forecast.year = Math.min(2100, Math.max(2024, Math.round(num($('#forecastYear').value) || new Date().getFullYear())));
+  state.forecast.activeScenario = state.forecastScenario;
+  return model;
+}
+
+function markForecastDirty() {
+  const status = $('#forecastSaveState');
+  status.textContent = 'Modifications non enregistrées';
+  status.classList.add('dirty');
+}
+
+function addForecastExpense() {
+  readForecastInputs();
+  activeForecast().expenses.push({ id: `expense-${Date.now()}-${Math.random()}`, label: '', monthlyAmount: 0 });
+  renderForecastExpenses(); markForecastDirty(); calculateForecast();
+  $('#forecastExpenses .forecast-line:last-child .forecast-line-label')?.focus();
+}
+
+function addForecastInvestment() {
+  readForecastInputs();
+  activeForecast().investments.push({ id: `investment-${Date.now()}-${Math.random()}`, label: '', month: 0, amount: 0 });
+  renderForecastInvestments(); markForecastDirty(); calculateForecast();
+  $('#forecastInvestments .forecast-line:last-child .forecast-line-label')?.focus();
+}
+
+function forecastActuals(year) {
+  const monthlyInvoiced = Array(12).fill(0);
+  const invoices = state.documents.filter(doc => doc.type === 'facture' && String(doc.document_date || '').startsWith(String(year)));
+  invoices.forEach(doc => { const month = new Date(`${doc.document_date}T00:00:00`).getMonth(); monthlyInvoiced[month] += num(doc.total_ht); });
+  const accepted = state.documents.filter(doc => doc.type === 'devis' && doc.status === 'accepted' && String(doc.event_date || doc.document_date || '').startsWith(String(year)));
+  return {
+    monthlyInvoiced,
+    invoiced: invoices.reduce((sum, doc) => sum + num(doc.total_ht), 0),
+    signed: accepted.reduce((sum, doc) => sum + num(doc.total_ht), 0),
+    outstanding: invoices.reduce((sum, doc) => sum + num(doc.remaining_amount), 0),
+    acceptedEvents: accepted.length
+  };
+}
+
+function calculateForecast() {
+  if (!state.forecast || !$('#forecastBasket')) return;
+  const model = readForecastInputs();
+  const fixedMonthly = model.expenses.reduce((sum, item) => sum + num(item.monthlyAmount), 0);
+  const payMonthly = model.maximePay + model.paulPay;
+  const actual = forecastActuals(state.forecast.year);
+  let cash = model.openingCash;
+  const rows = forecastMonths.map((month, index) => {
+    const events = model.monthlyEvents[index];
+    const revenue = events * model.basket;
+    const variable = events * model.variableCost;
+    const operating = revenue - variable - fixedMonthly - payMonthly;
+    const tax = Math.max(0, operating) * model.taxRate / 100;
+    const result = operating - tax;
+    const investments = model.investments.filter(item => num(item.month) === index).reduce((sum, item) => sum + num(item.amount), 0);
+    cash += result - investments;
+    return { month, events, revenue, actualRevenue: actual.monthlyInvoiced[index], variable, fixed: fixedMonthly, pay: payMonthly, operating, tax, result, investments, cash };
+  });
+  const total = key => rows.reduce((sum, row) => sum + num(row[key]), 0);
+  const revenue = total('revenue'), grossMargin = revenue - total('variable'), result = total('result'), investments = total('investments');
+  const eventTotal = total('events');
+  const contribution = model.basket - model.variableCost;
+  const annualStructure = (fixedMonthly + payMonthly) * 12;
+  const breakEven = contribution > 0 ? Math.ceil(annualStructure / contribution) : null;
+  $('#forecastRevenue').textContent = euro(revenue);
+  $('#forecastRevenueActual').textContent = `Réalisé : ${euro(actual.invoiced)}`;
+  $('#forecastGrossMargin').textContent = euro(grossMargin);
+  $('#forecastMarginRate').textContent = `${revenue ? Math.round(grossMargin / revenue * 100) : 0} % du CA`;
+  $('#forecastResult').textContent = euro(result);
+  $('#forecastResult').classList.toggle('negative', result < 0);
+  $('#forecastCash').textContent = euro(cash);
+  $('#forecastCash').classList.toggle('negative', cash < 0);
+  $('#forecastCashAlert').textContent = cash < 0 ? 'Besoin de financement à anticiper' : `Après ${euro(investments)} d’investissements`;
+  $('#forecastBreakEven').textContent = breakEven == null ? '—' : `${breakEven} événement${breakEven > 1 ? 's' : ''}`;
+  $('#forecastEventTotal').textContent = `${eventTotal} événement${eventTotal > 1 ? 's' : ''}`;
+  $('#forecastExpenseTotal').textContent = euro(fixedMonthly * 12);
+  $('#forecastInvestmentTotal').textContent = euro(investments);
+  $('#actualInvoiced').textContent = euro(actual.invoiced);
+  $('#actualSigned').textContent = euro(actual.signed);
+  $('#actualOutstanding').textContent = euro(actual.outstanding);
+  $('#actualAcceptedEvents').textContent = actual.acceptedEvents;
+  const progress = revenue > 0 ? Math.round(actual.invoiced / revenue * 100) : 0;
+  $('#actualProgressLabel').textContent = `${progress} %`;
+  $('#actualProgressBar').style.width = `${Math.min(100, progress)}%`;
+  renderForecastChart(rows);
+  $('#forecastTableBody').innerHTML = rows.map(row => `<tr><td><strong>${row.month}</strong></td><td>${row.events}</td><td>${euro(row.revenue)}</td><td>${euro(row.variable)}</td><td>${euro(row.fixed)}</td><td>${euro(row.pay)}</td><td class="${row.result < 0 ? 'negative-cell' : 'positive-cell'}">${euro(row.result)}</td><td>${euro(row.investments)}</td><td class="${row.cash < 0 ? 'negative-cell' : ''}">${euro(row.cash)}</td></tr>`).join('');
+}
+
+function renderForecastChart(rows) {
+  let forecastValues = rows.map(row => row.revenue);
+  let actualValues = rows.map(row => row.actualRevenue);
+  if (state.forecastChartMode === 'cumulative') {
+    forecastValues = forecastValues.map((_, index) => forecastValues.slice(0, index + 1).reduce((sum, value) => sum + value, 0));
+    actualValues = actualValues.map((_, index) => actualValues.slice(0, index + 1).reduce((sum, value) => sum + value, 0));
+  }
+  const max = Math.max(1, ...forecastValues, ...actualValues);
+  $('#forecastChartSubtitle').textContent = state.forecastChartMode === 'cumulative' ? 'Progression cumulée sur l’exercice.' : 'Prévisionnel et facturation réelle par mois.';
+  $('#forecastChart').innerHTML = forecastMonths.map((month, index) => {
+    const forecastHeight = Math.max(1, forecastValues[index] / max * 100);
+    const actualHeight = actualValues[index] ? Math.max(1, actualValues[index] / max * 100) : 0;
+    return `<div class="forecast-chart-month"><div class="forecast-bars"><span class="forecast-bar" style="height:${forecastHeight}%" title="${month} · Prévisionnel ${euro(forecastValues[index])}"></span><span class="actual-bar" style="height:${actualHeight}%" title="${month} · Réalisé ${euro(actualValues[index])}"></span></div><small>${month}</small></div>`;
+  }).join('');
+}
+
+async function saveForecast() {
+  readForecastInputs();
+  const { data: sessionData } = await db.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) return toast('Session expirée. Reconnecte-toi.', true);
+  setSync('loading');
+  const { error } = await db.from('forecast_settings').upsert({ id: 1, data: state.forecast, updated_by: userId, updated_at: new Date().toISOString() });
+  if (error) return handleError(error);
+  $('#forecastSaveState').textContent = 'Enregistré et partagé';
+  $('#forecastSaveState').classList.remove('dirty');
+  setSync('ok'); toast('Prévisionnel enregistré pour Maxime et Paul.');
 }
 
 function handleError(error, friendly = '') {
@@ -556,7 +740,14 @@ function bindEvents() {
   $('#documentForm').addEventListener('submit', saveDocument); $('#deleteDocumentBtn').addEventListener('click', deleteDocument); $('#convertDocumentBtn').addEventListener('click', convertDocument); $('#pdfDocumentBtn').addEventListener('click', () => { const doc = state.documents.find(item => item.id === state.editingDocument); if (doc) generatePdf(doc); });
   $('#eventForm').addEventListener('submit', saveEvent); $('#addTaskBtn').addEventListener('click', () => addEventTask());
   $('#catalogBtn').addEventListener('click', openCatalog); $('#freeLineBtn').addEventListener('click', () => addDocumentLine()); $('#settingsForm').addEventListener('submit', saveSettings);
-  $$('#simEvents,#simPrice,#simVariable,#simFixed').forEach(input => input.addEventListener('input', calculateSimulator));
+  $('#saveForecastBtn').addEventListener('click', saveForecast);
+  $('#addForecastExpenseBtn').addEventListener('click', addForecastExpense);
+  $('#addForecastInvestmentBtn').addEventListener('click', addForecastInvestment);
+  $('#forecastScenarios').addEventListener('click', event => { const button = event.target.closest('button[data-scenario]'); if (!button || button.dataset.scenario === state.forecastScenario) return; readForecastInputs(); state.forecastScenario = button.dataset.scenario; state.forecast.activeScenario = state.forecastScenario; renderForecast(); markForecastDirty(); });
+  $('#forecastChartMode').addEventListener('click', event => { const button = event.target.closest('button[data-mode]'); if (!button) return; state.forecastChartMode = button.dataset.mode; $$('#forecastChartMode button').forEach(item => item.classList.toggle('active', item === button)); calculateForecast(); });
+  $('#page-strategy').addEventListener('input', event => { if (!event.target.matches('input,select')) return; calculateForecast(); markForecastDirty(); });
+  $('#page-strategy').addEventListener('change', event => { if (!event.target.matches('input,select')) return; calculateForecast(); markForecastDirty(); });
+  $('#page-strategy').addEventListener('click', event => { const remove = event.target.closest('[data-remove-forecast-line]'); if (!remove) return; readForecastInputs(); const expenseRow = remove.closest('[data-forecast-expense]'), investmentRow = remove.closest('[data-forecast-investment]'); if (expenseRow) { activeForecast().expenses = activeForecast().expenses.filter(item => item.id !== expenseRow.dataset.forecastExpense); renderForecastExpenses(); } if (investmentRow) { activeForecast().investments = activeForecast().investments.filter(item => item.id !== investmentRow.dataset.forecastInvestment); renderForecastInvestments(); } markForecastDirty(); calculateForecast(); });
   window.addEventListener('hashchange', () => navigate(location.hash.slice(1))); document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData({ quiet: true }); });
 }
 
