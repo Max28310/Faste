@@ -1,7 +1,7 @@
 'use strict';
 
 const db = fasteAuth.client;
-const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, forecast: null, forecastScenario: 'realistic', forecastChartMode: 'monthly', crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
+const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, forecast: null, forecastScenario: 'realistic', forecastChartMode: 'monthly', forecastDirty: false, forecastSaving: false, forecastRevision: 0, forecastSaveTimer: null, crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
 const pageMeta = {
   dashboard: ['Dashboard', 'L’essentiel de l’activité FASTE.'],
   crm: ['CRM', 'Contacts, clients, lieux et prestataires.'],
@@ -80,6 +80,7 @@ function effectiveStatus(doc) {
 async function loadData({ quiet = false } = {}) {
   if (!quiet) setSync('loading');
   try {
+    const preservedForecast = (state.forecastDirty || state.forecastSaving) ? state.forecast : null;
     const queries = await Promise.all([
       db.from('contacts').select('*').order('updated_at', { ascending: false }),
       db.from('prestations').select('*').order('active', { ascending: false }).order('name'),
@@ -97,8 +98,12 @@ async function loadData({ quiet = false } = {}) {
     [state.contacts, state.services, state.documents, state.lines, state.events, state.eventTasks, state.materials] = queries.slice(0, 7).map(result => result.data || []);
     state.settings = queries[7].data || {};
     state.strategic = queries[8].data?.data?.business_data || {};
-    state.forecast = normalizeForecast(queries[9].data?.data);
-    state.forecastScenario = state.forecast.activeScenario;
+    if (preservedForecast) {
+      state.forecast = preservedForecast;
+    } else {
+      state.forecast = normalizeForecast(queries[9].data?.data);
+      state.forecastScenario = state.forecast.activeScenario;
+    }
     state.documents.forEach(doc => {
       doc.lines = state.lines.filter(line => line.document_id === doc.id).sort((a, b) => a.position - b.position);
       doc.contact = state.contacts.find(contact => contact.id === doc.contact_id) || null;
@@ -531,8 +536,8 @@ function renderForecast() {
   $('#forecastMonthInputs').innerHTML = forecastMonths.map((month, index) => `<label><span>${month}</span><input type="number" min="0" step="1" value="${model.monthlyEvents[index]}" data-forecast-month="${index}" aria-label="Événements en ${month}"></label>`).join('');
   renderForecastExpenses();
   renderForecastInvestments();
-  $('#forecastSaveState').textContent = 'À jour';
-  $('#forecastSaveState').classList.remove('dirty');
+  $('#forecastSaveState').textContent = state.forecastDirty ? 'Modifications en attente de sauvegarde' : 'À jour';
+  $('#forecastSaveState').classList.toggle('dirty', state.forecastDirty);
   calculateForecast();
 }
 
@@ -563,9 +568,17 @@ function readForecastInputs() {
 }
 
 function markForecastDirty() {
+  state.forecastDirty = true;
+  state.forecastRevision += 1;
   const status = $('#forecastSaveState');
-  status.textContent = 'Modifications non enregistrées';
+  status.textContent = 'Sauvegarde automatique…';
   status.classList.add('dirty');
+  scheduleForecastSave();
+}
+
+function scheduleForecastSave(delay = 900) {
+  clearTimeout(state.forecastSaveTimer);
+  state.forecastSaveTimer = setTimeout(() => saveForecast(), delay);
 }
 
 function addForecastExpense() {
@@ -662,17 +675,44 @@ function renderForecastChart(rows) {
   }).join('');
 }
 
-async function saveForecast() {
+async function saveForecast({ notify = false } = {}) {
+  clearTimeout(state.forecastSaveTimer);
+  if (state.forecastSaving) {
+    scheduleForecastSave(700);
+    return;
+  }
   readForecastInputs();
-  const { data: sessionData } = await db.auth.getSession();
-  const userId = sessionData.session?.user?.id;
-  if (!userId) return toast('Session expirée. Reconnecte-toi.', true);
+  const revision = state.forecastRevision;
+  const payload = JSON.parse(JSON.stringify(state.forecast));
+  state.forecastSaving = true;
+  $('#forecastSaveState').textContent = 'Enregistrement…';
   setSync('loading');
-  const { error } = await db.from('forecast_settings').upsert({ id: 1, data: state.forecast, updated_by: userId, updated_at: new Date().toISOString() });
-  if (error) return handleError(error);
-  $('#forecastSaveState').textContent = 'Enregistré et partagé';
-  $('#forecastSaveState').classList.remove('dirty');
-  setSync('ok'); toast('Prévisionnel enregistré pour Maxime et Paul.');
+  const { data: userData, error: userError } = await db.auth.getUser();
+  const userId = userData.user?.id;
+  if (userError || !userId) {
+    state.forecastSaving = false;
+    state.forecastDirty = true;
+    $('#forecastSaveState').textContent = 'Sauvegarde impossible';
+    return handleError(userError || new Error('Session expirée. Reconnecte-toi.'));
+  }
+  const { error } = await db.from('forecast_settings').upsert({ id: 1, data: payload, updated_by: userId, updated_at: new Date().toISOString() });
+  state.forecastSaving = false;
+  if (error) {
+    state.forecastDirty = true;
+    $('#forecastSaveState').textContent = 'Sauvegarde à réessayer';
+    return handleError(error);
+  }
+  if (revision === state.forecastRevision) {
+    state.forecastDirty = false;
+    $('#forecastSaveState').textContent = 'Enregistré automatiquement';
+    $('#forecastSaveState').classList.remove('dirty');
+  } else {
+    state.forecastDirty = true;
+    $('#forecastSaveState').textContent = 'Sauvegarde automatique…';
+    scheduleForecastSave();
+  }
+  setSync('ok');
+  if (notify) toast('Prévisionnel enregistré pour Maxime et Paul.');
 }
 
 function handleError(error, friendly = '') {
@@ -742,7 +782,7 @@ function bindEvents() {
   $('#documentForm').addEventListener('submit', saveDocument); $('#deleteDocumentBtn').addEventListener('click', deleteDocument); $('#convertDocumentBtn').addEventListener('click', convertDocument); $('#pdfDocumentBtn').addEventListener('click', () => { const doc = state.documents.find(item => item.id === state.editingDocument); if (doc) generatePdf(doc); });
   $('#eventForm').addEventListener('submit', saveEvent); $('#addTaskBtn').addEventListener('click', () => addEventTask());
   $('#catalogBtn').addEventListener('click', openCatalog); $('#freeLineBtn').addEventListener('click', () => addDocumentLine()); $('#settingsForm').addEventListener('submit', saveSettings);
-  $('#saveForecastBtn').addEventListener('click', saveForecast);
+  $('#saveForecastBtn').addEventListener('click', () => saveForecast({ notify: true }));
   $('#addForecastExpenseBtn').addEventListener('click', addForecastExpense);
   $('#addForecastInvestmentBtn').addEventListener('click', addForecastInvestment);
   $('#forecastScenarios').addEventListener('click', event => { const button = event.target.closest('button[data-scenario]'); if (!button || button.dataset.scenario === state.forecastScenario) return; readForecastInputs(); state.forecastScenario = button.dataset.scenario; state.forecast.activeScenario = state.forecastScenario; renderForecast(); markForecastDirty(); });
