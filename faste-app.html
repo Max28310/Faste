@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07111f"><title>FASTE — Gestion</title>
-  <link rel="stylesheet" href="faste.css?v=20260908-3">
+  <link rel="stylesheet" href="faste.css?v=20260910-1">
 </head>
 <body>
 <div class="app-shell">
@@ -17,7 +17,7 @@
       <button class="nav-link" data-page="prestations"><span>✦</span> Prestations</button>
       <button class="nav-link" data-page="materials"><span>▤</span> Matériel</button>
       <div class="nav-separator"><span>Pilotage</span></div>
-      <button class="nav-link secondary" data-page="strategy"><span>◇</span> Pilotage stratégique</button>
+      <button class="nav-link secondary" data-page="strategy"><span>◇</span> Prévisionnel</button>
       <div class="nav-spacer"></div>
       <button class="nav-link secondary" data-page="settings"><span>⚙</span> Paramètres</button>
       <button class="nav-link secondary" id="logoutBtn"><span>↪</span> Déconnexion</button>
@@ -58,9 +58,37 @@
       </section>
 
       <section class="page" id="page-strategy">
-        <div class="strategy-hero"><span class="eyebrow">PILOTAGE STRATÉGIQUE</span><h2>Valider, vendre, rentabiliser, structurer.</h2><p>Les éléments du business plan historique sont conservés ici, sans encombrer l’utilisation quotidienne.</p></div>
-        <div class="strategy-grid"><article class="panel"><h3>Positionnement</h3><p>Production événementielle premium : musique, ambiance, technique, accompagnement et esthétique.</p></article><article class="panel"><h3>Territoire</h3><p>Orléans → Loiret → Val de Loire → Sologne, puis extension progressive selon la demande.</p></article><article class="panel"><h3>Priorité</h3><p>Obtenir des ventes réelles, mesurer les marges et développer le réseau de lieux et partenaires.</p></article></div>
-        <article class="panel simulator"><div class="panel-head"><div><h2>Simulateur rapide</h2><p>Hypothèses stratégiques historiques, toujours modifiables dans Supabase.</p></div></div><div class="sim-grid"><label>Événements / mois<input id="simEvents" type="number" min="0"></label><label>Panier moyen HT<input id="simPrice" type="number" min="0"></label><label>Coût variable / événement<input id="simVariable" type="number" min="0"></label><label>Charges fixes / mois<input id="simFixed" type="number" min="0"></label></div><div class="sim-results"><div><span>CA mensuel HT</span><strong id="simRevenue">0 €</strong></div><div><span>Marge estimée</span><strong id="simMargin">0 €</strong></div></div></article>
+        <div class="forecast-toolbar"><div><span class="eyebrow">SIMULATEUR PARTAGÉ</span><div class="scenario-tabs" id="forecastScenarios"><button data-scenario="prudent">Prudent</button><button class="active" data-scenario="realistic">Réaliste</button><button data-scenario="ambitious">Ambitieux</button></div></div><div class="forecast-toolbar-actions"><label>Exercice<input id="forecastYear" type="number" min="2024" max="2100"></label><button class="btn primary" id="saveForecastBtn" type="button">Enregistrer le prévisionnel</button></div></div>
+
+        <div class="forecast-kpis">
+          <article class="forecast-kpi"><span>CA prévisionnel HT</span><strong id="forecastRevenue">0 €</strong><small id="forecastRevenueActual">Réalisé : 0 €</small></article>
+          <article class="forecast-kpi"><span>Marge brute</span><strong id="forecastGrossMargin">0 €</strong><small id="forecastMarginRate">0 % du CA</small></article>
+          <article class="forecast-kpi"><span>Résultat estimé</span><strong id="forecastResult">0 €</strong><small>Avant investissements</small></article>
+          <article class="forecast-kpi"><span>Trésorerie finale</span><strong id="forecastCash">0 €</strong><small id="forecastCashAlert">Après investissements</small></article>
+          <article class="forecast-kpi"><span>Seuil de rentabilité</span><strong id="forecastBreakEven">—</strong><small>Événements nécessaires</small></article>
+        </div>
+
+        <div class="forecast-layout">
+          <article class="panel forecast-main-panel"><div class="panel-head"><div><h2>Hypothèses du scénario</h2><p>Tous les montants sont hors taxes. Aucun chiffre n’est imposé.</p></div><span class="forecast-save-state" id="forecastSaveState">Non enregistré</span></div><div class="forecast-input-grid">
+            <label>Panier moyen par événement<input id="forecastBasket" type="number" min="0" step="50" value="0"><small>Prix moyen facturé HT</small></label>
+            <label>Coût variable par événement<input id="forecastVariable" type="number" min="0" step="10" value="0"><small>Transport, consommables, renfort…</small></label>
+            <label>Trésorerie de départ<input id="forecastOpeningCash" type="number" step="100" value="0"><small>Solde disponible au 1er janvier</small></label>
+            <label>Provision impôts / cotisations<input id="forecastTaxRate" type="number" min="0" max="100" step="1" value="0"><small>Pourcentage du résultat positif</small></label>
+            <label>Rémunération Maxime / mois<input id="forecastMaximePay" type="number" min="0" step="100" value="0"><small>Coût total supporté par FASTE</small></label>
+            <label>Rémunération Paul / mois<input id="forecastPaulPay" type="number" min="0" step="100" value="0"><small>Coût total supporté par FASTE</small></label>
+          </div><div class="forecast-section-head"><div><h3>Événements prévus par mois</h3><p>Ajustez la saisonnalité réelle de votre activité.</p></div><strong id="forecastEventTotal">0 événement</strong></div><div class="month-input-grid" id="forecastMonthInputs"></div></article>
+
+          <article class="panel forecast-reality"><div class="panel-head"><div><h2>Activité réelle</h2><p>Données issues automatiquement des documents FASTE.</p></div></div><div class="reality-list"><div><span>CA facturé HT</span><strong id="actualInvoiced">0 €</strong></div><div><span>CA signé HT</span><strong id="actualSigned">0 €</strong></div><div><span>À encaisser TTC</span><strong id="actualOutstanding">0 €</strong></div><div><span>Événements confirmés</span><strong id="actualAcceptedEvents">0</strong></div></div><div class="forecast-progress-wrap"><div><span>Objectif annuel facturé</span><strong id="actualProgressLabel">0 %</strong></div><div class="forecast-progress"><span id="actualProgressBar"></span></div></div><p class="forecast-help">La marge réelle sera calculable lorsque les dépenses réalisées seront enregistrées dans FASTE.</p></article>
+        </div>
+
+        <div class="forecast-two-columns">
+          <article class="panel"><div class="panel-head"><div><h2>Charges fixes</h2><p>Abonnements, assurance, banque, comptabilité, local…</p></div><button class="btn ghost" id="addForecastExpenseBtn" type="button">＋ Ajouter</button></div><div class="forecast-lines" id="forecastExpenses"></div><div class="forecast-list-total"><span>Total annuel</span><strong id="forecastExpenseTotal">0 €</strong></div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Investissements</h2><p>Matériel, véhicule, communication ou autre achat ponctuel.</p></div><button class="btn ghost" id="addForecastInvestmentBtn" type="button">＋ Ajouter</button></div><div class="forecast-lines" id="forecastInvestments"></div><div class="forecast-list-total"><span>Total prévu</span><strong id="forecastInvestmentTotal">0 €</strong></div></article>
+        </div>
+
+        <article class="panel forecast-chart-panel"><div class="panel-head"><div><h2>Évolution du chiffre d’affaires</h2><p id="forecastChartSubtitle">Prévisionnel et facturation réelle par mois.</p></div><div class="chart-mode" id="forecastChartMode"><button class="active" data-mode="monthly">Mensuel</button><button data-mode="cumulative">Cumul</button></div></div><div class="chart-legend"><span><i class="forecast-color"></i>Prévisionnel</span><span><i class="actual-color"></i>Réalisé</span></div><div class="forecast-chart" id="forecastChart"></div></article>
+
+        <article class="panel forecast-table-panel"><div class="panel-head"><div><h2>Prévisionnel mois par mois</h2><p>Lecture complète du CA jusqu’à la trésorerie.</p></div></div><div class="table-wrap"><table class="forecast-table"><thead><tr><th>Mois</th><th>Événements</th><th>CA HT</th><th>Coûts variables</th><th>Charges fixes</th><th>Rémunérations</th><th>Résultat</th><th>Investissements</th><th>Trésorerie</th></tr></thead><tbody id="forecastTableBody"></tbody></table></div></article>
       </section>
 
       <section class="page" id="page-settings">
@@ -85,5 +113,5 @@
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="faste-auth.js?v=20260908-3"></script><script src="faste.js?v=20260908-3"></script>
+<script src="faste-auth.js?v=20260910-1"></script><script src="faste.js?v=20260910-1"></script>
 </body></html>
