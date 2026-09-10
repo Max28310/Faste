@@ -489,6 +489,7 @@ async function saveSettings(event) {
 }
 
 const forecastMonths = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+const forecastContributionDefaults = { sas: 82, sarl: 45 };
 
 function emptyForecastScenario(source = {}) {
   return {
@@ -506,9 +507,16 @@ function emptyForecastScenario(source = {}) {
 
 function normalizeForecast(data = {}) {
   const source = data && typeof data === 'object' ? data : {};
+  const legalForm = ['sas', 'sarl'].includes(source.legalForm) ? source.legalForm : 'sas';
+  const savedRates = source.contributionRates && typeof source.contributionRates === 'object' ? source.contributionRates : {};
   return {
-    version: 1,
+    version: 2,
     year: Math.min(2100, Math.max(2024, Math.round(num(source.year) || new Date().getFullYear()))),
+    legalForm,
+    contributionRates: {
+      sas: savedRates.sas === undefined ? forecastContributionDefaults.sas : Math.min(200, Math.max(0, num(savedRates.sas))),
+      sarl: savedRates.sarl === undefined ? forecastContributionDefaults.sarl : Math.min(200, Math.max(0, num(savedRates.sarl)))
+    },
     activeScenario: ['prudent', 'realistic', 'ambitious'].includes(source.activeScenario) ? source.activeScenario : 'realistic',
     scenarios: {
       prudent: emptyForecastScenario(source.scenarios?.prudent),
@@ -531,6 +539,9 @@ function renderForecast() {
   $('#forecastVariable').value = model.variableCost;
   $('#forecastOpeningCash').value = model.openingCash;
   $('#forecastTaxRate').value = model.taxRate;
+  $('#forecastLegalForm').value = state.forecast.legalForm;
+  $('#forecastContributionRate').value = state.forecast.contributionRates[state.forecast.legalForm];
+  updateForecastContributionHelp();
   $('#forecastMaximePay').value = model.maximePay;
   $('#forecastPaulPay').value = model.paulPay;
   $('#forecastMonthInputs').innerHTML = forecastMonths.map((month, index) => `<label><span>${month}</span><input type="number" min="0" step="1" value="${model.monthlyEvents[index]}" data-forecast-month="${index}" aria-label="Événements en ${month}"></label>`).join('');
@@ -557,6 +568,9 @@ function readForecastInputs() {
   model.variableCost = num($('#forecastVariable').value);
   model.openingCash = num($('#forecastOpeningCash').value);
   model.taxRate = Math.min(100, Math.max(0, num($('#forecastTaxRate').value)));
+  const legalForm = ['sas', 'sarl'].includes($('#forecastLegalForm').value) ? $('#forecastLegalForm').value : 'sas';
+  state.forecast.legalForm = legalForm;
+  state.forecast.contributionRates[legalForm] = Math.min(200, Math.max(0, num($('#forecastContributionRate').value)));
   model.maximePay = num($('#forecastMaximePay').value);
   model.paulPay = num($('#forecastPaulPay').value);
   model.monthlyEvents = $$('[data-forecast-month]').map(input => Math.max(0, Math.round(num(input.value))));
@@ -565,6 +579,15 @@ function readForecastInputs() {
   state.forecast.year = Math.min(2100, Math.max(2024, Math.round(num($('#forecastYear').value) || new Date().getFullYear())));
   state.forecast.activeScenario = state.forecastScenario;
   return model;
+}
+
+function updateForecastContributionHelp() {
+  const legalForm = state.forecast?.legalForm || 'sas';
+  const help = $('#forecastContributionHelp');
+  if (!help) return;
+  help.textContent = legalForm === 'sas'
+    ? 'Président et DG assimilés salariés — estimation ajustable'
+    : 'Deux cogérants majoritaires TNS — estimation ajustable';
 }
 
 function markForecastDirty() {
@@ -613,7 +636,10 @@ function calculateForecast() {
   if (!state.forecast || !$('#forecastBasket')) return;
   const model = readForecastInputs();
   const fixedMonthly = model.expenses.reduce((sum, item) => sum + num(item.monthlyAmount), 0);
-  const payMonthly = model.maximePay + model.paulPay;
+  const netPayMonthly = model.maximePay + model.paulPay;
+  const contributionRate = state.forecast.contributionRates[state.forecast.legalForm] / 100;
+  const contributionsMonthly = netPayMonthly * contributionRate;
+  const payMonthly = netPayMonthly + contributionsMonthly;
   const actual = forecastActuals(state.forecast.year);
   let cash = model.openingCash;
   const rows = forecastMonths.map((month, index) => {
@@ -646,6 +672,9 @@ function calculateForecast() {
   $('#forecastEventTotal').textContent = `${eventTotal} événement${eventTotal > 1 ? 's' : ''}`;
   $('#forecastExpenseTotal').textContent = euro(fixedMonthly * 12);
   $('#forecastInvestmentTotal').textContent = euro(investments);
+  $('#forecastNetPay').textContent = `${euro(netPayMonthly)} / mois`;
+  $('#forecastContributions').textContent = `${euro(contributionsMonthly)} / mois`;
+  $('#forecastTotalPayCost').textContent = `${euro(payMonthly)} / mois`;
   $('#actualInvoiced').textContent = euro(actual.invoiced);
   $('#actualSigned').textContent = euro(actual.signed);
   $('#actualOutstanding').textContent = euro(actual.outstanding);
@@ -786,6 +815,15 @@ function bindEvents() {
   $('#addForecastExpenseBtn').addEventListener('click', addForecastExpense);
   $('#addForecastInvestmentBtn').addEventListener('click', addForecastInvestment);
   $('#forecastScenarios').addEventListener('click', event => { const button = event.target.closest('button[data-scenario]'); if (!button || button.dataset.scenario === state.forecastScenario) return; readForecastInputs(); state.forecastScenario = button.dataset.scenario; state.forecast.activeScenario = state.forecastScenario; renderForecast(); markForecastDirty(); });
+  const switchForecastLegalForm = event => {
+    const previousForm = state.forecast.legalForm;
+    state.forecast.contributionRates[previousForm] = Math.min(200, Math.max(0, num($('#forecastContributionRate').value)));
+    state.forecast.legalForm = event.target.value === 'sarl' ? 'sarl' : 'sas';
+    $('#forecastContributionRate').value = state.forecast.contributionRates[state.forecast.legalForm];
+    updateForecastContributionHelp();
+  };
+  $('#forecastLegalForm').addEventListener('input', switchForecastLegalForm);
+  $('#forecastLegalForm').addEventListener('change', switchForecastLegalForm);
   $('#forecastChartMode').addEventListener('click', event => { const button = event.target.closest('button[data-mode]'); if (!button) return; state.forecastChartMode = button.dataset.mode; $$('#forecastChartMode button').forEach(item => item.classList.toggle('active', item === button)); calculateForecast(); });
   $('#page-strategy').addEventListener('input', event => { if (!event.target.matches('input,select')) return; calculateForecast(); markForecastDirty(); });
   $('#page-strategy').addEventListener('change', event => { if (!event.target.matches('input,select')) return; calculateForecast(); markForecastDirty(); });
