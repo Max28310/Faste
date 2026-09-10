@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07111f"><title>FASTE — Gestion</title>
-  <link rel="stylesheet" href="faste.css?v=20260910-3">
+  <link rel="stylesheet" href="faste.css?v=20260910-4">
 </head>
 <body>
 <div class="app-shell">
@@ -73,9 +73,12 @@
             <label>Panier moyen par événement<input id="forecastBasket" type="number" min="0" step="50" value="0"><small>Prix moyen facturé HT</small></label>
             <label>Coût variable par événement<input id="forecastVariable" type="number" min="0" step="10" value="0"><small>Transport, consommables, renfort…</small></label>
             <label>Trésorerie de départ<input id="forecastOpeningCash" type="number" step="100" value="0"><small>Solde disponible au 1er janvier</small></label>
-            <label>Provision impôts / cotisations<input id="forecastTaxRate" type="number" min="0" max="100" step="1" value="0"><small>Pourcentage du résultat positif</small></label>
-            <label>Rémunération Maxime / mois<input id="forecastMaximePay" type="number" min="0" step="100" value="0"><small>Coût total supporté par FASTE</small></label>
-            <label>Rémunération Paul / mois<input id="forecastPaulPay" type="number" min="0" step="100" value="0"><small>Coût total supporté par FASTE</small></label>
+            <label>Provision impôt sur le résultat<input id="forecastTaxRate" type="number" min="0" max="100" step="1" value="0"><small>Les cotisations sur les rémunérations sont calculées séparément</small></label>
+            <label>Forme juridique simulée<select id="forecastLegalForm"><option value="sas">SAS</option><option value="sarl">SARL — cogérance majoritaire</option></select><small>Modifiable à tout moment sans perdre le scénario</small></label>
+            <label>Taux de cotisations estimé<input id="forecastContributionRate" type="number" min="0" max="200" step="1" value="82"><small id="forecastContributionHelp">Estimation ajustable à confirmer avec l’expert-comptable</small></label>
+            <label>Net mensuel Maxime<input id="forecastMaximePay" type="number" min="0" step="100" value="0"><small>Net avant impôt sur le revenu</small></label>
+            <label>Net mensuel Paul<input id="forecastPaulPay" type="number" min="0" step="100" value="0"><small>Net avant impôt sur le revenu</small></label>
+            <div class="forecast-pay-summary" aria-live="polite"><div><span>Net versé aux deux associés</span><strong id="forecastNetPay">0 € / mois</strong></div><div><span>Cotisations estimées</span><strong id="forecastContributions">0 € / mois</strong></div><div><span>Coût total pour FASTE</span><strong id="forecastTotalPayCost">0 € / mois</strong></div></div>
           </div><div class="forecast-section-head"><div><h3>Événements prévus par mois</h3><p>Ajustez la saisonnalité réelle de votre activité.</p></div><strong id="forecastEventTotal">0 événement</strong></div><div class="month-input-grid" id="forecastMonthInputs"></div></article>
 
           <article class="panel forecast-reality"><div class="panel-head"><div><h2>Activité réelle</h2><p>Données issues automatiquement des documents FASTE.</p></div></div><div class="reality-list"><div><span>CA facturé HT</span><strong id="actualInvoiced">0 €</strong></div><div><span>CA signé HT</span><strong id="actualSigned">0 €</strong></div><div><span>À encaisser TTC</span><strong id="actualOutstanding">0 €</strong></div><div><span>Événements confirmés</span><strong id="actualAcceptedEvents">0</strong></div></div><div class="forecast-progress-wrap"><div><span>Objectif annuel facturé</span><strong id="actualProgressLabel">0 %</strong></div><div class="forecast-progress"><span id="actualProgressBar"></span></div></div><p class="forecast-help">La marge réelle sera calculable lorsque les dépenses réalisées seront enregistrées dans FASTE.</p></article>
@@ -113,5 +116,5 @@
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="faste-auth.js?v=20260910-3"></script><script src="faste.js?v=20260910-3"></script>
+<script src="faste-auth.js?v=20260910-4"></script><script src="faste.js?v=20260910-4"></script>
 </body></html>
