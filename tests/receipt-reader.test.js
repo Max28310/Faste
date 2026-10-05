@@ -1,0 +1,5 @@
+const { test } = require('node:test'); const assert = require('node:assert/strict'); const R = require('../receipt-reader.js');
+test('facture française : fournisseur, référence, date, HT, TVA, TTC', () => { const r = R.parse('LOUEUR EXEMPLE\nFacture n° F-2026-1\nDate 05/10/2026\nTotal HT 1 000,00 €\nTotal TVA 200,00 €\nTotal TTC 1 200,00 €'); assert.equal(r.ht, 1000); assert.equal(r.vat, 200); assert.equal(r.ttc, 1200); assert.equal(r.coherent, true); assert.equal(r.reference, 'F-2026-1'); assert.equal(r.document_date, '2026-10-05'); });
+test('le taux TVA ne devient pas son montant', () => { const r = R.parse('Total HT 1.000,00\nTVA 20 % 200,00\nTotal TTC 1.200,00'); assert.equal(r.vat, 200); assert.equal(r.ht, 1000); });
+test('ticket TTC seul : pas de TVA inventée', () => { const r = R.parse('STATION EXEMPLE\nTOTAL A PAYER 60,00 €'); assert.equal(r.ttc, 60); assert.equal(r.ht, null); assert.equal(r.vat, null); });
+test('date impossible et totaux incohérents signalés', () => { const r = R.parse('31/02/2026\nTotal HT 100\nTotal TVA 20\nTotal TTC 140'); assert.equal(r.document_date, null); assert.equal(r.coherent, false); });

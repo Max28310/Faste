@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07111f"><title>FASTE — Gestion</title>
-  <link rel="stylesheet" href="faste.css?v=20260910-4">
+  <link rel="stylesheet" href="faste.css?v=20261005-finance">
 </head>
 <body>
 <div class="app-shell">
@@ -17,6 +17,7 @@
       <button class="nav-link" data-page="prestations"><span>✦</span> Prestations</button>
       <button class="nav-link" data-page="materials"><span>▤</span> Matériel</button>
       <div class="nav-separator"><span>Pilotage</span></div>
+      <button class="nav-link" data-page="finance"><span>€</span> Finances</button>
       <button class="nav-link secondary" data-page="strategy"><span>◇</span> Prévisionnel</button>
       <div class="nav-spacer"></div>
       <button class="nav-link secondary" data-page="settings"><span>⚙</span> Paramètres</button>
@@ -81,7 +82,7 @@
             <div class="forecast-pay-summary" aria-live="polite"><div><span>Net versé aux deux associés</span><strong id="forecastNetPay">0 € / mois</strong></div><div><span>Cotisations estimées</span><strong id="forecastContributions">0 € / mois</strong></div><div><span>Coût total pour FASTE</span><strong id="forecastTotalPayCost">0 € / mois</strong></div></div>
           </div><div class="forecast-section-head"><div><h3>Événements prévus par mois</h3><p>Ajustez la saisonnalité réelle de votre activité.</p></div><strong id="forecastEventTotal">0 événement</strong></div><div class="month-input-grid" id="forecastMonthInputs"></div></article>
 
-          <article class="panel forecast-reality"><div class="panel-head"><div><h2>Activité réelle</h2><p>Données issues automatiquement des documents FASTE.</p></div></div><div class="reality-list"><div><span>CA facturé HT</span><strong id="actualInvoiced">0 €</strong></div><div><span>CA signé HT</span><strong id="actualSigned">0 €</strong></div><div><span>À encaisser TTC</span><strong id="actualOutstanding">0 €</strong></div><div><span>Événements confirmés</span><strong id="actualAcceptedEvents">0</strong></div></div><div class="forecast-progress-wrap"><div><span>Objectif annuel facturé</span><strong id="actualProgressLabel">0 %</strong></div><div class="forecast-progress"><span id="actualProgressBar"></span></div></div><p class="forecast-help">La marge réelle sera calculable lorsque les dépenses réalisées seront enregistrées dans FASTE.</p></article>
+          <article class="panel forecast-reality"><div class="panel-head"><div><h2>Activité réelle</h2><p>Données issues automatiquement des documents FASTE.</p></div></div><div class="reality-list"><div><span>CA facturé HT</span><strong id="actualInvoiced">0 €</strong></div><div><span>CA signé HT</span><strong id="actualSigned">0 €</strong></div><div><span>À encaisser TTC</span><strong id="actualOutstanding">0 €</strong></div><div><span>Événements confirmés</span><strong id="actualAcceptedEvents">0</strong></div></div><div class="forecast-progress-wrap"><div><span>Objectif annuel facturé</span><strong id="actualProgressLabel">0 %</strong></div><div class="forecast-progress"><span id="actualProgressBar"></span></div></div><p class="forecast-help">Consultez Finances pour les marges des événements et les dépenses réellement enregistrées.</p></article>
         </div>
 
         <div class="forecast-two-columns">
@@ -92,6 +93,30 @@
         <article class="panel forecast-chart-panel"><div class="panel-head"><div><h2>Évolution du chiffre d’affaires</h2><p id="forecastChartSubtitle">Prévisionnel et facturation réelle par mois.</p></div><div class="chart-mode" id="forecastChartMode"><button class="active" data-mode="monthly">Mensuel</button><button data-mode="cumulative">Cumul</button></div></div><div class="chart-legend"><span><i class="forecast-color"></i>Prévisionnel</span><span><i class="actual-color"></i>Réalisé</span></div><div class="forecast-chart" id="forecastChart"></div></article>
 
         <article class="panel forecast-table-panel"><div class="panel-head"><div><h2>Prévisionnel mois par mois</h2><p>Lecture complète du CA jusqu’à la trésorerie.</p></div></div><div class="table-wrap"><table class="forecast-table"><thead><tr><th>Mois</th><th>Événements</th><th>CA HT</th><th>Coûts variables</th><th>Charges fixes</th><th>Rémunérations</th><th>Résultat</th><th>Investissements</th><th>Trésorerie</th></tr></thead><tbody id="forecastTableBody"></tbody></table></div></article>
+      </section>
+
+
+      <section class="page" id="page-finance">
+        <p id="financeError" class="finance-notice" role="alert"></p>
+        <div id="financeOverview" class="kpi-grid"></div>
+        <div class="page-actions"><div class="filters pills" id="financeTabs" role="tablist" aria-label="Suivi financier"><button class="active" data-finance-tab="events" role="tab" aria-selected="true">Mes événements</button><button data-finance-tab="expenses" role="tab" aria-selected="false">Mes dépenses</button><button data-finance-tab="money" role="tab" aria-selected="false">Mon argent</button><button data-finance-tab="export" role="tab" aria-selected="false">Export comptable</button></div><button class="btn primary" data-finance-action="expense">＋ Ajouter une dépense</button></div>
+        <div class="finance-view" id="finance-events">
+          <article class="panel"><div class="panel-head"><div><h2>Ce que chaque événement rapporte</h2><p>Devis, factures et paiements repris automatiquement. Ajoutez seulement vos dépenses et les nouveaux paiements.</p></div></div><div class="table-tools"><input class="search" id="financeEventSearch" aria-label="Rechercher un événement financier" placeholder="Rechercher un client ou un événement…"></div><div class="table-wrap"><table><thead><tr><th>Événement / client</th><th>Devis HT</th><th>Facturé HT</th><th>Coûts directs</th><th>Marge € / %</th><th>Encaissé TTC</th><th>À encaisser TTC</th><th>À payer TTC</th><th>Actions</th></tr></thead><tbody id="financeEventsBody"></tbody></table></div><p class="finance-help" id="financeVatWarning"></p></article>
+          <article class="panel"><div class="panel-head"><div><h2>Mes factures clients</h2><p>Un acompte reçu est un paiement partiel de la facture, enregistré une seule fois.</p></div></div><div class="table-wrap"><table><thead><tr><th>Facture / client</th><th>TTC</th><th>Encaissé</th><th>Restant</th><th>Échéance</th><th>Actions</th></tr></thead><tbody id="financeInvoicesBody"></tbody></table></div></article>
+        </div>
+        <div class="finance-view" id="finance-expenses" hidden>
+          <article class="panel"><div class="panel-head"><div><h2>Factures fournisseurs et tickets</h2><p>Rattachez une dépense à un événement, ou choisissez Frais généraux FASTE.</p></div></div><div class="table-tools"><input class="search" id="financeExpenseSearch" aria-label="Rechercher une dépense" placeholder="Fournisseur, référence, catégorie…"></div><div class="table-wrap"><table><thead><tr><th>Fournisseur / référence</th><th>Dossier / nature</th><th>TTC</th><th>À payer le</th><th>Restant</th><th>Justificatifs</th><th>Actions</th></tr></thead><tbody id="financeExpensesBody"></tbody></table></div></article>
+        </div>
+        <div class="finance-view" id="finance-money" hidden>
+          <article class="panel"><div class="panel-head"><div><h2>Mon compte bancaire</h2><p id="financeBalanceLabel"></p></div><button class="btn primary" data-finance-action="balance">Renseigner / actualiser le solde</button></div><p class="finance-help" id="financePersonal"></p><p class="finance-notice" id="financeLegacy" hidden>Des encaissements existaient avant ce module sans date détaillée. Ils sont conservés dans le payé des factures et l’export, mais ne sont pas ajoutés au solde bancaire. Partez d’un relevé vérifié et enregistrez seulement les nouveaux paiements.</p></article>
+          <article class="panel"><div class="panel-head"><div><h2>L’argent prévu sur les 6 prochains mois</h2><p>Solde actuel + factures restant à encaisser − dépenses restant à payer + autres mouvements prévus. Les devis non facturés ne sont pas comptés.</p></div></div><p class="finance-notice" id="financeOverdue"></p><div class="table-wrap"><table><thead><tr><th>Mois</th><th>Entrées prévues</th><th>Sorties prévues</th><th>Solde prévu</th></tr></thead><tbody id="financeForecastBody"></tbody></table></div></article>
+          <details class="panel finance-details"><summary>Comprendre mon BFR estimé</summary><div id="financeBfrDetail" class="finance-help"></div></details>
+          <article class="panel"><div class="panel-head"><div><h2>Autres entrées et sorties</h2><p>Capital, prêts, TVA, impôts et remboursements aux associés.</p></div><button class="btn ghost" data-finance-action="flow">＋ Ajouter un mouvement</button></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Libellé</th><th>Montant signé</th><th>État</th><th>Actions</th></tr></thead><tbody id="financeFlowsBody"></tbody></table></div></article>
+          <details class="panel finance-details"><summary>Historique des paiements clients et fournisseurs</summary><div class="table-wrap"><table><thead><tr><th>Date réelle</th><th>Facture / dépense</th><th>Montant</th><th>Payeur</th><th>Actions</th></tr></thead><tbody id="financePaymentsBody"></tbody></table></div></details>
+        </div>
+        <div class="finance-view" id="finance-export" hidden>
+          <article class="panel"><div class="panel-head"><div><h2>Préparer le dossier pour l’expert-comptable</h2><p>Une archive avec Excel, CSV, factures clients PDF et justificatifs originaux. Sélectionnez la période.</p></div></div><form id="financeExportForm" class="finance-export-form"><label>Du<input type="date" name="from" required></label><label>Au<input type="date" name="to" required></label><button class="btn primary" id="financeExportBtn">Télécharger le dossier comptable</button></form><p id="financeExportStatus" class="finance-help" role="status"></p><p class="finance-help">Factures et dépenses par date de document ; paiements par date réelle. Les dossiers liés hors période sont inclus séparément. La TVA à confirmer et les annulations restent visibles. Cet export prépare le travail comptable ; ce n’est pas un FEC ni une déclaration.</p></article>
+        </div>
       </section>
 
       <section class="page" id="page-settings">
@@ -113,8 +138,11 @@
 
 <div class="modal" id="eventModal" aria-hidden="true"><div class="modal-card document-card"><div class="modal-head sticky"><div><span class="eyebrow">PENSE-BÊTE OPÉRATIONNEL</span><h2 id="eventModalTitle">Fiche événement</h2><p id="eventModalSubtitle" class="modal-subtitle"></p></div><button class="icon-btn" data-close="eventModal">✕</button></div><form id="eventForm"><div id="eventFields" class="form-grid"></div><div class="event-detail-grid"><div><div class="lines-head"><div><h3>Checklist</h3><p>Préremplie depuis le devis, puis entièrement adaptable.</p></div><button class="btn ghost" id="addTaskBtn" type="button">＋ Ajouter</button></div><div class="task-list" id="eventTaskList"></div></div><div><div class="lines-head"><div><h3>Notes du jour J</h3><p>Uniquement ce qui peut éviter un oubli.</p></div></div><div id="eventNotes" class="event-notes"></div></div></div></form><div class="modal-actions sticky-bottom"><span></span><span></span><button class="btn ghost" type="button" data-close="eventModal">Fermer</button><button class="btn primary" form="eventForm">Enregistrer la fiche</button></div></div></div>
 
+<div class="modal" id="financeModal" aria-hidden="true"><div class="modal-card"><div class="modal-head"><div><span class="eyebrow">FINANCES FASTE</span><h2 id="financeModalTitle"></h2></div><button class="icon-btn" data-close="financeModal" aria-label="Fermer">✕</button></div><form id="financeForm" class="form-grid"></form><p id="financeFormError" class="finance-notice" role="alert"></p><div class="modal-actions"><span></span><span></span><button class="btn ghost" type="button" data-close="financeModal">Fermer</button><button class="btn primary" id="financeSaveBtn" form="financeForm">Enregistrer</button></div></div></div>
+
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="faste-auth.js?v=20260910-4"></script><script src="faste.js?v=20260910-4"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script><script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="faste-auth.js?v=20260910-4"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script><script src="receipt-reader.js?v=20261005-1"></script><script src="finance-core.js?v=20261005-1"></script><script src="finance-ui.js?v=20261005-1"></script><script src="faste.js?v=20261005-finance"></script>
 </body></html>

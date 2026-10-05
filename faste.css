@@ -32,3 +32,20 @@
 .forecast-pay-summary span{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .forecast-pay-summary strong{display:block;margin-top:6px;font-size:15px}
 @media(max-width:600px){.forecast-pay-summary{grid-template-columns:1fr}}
+/* Finances : mêmes composants que Gestion FASTE, détails secondaires repliés. */
+[hidden],.finance-view[hidden]{display:none!important}
+.finance-view{display:grid;gap:22px}
+.finance-help{padding:0 24px 20px;color:var(--muted,#7c8a9b);font-size:13px;line-height:1.7}
+.finance-notice{margin:12px 24px;padding:14px 18px;background:rgba(195,159,94,.09);border:1px solid rgba(195,159,94,.3);border-radius:10px;font-size:13px;line-height:1.7}
+.finance-notice:empty{display:none}
+.finance-details summary{padding:22px 24px;cursor:pointer;font-weight:600}
+.finance-export-form{display:flex;gap:18px;align-items:end;flex-wrap:wrap;padding:0 24px 24px}
+.finance-export-form label{display:grid;gap:8px}
+.finance-export-form input{background:var(--surface,#142033);color:inherit;border:1px solid #344354;border-radius:8px;padding:12px;color-scheme:dark}
+.finance-file-list{display:flex;flex-wrap:wrap;gap:10px}
+.finance-form-note{font-size:12px;line-height:1.7;color:var(--muted,#8996a8)}
+#financeTabs{flex-wrap:wrap}
+#page-finance table td .mini-btn{margin:3px 0}
+#financeModal .field strong{padding:12px 0}
+#financeModal input:read-only{opacity:.7}
+@media(max-width:700px){.finance-export-form{display:grid;grid-template-columns:1fr;width:100%}.finance-export-form button{width:100%}#page-finance .page-actions{align-items:stretch}#page-finance .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-help{padding:0 16px 16px}}

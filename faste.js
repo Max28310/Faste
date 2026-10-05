@@ -9,6 +9,7 @@ const pageMeta = {
   events: ['Événements', 'Pense-bêtes opérationnels générés depuis les devis acceptés.'],
   prestations: ['Prestations', 'Catalogue de services et tarifs par défaut.'],
   materials: ['Matériel', 'Inventaire partagé et toujours à jour.'],
+  finance: ['Finances', 'Mes événements, mes dépenses et mon argent.'],
   strategy: ['Prévisionnel', 'Simuler, comparer et piloter la trajectoire financière de FASTE.'],
   settings: ['Paramètres', 'Informations légales et coordonnées de l’entreprise.']
 };
@@ -77,18 +78,28 @@ function effectiveStatus(doc) {
   return doc.status;
 }
 
+async function readAllRows(query) {
+  const data = [];
+  for (let offset = 0; ; offset += 500) {
+    const result = await query.range(offset, offset + 499);
+    if (result.error) return result;
+    data.push(...result.data);
+    if (result.data.length < 500) return { data, error: null };
+  }
+}
+
 async function loadData({ quiet = false } = {}) {
   if (!quiet) setSync('loading');
   try {
     const preservedForecast = (state.forecastDirty || state.forecastSaving) ? state.forecast : null;
     const queries = await Promise.all([
-      db.from('contacts').select('*').order('updated_at', { ascending: false }),
-      db.from('prestations').select('*').order('active', { ascending: false }).order('name'),
-      db.from('documents').select('*').order('created_at', { ascending: false }),
-      db.from('document_lines').select('*').order('position'),
-      db.from('event_sheets').select('*').order('event_date', { ascending: true, nullsFirst: false }),
-      db.from('event_tasks').select('*').order('position'),
-      db.from('materiel').select('*').order('nom'),
+      readAllRows(db.from('contacts').select('*').order('updated_at', { ascending: false }).order('id')),
+      readAllRows(db.from('prestations').select('*').order('active', { ascending: false }).order('name').order('id')),
+      readAllRows(db.from('documents').select('*').order('created_at', { ascending: false }).order('id')),
+      readAllRows(db.from('document_lines').select('*').order('position').order('id')),
+      readAllRows(db.from('event_sheets').select('*').order('event_date', { ascending: true, nullsFirst: false }).order('id')),
+      readAllRows(db.from('event_tasks').select('*').order('position').order('id')),
+      readAllRows(db.from('materiel').select('*').order('nom').order('id')),
       db.from('company_settings').select('*').eq('id', 1).maybeSingle(),
       db.from('faste_data').select('data').eq('id', 1).maybeSingle(),
       db.from('forecast_settings').select('*').eq('id', 1).maybeSingle()
@@ -113,12 +124,15 @@ async function loadData({ quiet = false } = {}) {
       event.quote = state.documents.find(doc => doc.id === event.source_quote_id) || null;
       event.contact = state.contacts.find(contact => contact.id === event.contact_id) || null;
     });
+    if (typeof FinanceUI !== 'undefined') await FinanceUI.load();
     renderAll();
     setSync('ok');
+    return true;
   } catch (error) {
     console.error(error);
     setSync('error');
     if (!quiet) toast(`Chargement impossible : ${error.message}`, true);
+    return false;
   }
 }
 
@@ -131,6 +145,7 @@ function renderAll() {
   renderMaterials();
   renderSettings();
   renderForecast();
+  if (typeof FinanceUI !== 'undefined') FinanceUI.render();
 }
 
 function renderDashboard() {
@@ -236,7 +251,9 @@ function renderDocumentFields(doc = {}) {
   $('#documentEyebrow').textContent = type.toUpperCase();
   $('#remainingRow').classList.toggle('hidden', type !== 'facture');
   $('#documentForm [name="type"]')?.addEventListener('change', event => { renderDocumentFields({ ...readDocumentHeader(), type: event.target.value, status: event.target.value === 'facture' ? 'unpaid' : 'draft' }); calculateDocument(); });
-  $('#documentForm [name="paid_amount"]')?.addEventListener('input', calculateDocument);
+  const paidInput = $('#documentForm [name="paid_amount"]');
+  if (paidInput) { paidInput.readOnly = true; paidInput.title = 'Paiements datés dans Finances'; }
+  if (type === 'facture' && doc.id) $('#documentFields').insertAdjacentHTML('beforeend', `<div class="field full"><button class="btn ghost" type="button" data-finance-action="receipt" data-id="${doc.id}">Enregistrer un encaissement / acompte</button><small>Le montant encaissé est calculé depuis les paiements datés dans Finances.</small></div>`);
 }
 
 function readDocumentHeader() {
@@ -748,7 +765,7 @@ function handleError(error, friendly = '') {
   console.error(error); setSync('error'); toast(friendly || error.message || 'Une erreur est survenue.', true);
 }
 
-function generatePdf(doc) {
+function generatePdf(doc, { download = true } = {}) {
   if (!window.jspdf?.jsPDF) return toast('Le module PDF ne répond pas.', true);
   const { jsPDF } = window.jspdf, pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const company = state.settings || {}, contact = doc.contact || state.contacts.find(item => item.id === doc.contact_id) || {}, lines = doc.lines || [], W = 210, H = 297, left = 15, right = 195, bottom = 268;
@@ -772,7 +789,8 @@ function generatePdf(doc) {
   if (doc.notes) { const noteRows = pdf.splitTextToSize(doc.notes, 168), h = Math.max(18, noteRows.length * 4 + 10); if (y + h > bottom) y = nextPage(); text('NOTES & CONDITIONS', left, y, 8, 'bold'); y += 6; pdf.setFillColor(...colors.soft); pdf.roundedRect(left, y, 180, h, 3, 3, 'F'); text(noteRows, 21, y + 7, 8); y += h + 8; }
   if (company.iban) { if (y + 14 > bottom) y = nextPage(); text(`IBAN : ${company.iban}${company.bic ? ` · BIC : ${company.bic}` : ''}`, left, y, 7.2, 'normal', colors.muted); }
   for (let page = 1; page <= pdf.getNumberOfPages(); page++) { pdf.setPage(page); footer(page); }
-  pdf.save(`${doc.number || 'FASTE-document'}.pdf`);
+  if (download) pdf.save(`${doc.number || 'FASTE-document'}.pdf`);
+  return pdf.output('arraybuffer');
 }
 
 function navigate(page) {
@@ -835,7 +853,7 @@ async function init() {
   const session = await fasteAuth.requireSession(); if (!session) return;
   $('#userEmail').textContent = session.user.email || '';
   fasteAuth.client.auth.onAuthStateChange((event, activeSession) => { if (event === 'SIGNED_OUT' || !activeSession) location.replace('faste-login.html'); });
-  bindEvents(); navigate(location.hash.slice(1) || 'dashboard'); await loadData(); setInterval(() => loadData({ quiet: true }), 60000);
+  bindEvents(); if (typeof FinanceUI !== 'undefined') FinanceUI.bind(); navigate(location.hash.slice(1) || 'dashboard'); await loadData(); setInterval(() => loadData({ quiet: true }), 60000);
 }
 
 init().catch(error => handleError(error));
