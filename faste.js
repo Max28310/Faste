@@ -7,6 +7,7 @@ const pageMeta = {
   crm: ['Clients & contacts', 'Clients, prospects, lieux et prestataires.'],
   documents: ['Devis & Factures', 'Créer, suivre, convertir et encaisser.'],
   events: ['Événements', 'Un dossier pour préparer chaque événement et suivre ce qu’il rapporte.'],
+  planning: ['Planning & disponibilités', 'Matériel, équipes et prestataires affectés aux événements.'],
   prestations: ['Prestations', 'Catalogue de services et tarifs par défaut.'],
   materials: ['Matériel', 'Inventaire partagé et toujours à jour.'],
   finance: ['Suivi financier détaillé', 'Retrouvez les tableaux et les réglages complémentaires.'],
@@ -128,7 +129,7 @@ async function loadData({ quiet = false } = {}) {
       event.quote = state.documents.find(doc => doc.id === event.source_quote_id) || null;
       event.contact = state.contacts.find(contact => contact.id === event.contact_id) || null;
     });
-    if (typeof FinanceUI !== 'undefined') await FinanceUI.load();
+    await Promise.all([typeof FinanceUI !== 'undefined' ? FinanceUI.load() : Promise.resolve(), typeof PlanningUI !== 'undefined' ? PlanningUI.load() : Promise.resolve()]);
     renderAll();
     setSync('ok');
     return true;
@@ -150,6 +151,7 @@ function renderAll() {
   renderSettings();
   renderForecast();
   if (typeof FinanceUI !== 'undefined') FinanceUI.render();
+  if (typeof PlanningUI !== 'undefined') PlanningUI.render();
 }
 
 function renderDashboard() {
@@ -276,15 +278,16 @@ function renderDocumentFields(doc = {}) {
   ].join('') + `<datalist id="venueOptions">${venues.map(name => `<option value="${esc(name)}">`).join('')}</datalist>`;
   const venueInput = $('#documentForm [name="venue"]'); if (venueInput) venueInput.setAttribute('list', 'venueOptions');
   $('#documentEyebrow').textContent = type.toUpperCase();
+  if($('#quotePlanPanel')) $('#quotePlanPanel').hidden=type!=='devis';
   $('#remainingRow').classList.toggle('hidden', type !== 'facture');
-  $('#documentForm [name="type"]')?.addEventListener('change', event => { renderDocumentFields({ ...readDocumentHeader(), type: event.target.value, status: event.target.value === 'facture' ? 'unpaid' : 'draft' }); calculateDocument(); });
+  $('#documentForm [name="type"]')?.addEventListener('change', event => { renderDocumentFields({ ...readDocumentHeader(), type: event.target.value, status: event.target.value === 'facture' ? 'unpaid' : 'draft' }); if(event.target.value==='devis' && typeof PlanningUI!=='undefined' && !$('#quotePlanPanel [name="planning_billing_model"]')) PlanningUI.quoteForm(readDocumentHeader()); calculateDocument(); });
   const paidInput = $('#documentForm [name="paid_amount"]');
   if (paidInput) { paidInput.readOnly = true; paidInput.title = 'Paiements datés dans Finances'; }
   if (type === 'facture' && doc.id) $('#documentFields').insertAdjacentHTML('beforeend', `<div class="field full"><button class="btn ghost" type="button" data-finance-action="receipt" data-id="${doc.id}">Enregistrer un encaissement / acompte</button><small>Le montant encaissé est calculé depuis les paiements datés dans Finances.</small></div>`);
 }
 
 function readDocumentHeader() {
-  const data = Object.fromEntries(new FormData($('#documentForm')));
+  const data = Object.fromEntries([...new FormData($('#documentForm'))].filter(([key])=>!key.startsWith('planning_')));
   const disabledType = $('#documentForm [name="type"]')?.value;
   return { ...data, type: disabledType || 'devis', notes: $('#docNotes').value };
 }
@@ -301,6 +304,7 @@ function openDocument(id = null, preset = {}) {
   $('#deleteDocumentBtn').classList.toggle('hidden', !existing);
   $('#pdfDocumentBtn').classList.toggle('hidden', !existing);
   $('#convertDocumentBtn').classList.toggle('hidden', !(existing?.type === 'devis' && !state.documents.some(item => item.source_quote_id === existing.id)));
+  if(typeof PlanningUI!=='undefined') PlanningUI.quoteForm(doc);
   calculateDocument(); openModal('documentModal');
 }
 
@@ -327,6 +331,7 @@ function calculateDocument() {
   const totals = documentTotals();
   $('#docTotalHt').textContent = euro(totals.ht); $('#docTotalVat').textContent = euro(totals.vat); $('#docTotalTtc').textContent = euro(totals.ttc);
   const paid = num($('#documentForm [name="paid_amount"]')?.value), credit = typeof FinanceUI !== 'undefined' ? FinanceUI.creditTotal(state.editingDocument) : 0; $('#docRemaining').textContent = euro(Math.max(0, totals.ttc - paid - credit));
+  if(typeof PlanningUI!=='undefined') PlanningUI.previewQuote();
   $$('.doc-line', $('#documentLines')).forEach(row => { const total = num($('.line-quantity', row).value) * num($('.line-price', row).value) * (1 + num($('.line-vat', row).value) / 100); $('.line-total', row).textContent = euro(total); });
 }
 
@@ -344,7 +349,9 @@ async function saveDocument(event) {
   if (!lines.length) return toast('Ajoute au moins une prestation.', true);
   const payload = { ...header, id: state.editingDocument, event_date: isoDate(header.event_date), due_date: isoDate(header.due_date), paid_amount: num(header.paid_amount) };
   setSync('loading');
-  const { error } = await db.rpc('save_faste_document', { p_document: payload, p_lines: lines });
+  const withPlan=header.type==='devis' && typeof PlanningUI!=='undefined';
+  if(withPlan&&(!PlanningUI.isReady() || !$('#quotePlanPanel [name="planning_billing_model"]'))) return handleError(new Error('Budget interne indisponible. Actualisez avant d’enregistrer le devis.'));
+  const { error } = await db.rpc(withPlan?'save_faste_document_with_plan':'save_faste_document', { p_document: payload, p_lines: lines, ...(withPlan?{p_plan:PlanningUI.readPlan()}:{}) });
   if (error) return handleError(error);
   closeModal('documentModal'); toast('Document enregistré et partagé.'); await loadData({ quiet: true });
 }
@@ -449,6 +456,7 @@ function openEvent(id) {
   ].map(([label, name]) => `<label>${label}<textarea name="${name}" rows="3">${esc(event[name] || '')}</textarea></label>`).join('');
   renderEventTasks(event.tasks);
   if(typeof FinanceUI!=='undefined') FinanceUI.renderEventPanel(event.id);
+  if(typeof PlanningUI!=='undefined') PlanningUI.eventPanel(event.id);
   openModal('eventModal');
 }
 
@@ -846,7 +854,7 @@ function bindEvents() {
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if(event.target.closest('.quick-menu button')) $('.quick-menu').open=false;
-    if (action === 'new-contact') openContact(); if (action === 'new-document') openDocument(); if (action === 'new-service') openService(); if (action === 'new-material') openMaterial();
+    if (action === 'new-contact') { openContact(); if(event.target.closest('#page-planning')) $('#contactForm [name="type"]').value='prestataire'; } if (action === 'new-document') openDocument(); if (action === 'new-service') openService(); if (action === 'new-material') openMaterial();
     const contact = event.target.closest('[data-edit-contact]')?.dataset.editContact; if (contact) openContact(contact);
     const service = event.target.closest('[data-edit-service]')?.dataset.editService; if (service) openService(service);
     const material = event.target.closest('[data-edit-material]')?.dataset.editMaterial; if (material) openMaterial(material);
@@ -894,7 +902,7 @@ async function init() {
   const session = await fasteAuth.requireSession(); if (!session) return;
   $('#userEmail').textContent = session.user.email || '';
   fasteAuth.client.auth.onAuthStateChange((event, activeSession) => { if (event === 'SIGNED_OUT' || !activeSession) location.replace('faste-login.html'); });
-  bindEvents(); if (typeof FinanceUI !== 'undefined') FinanceUI.bind(); navigate(location.hash.slice(1) || 'dashboard'); await loadData(); setInterval(() => loadData({ quiet: true }), 60000);
+  bindEvents(); if (typeof FinanceUI !== 'undefined') FinanceUI.bind(); if (typeof PlanningUI !== 'undefined') PlanningUI.bind(); navigate(location.hash.slice(1) || 'dashboard'); await loadData(); setInterval(() => loadData({ quiet: true }), 60000);
 }
 
 init().catch(error => handleError(error));

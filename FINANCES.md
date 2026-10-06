@@ -90,3 +90,19 @@ Tables protégées par RLS, autorisation identique aux associés existants. Buck
 Le contrôle Supabase n’a signalé aucune nouvelle alerte RLS. L’alerte préexistante de protection contre les mots de passe compromis reste distincte : https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection .
 
 La connexion réelle au navigateur nécessite la session d’un associé : aucune preuve de test connecté bout en bout n’est revendiquée sans cette session.
+
+## Budget et préparation événementielle
+
+Dans le devis, « Budget client et marge prévue » est réservé à FASTE et n’apparaît pas sur le PDF client. Saisir le budget global TTC du client, le mode de facturation (global, prestations FASTE seules ou mixte) et les prestations payées directement par le client. Le devis facture uniquement les lignes FASTE. Exemple : budget client de 30 000 €, devis FASTE de 12 000 € TTC et fournisseurs payés par le client de 18 000 €. Les 18 000 € ne deviennent ni du chiffre d’affaires, ni une dépense, ni un encaissement FASTE.
+
+Ajouter les coûts prévus supportés par FASTE : fournisseurs, locations, transport, logistique et personnel. Saisir HT si la TVA est récupérable, TTC sinon. Cocher « coûts vérifiés » seulement après avoir recensé tous les coûts, même si leur total est zéro. Marge prévue = devis HT − coûts prévus ; pourcentage = marge / devis HT. La valorisation facultative des heures de préparation, montage, exploitation et démontage donne un indicateur supplémentaire. Elle ne crée aucun salaire ni aucune charge comptable ; ne pas valoriser deux fois du personnel déjà compris dans les coûts prévus.
+
+Le dossier reprend le budget et compare coûts/marge prévus aux coûts/marge réalisés saisis dans le module financier. Une facturation ou des dépenses incomplètes sont signalées. Le prévisionnel reste modifiable depuis le devis : ce n’est pas une photographie immuable à la date d’acceptation. L’export unique conserve une ligne informative de budget/marge prévue, sans montant dans les colonnes HT/TVA/TTC ou banque.
+
+## Réservations et disponibilités
+
+Depuis Événements, ouvrir « Planning & disponibilités », ou ajouter une réservation dans le dossier. Choisir du matériel FASTE avec quantité, un équipier ou un prestataire ; renseigner une mission, un début et une fin, puis « À confirmer » ou « Confirmé ». Les heures sont celles de Paris ; pour une prestation après minuit, renseigner la date du lendemain. Une heure inexistante ou ambiguë lors du changement d’heure doit être remplacée par une heure non ambiguë.
+
+Les réservations à confirmer participent aux alertes, mais ne bloquent pas la saisie. La confirmation est contrôlée côté serveur : une quantité de matériel supérieure au stock disponible ou un équipier confirmé sur deux missions simultanées est refusé. Deux missions successives à la même heure de fin/début sont compatibles. Les prestataires peuvent disposer de plusieurs équipes : un chevauchement affiche une alerte à vérifier, sans blocage automatique. Les réservations annulées restent dans l’historique et libèrent la ressource. Maxime et Paul figurent dans l’équipe ; ajouter les autres équipiers avec un nom unique.
+
+Une réservation ne crée aucune dépense ni aucun paiement. Si le client règle directement un prestataire, l’indiquer dans la réservation et dans le budget client. Si FASTE le règle, enregistrer ensuite sa facture dans Dépenses. Les dates des réservations restent indépendantes : après une modification de date de l’événement, revoir les réservations. Le stock correspond aux quantités actuellement saisies dans Matériel ; une modification du stock peut nécessiter de réviser les affectations.

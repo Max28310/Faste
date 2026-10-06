@@ -1,8 +1,8 @@
 /* Journal unique de gestion. Pièces et mouvements bancaires restent dans des colonnes distinctes. */
 (function(root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./finance-core.js'),require('./finance-profit.js'));
-  else root.FasteExport = factory(root.FasteFinance,root.FasteProfit);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function(F,P) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./finance-core.js'),require('./finance-profit.js'),require('./event-planning.js'));
+  else root.FasteExport = factory(root.FasteFinance,root.FasteProfit,root.FastePlanning);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function(F,P,Planning) {
   'use strict';
   const headers = ['Date', 'Type', 'Référence', 'Client / fournisseur', 'Événement / catégorie', 'Pièce liée', 'Libellé / détail', 'Échéance', 'HT (€)', 'TVA (€)', 'TTC (€)', 'Entrée banque (€)', 'Sortie banque (€)', 'Frais avancés associé (€)', 'Payeur / bénéficiaire', 'Statut', 'TVA déductible (€)', 'Reste à fin période (€)', 'Justificatifs / PDF', 'Notes', 'Indicateur (€)', 'Marge (%)', 'ID'];
   const safe = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -40,6 +40,7 @@
     });
     docs.filter(d => d.type==='devis' && d.status==='accepted' && d.document_date<=to && !docs.some(i => i.type==='facture' && i.source_quote_id===d.id)).forEach(d => add({'Date':d.document_date,'Type':'Devis à facturer','Référence':d.number,'Client / fournisseur':client(d),'Événement / catégorie':event(d),'Statut':'Information — non facturé','Notes':`Devis accepté de ${d.total_ttc} € TTC : exclu de la facturation et des mouvements.`,'ID':d.id},true));
     F.eventRows(data,to).forEach(r => add({'Date':to,'Type':'Synthèse marge','Client / fournisseur':r.quote?.contact?.name || r.docs[0]?.contact?.name,'Événement / catégorie':r.title,'Statut':'Information — cumul à fin de période','Notes':`Recettes nettes HT ${r.billed} € ; coûts directs ${r.costs} €. Avant frais généraux non alloués, rémunération et amortissements.`,'Indicateur (€)':r.margin,'Marge (%)':r.rate,'ID':r.id},true));
+    (data.plans||[]).forEach(p=>{const q=doc(p.quote_id);if(!q||q.status!=='accepted'||q.document_date>to)return;const r=Planning.forecast(p,q);add({'Date':to,'Type':'Budget et marge prévus','Référence':q.number,'Client / fournisseur':client(q),'Événement / catégorie':event(q),'Statut':'Information — prévision interne modifiable','Indicateur (€)':r.margin,'Marge (%)':r.rate,'Notes':`Budget global client TTC : ${r.budget==null?'non renseigné':r.budget} ; devis FASTE TTC : ${q.total_ttc} ; autres prestataires payés directement par le client TTC : ${p.external_client_ttc}. Modèle : ${p.billing_model}. Coûts prévus FASTE : ${r.costs}. Travail valorisé : ${r.timeValue} pour ${r.hours} heures-personnes, séparé des charges. ${r.checked?'Coûts déclarés complets.':'Coûts à vérifier.'} Prévision uniquement : ne pas comptabiliser ni additionner aux factures, charges ou paiements.`,'ID':p.quote_id},true);});
     const snapshot=F.snapshot(data,to);
     (data.adjustments||[]).filter(a=>within(a.document_date)).forEach(a=>add({'Date':a.document_date,'Type':['tax_addback','tax_deduction'].includes(a.category) ? 'Correction fiscale' : 'Ajustement résultat','Référence':a.reference,'Libellé / détail':a.label,'Événement / catégorie':a.category,'Statut':a.cancelled ? 'Annulé' : 'Hors banque','Justificatifs / PDF':files('adjustment_id',a.id).join('\n'),'Indicateur (€)':a.cancelled ? 0 : Number(a.amount),'Notes':(a.notes||'')+' — Impact signé sur '+(['tax_addback','tax_deduction'].includes(a.category) ? 'la base IS seulement.' : 'le résultat avant IS. Ne pas compter comme mouvement bancaire.'),'ID':a.id}));
     P.range(data,from,to).forEach(r=>{
