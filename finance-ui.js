@@ -40,7 +40,13 @@ const FinanceUI = (() => {
     const rows = F.eventRows(m, asOf).filter(r => `${r.title} ${r.quote?.contact?.name || r.docs[0]?.contact?.name || ''}`.toLowerCase().includes(search));
     $('#financeEventsBody').innerHTML = rows.length ? rows.map(r => `<tr><td><strong>${esc(r.title)}</strong><span class="cell-sub">${esc(r.quote?.contact?.name || r.docs[0]?.contact?.name || '')} · ${dateFr(r.date)}</span></td><td>${euro(r.quote?.total_ht || 0)}</td><td>${euro(r.billed)}</td><td>${euro(r.costs)}${r.pendingVat ? '<span class="cell-sub">TVA déductible à vérifier</span>' : ''}</td><td class="${r.margin < 0 ? 'negative-cell' : 'positive-cell'}"><strong>${euro(r.margin)}</strong><span class="cell-sub">${pct(r.rate)} du facturé HT</span></td><td>${euro(r.received)}</td><td>${euro(r.due)}</td><td>${euro(r.payable)}</td><td>${button('Ajouter une dépense', 'expense', r.id)} ${r.docs.map(d => button('Encaisser ' + esc(d.number), 'receipt', d.id)).join(' ')}</td></tr>`).join('') : '<tr><td colspan="9"><div class="empty-state">Vos événements apparaissent dès qu’un devis est accepté. Les factures sans devis lié apparaissent aussi.</div></td></tr>';
     const q = ($('#financeExpenseSearch').value || '').toLowerCase();
-    $('#financeExpensesBody').innerHTML = data.expenses.filter(e => !e.archived && `${e.supplier} ${e.reference} ${e.category}`.toLowerCase().includes(q)).map(e => {
+    const month=$('#expenseMonth').value, expenseState=$('#expenseState').value;
+    const purchases=data.expenses.filter(e=>!e.archived && `${e.supplier} ${e.reference} ${e.category}`.toLowerCase().includes(q) && (!month || e.document_date?.startsWith(month))).filter(e=>{
+      const due=F.cents(F.expenseTtc(e))-F.cents(F.paidExpense(e,data.payments,asOf));
+      return expenseState==='all' || expenseState==='paid' && due<=0 || expenseState==='unpaid' && due>0 || expenseState==='verify' && e.provisional || expenseState==='missing' && !data.attachments.some(a=>a.expense_id===e.id);
+    });
+    $('#expenseSelectionTotal').textContent=`${purchases.length} dépense(s) · Total TTC : ${euro(F.sum(purchases,F.expenseTtc))} · Reste à payer : ${euro(F.sum(purchases,e=>Math.max(0,F.expenseTtc(e)-F.paidExpense(e,data.payments,asOf))))}. Les filtres modifient cette liste, pas les résultats de l’entreprise.`;
+    $('#financeExpensesBody').innerHTML = purchases.map(e => {
       const paid = F.paidExpense(e, data.payments, asOf), due = F.money(F.cents(F.expenseTtc(e)) - F.cents(paid));
       const event = state.events.find(x => x.id === e.event_id), doc = state.documents.find(x => x.id === e.document_id);
       return `<tr><td><strong>${esc(e.supplier)}</strong><span class="cell-sub">${esc(e.reference)} · ${esc(e.category)}${e.provisional ? ' · À vérifier' : ''}</span></td><td>${esc(event?.title || doc?.number || 'Frais généraux FASTE')}<span class="cell-sub">${({ charge: 'Dépense courante', investment: 'Investissement', advance: 'Acompte fournisseur' })[e.kind]}</span></td><td>${euro(F.expenseTtc(e))}</td><td>${dateFr(e.due_date)}</td><td>${euro(due)}</td><td>${data.attachments.filter(a => a.expense_id === e.id).length} pièce(s)</td><td>${button('Ouvrir', 'edit-expense', e.id)} ${due > 0 ? button('Payer', 'payment', e.id) : '<span class="badge paid">Payé</span>'} ${button('Justificatifs', 'files-expense', e.id)}</td></tr>`;
@@ -59,9 +65,10 @@ const FinanceUI = (() => {
     $('#financeBalanceLabel').textContent = data.settings.balance_date ? `Solde vérifié au ${dateFr(data.settings.balance_date)} : ${euro(data.settings.balance_amount)}. Les paiements de cette journée et antérieurs sont inclus dans ce solde.` : 'Renseignez le solde de fin de journée de votre relevé bancaire pour démarrer.';
     $('#financeFlowsBody').innerHTML = data.flows.filter(f => !f.cancelled).sort((a, b) => b.flow_date.localeCompare(a.flow_date)).map(f => `<tr><td>${dateFr(f.flow_date)}</td><td>${esc(f.label)}</td><td>${euro(f.amount)}</td><td>${f.realized ? 'Réalisé' : 'Prévu'}</td><td>${!f.realized ? button('Marquer réalisé', 'realize-flow', f.id) : ''} ${button('Annuler', 'cancel-flow', f.id)} ${button('Pièces', 'files-flow', f.id)}</td></tr>`).join('') || '<tr><td colspan="5"><div class="empty-state">Ajoutez ici uniquement les autres mouvements : capital, prêt, TVA, remboursement d’associé… Les paiements clients/fournisseurs sont déjà comptés.</div></td></tr>';
     $('#financeLegacy').hidden = !invoices.some(d => Number(d.finance_initial_paid) > 0);
+    if(state.editingEvent && $('#eventModal').classList.contains('open')) renderEventPanel(state.editingEvent);
     $('#financeVatWarning').textContent = s.pendingVat ? `${s.pendingVat} dépense(s) avec TVA récupérable à confirmer : les coûts incluent cette TVA par prudence.` : 'La marge est calculée sur les dépenses courantes saisies, avant frais généraux non rattachés, rémunération, amortissements et impôts.';
   }
-  function showTab(tab) { $$('#financeTabs button').forEach(b => { b.classList.toggle('active', b.dataset.financeTab === tab); b.setAttribute('aria-selected', b.dataset.financeTab === tab); }); $$('.finance-view').forEach(v => v.hidden = v.id !== 'finance-' + tab); }
+  function showTab(tab) { if(!['events','expenses','money','export'].includes(tab)) tab='events'; $$('#financeTabs button').forEach(b => { b.classList.toggle('active', b.dataset.financeTab === tab); b.setAttribute('aria-selected', b.dataset.financeTab === tab); }); $$('.finance-view').forEach(v => v.hidden = v.id !== 'finance-' + tab); }
   function form(title, mode, fields, footer = '') {
     editing = mode; pendingId = crypto.randomUUID();
     $('#financeModalTitle').textContent = title;
@@ -275,8 +282,10 @@ const FinanceUI = (() => {
   }
   function bind() {
     document.addEventListener('click', actions); $('#financeForm').addEventListener('submit', save);
-    $('#financeTabs').addEventListener('click', e => { const b = e.target.closest('[data-finance-tab]'); if (b) showTab(b.dataset.financeTab); });
+    $('#financeTabs').addEventListener('click', e => { const b = e.target.closest('[data-finance-tab]'); if (b) navigate(({events:'finance',expenses:'expenses',money:'money',export:'accountant'})[b.dataset.financeTab]); });
     $('#financeEventSearch').addEventListener('input', render); $('#financeExpenseSearch').addEventListener('input', render);
+    ['expenseMonth','expenseState'].forEach(id=>$('#'+id).addEventListener('change',render));
+    $('#resetExpenseFilters').addEventListener('click',()=>{ $('#financeExpenseSearch').value=''; $('#expenseMonth').value=''; $('#expenseState').value='all'; render(); });
     $('#financeExportForm').addEventListener('submit', exportPackage);
     $('#financeExportForm [name="from"]').value = localDate().slice(0, 4) + '-01-01'; $('#financeExportForm [name="to"]').value = localDate();
     ['dashProfitMode','dashProfitYear','dashProfitPeriod'].forEach(id=>$('#'+id).addEventListener('change',renderProfit));
@@ -301,6 +310,27 @@ const FinanceUI = (() => {
     if(selected.future) { $('#dashProfitBreakdown').textContent=selected.label+' : période à venir.'; $('#dashProfitNote').textContent='Les résultats seront calculés au fil des factures, charges et ajustements enregistrés. Aucun bénéfice futur n’est supposé.'; }
     $('#dashProfitBody').innerHTML=rows.map(r=>`<tr${r===selected ? ' class="selected-row"' : ''}><td>${esc(r.label)}${r.future ? '<span class="cell-sub">À venir</span>' : r.actualTo<r.to ? '<span class="cell-sub">Cumul en cours</span>' : ''}</td>${[r.revenue,r.direct,r.overhead,r.nonCash,r.pretax].map(v=>`<td>${r.future ? '—' : euro(v)}</td>`).join('')}<td>${r.future ? '—' : pct(r.beforeRate)}</td><td>${r.future ? '—' : euro(r.is)}</td><td>${r.future ? '—' : euro(r.after)}</td><td>${r.future ? '—' : pct(r.afterRate)}</td></tr>`).join('');
   }
+  function documentFigures(doc) {
+    if(!ready) return null;
+    return {netHt:F.money(F.cents(doc.total_ht)-F.cents(F.credited(doc,data.credits,localDate(),true))),creditTtc:F.credited(doc,data.credits,localDate()),paid:F.docPaid(doc,data.payments,localDate()),due:F.remainingDoc(doc,data.payments,localDate(),data.credits)};
+  }
+  function eventSummary(id) { return ready ? F.eventRows(model(),localDate()).find(r=>r.id===id)||null : null; }
+  function renderHome() {
+    if(!$('#homeCash')) return;
+    if(!ready) { ['homeCash','homeDue','homePayable'].forEach(id=>$('#'+id).textContent='Indisponible'); $('#homeDataNotice').hidden=false; $('#homeDataNotice').textContent='Les finances n’ont pas pu être chargées. Actualisez la page.'; return; }
+    const asOf=localDate(), s=F.snapshot(model(),asOf);
+    $('#homeCash').textContent=s.cash==null ? 'À renseigner' : euro(s.cash); $('#homeCash').classList.toggle('negative',s.cash<0);
+    $('#homeCashHelp').textContent=s.cash==null ? 'Renseignez le solde de votre relevé bancaire.' : 'Solde calculé au '+dateFr(asOf)+' ; à rapprocher du relevé.';
+    $('#homeDue').textContent=euro(s.due); $('#homePayable').textContent=euro(s.payable);
+    const test=state.documents.some(d=>d.number?.startsWith('TEST-'));
+    $('#homeDataNotice').hidden=!test; $('#homeDataNotice').textContent=test ? 'Les exemples TEST sont inclus dans ces chiffres et dans les exports. Ils sont fictifs.' : '';
+  }
+  function renderEventPanel(id) {
+    const box=$('#eventFinancePanel'); if(!box) return;
+    const r=eventSummary(id); if(!r) { box.innerHTML='<p class="finance-notice">Chiffres indisponibles. Actualisez les finances avant de saisir.</p>'; return; }
+    const figures=r.docs.map(d=>({doc:d,...documentFigures(d)}));
+    box.innerHTML=`<div class="panel-head"><div><h3>Ce que rapporte cet événement</h3><p>Facturation et coûts saisis à ce jour. Marge avant frais généraux et impôt.</p></div>${button('Ajouter une dépense / scanner','expense',id,'btn primary')}</div><div class="event-financial-grid">${card('Facturé HT net d’avoirs',euro(r.billed),'Le devis n’est pas recompté')}${card('Coûts directs',euro(r.costs),'Prestataires, transport, location…')}${card('Marge directe',euro(r.margin),pct(r.rate)+' du facturé HT',r.margin<0)}</div><p class="list-scope">Encaissé TTC : ${euro(r.received)} · Clients à encaisser : ${euro(r.due)} · Fournisseurs à payer : ${euro(r.payable)}.${r.pendingVat ? ' TVA récupérable à confirmer : coûts prudents TTC.' : ''}</p><details class="explain-details"><summary>Devis, factures et paiements de cet événement</summary><div class="dossier-lines">${r.quote ? `<div><span>Devis ${esc(r.quote.number)} · ${euro(r.quote.total_ttc)} TTC</span><button class="mini-btn" data-edit-document="${esc(r.quote.id)}">Ouvrir / facturer</button><button class="mini-btn" data-pdf-document="${esc(r.quote.id)}">PDF</button></div>` : ''}${figures.length ? figures.map(f=>`<div><span><strong>${esc(f.doc.number)}</strong> · ${euro(f.doc.total_ttc)} TTC · restant ${euro(f.due)}</span><button class="mini-btn" data-edit-document="${esc(f.doc.id)}">Ouvrir</button>${f.due>0 ? button('Encaisser / acompte','receipt',f.doc.id) : '<span class="badge paid">Soldée</span>'}${button('Avoir','credit',f.doc.id)}</div>`).join('') : '<p>Aucune facture créée. Ouvrez le devis puis choisissez Transformer en facture.</p>'}</div></details><details class="explain-details"><summary>Dépenses et justificatifs de cet événement (${r.expenses.length})</summary><div class="dossier-lines">${r.expenses.map(e=>{const due=Math.max(0,F.expenseTtc(e)-F.paidExpense(e,data.payments,localDate()));return `<div><span><strong>${esc(e.supplier)}</strong> · ${esc(e.reference)} · ${euro(F.expenseTtc(e))} TTC${e.provisional ? ' · À vérifier' : ''}</span>${button('Ouvrir','edit-expense',e.id)}${due>0 ? button('Payer','payment',e.id) : '<span class="badge paid">Payée</span>'}${button('Justificatifs','files-expense',e.id)}</div>`;}).join('')||'<p>Aucune dépense rattachée. Utilisez Ajouter une dépense : cet événement sera présélectionné.</p>'}</div></details>`;
+  }
   const creditTotal = id => F.credited({id}, data.credits, localDate());
   function dashboardSummary() {
     if (!ready) return null;
@@ -308,5 +338,5 @@ const FinanceUI = (() => {
     const linked=rows.flatMap(r => r.expenses).filter(e => e.document_date<=date && e.kind==='charge');
     return { billed, costs, margin, rate:billed>0 ? margin/billed*100 : null, pendingVat:linked.some(e => e.deduction_status==='unknown'), provisional:linked.some(e => e.provisional), test:state.documents.some(d => d.number?.startsWith('TEST-')) };
   }
-  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal, dashboardSummary, renderProfit };
+  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal, dashboardSummary, renderProfit, showTab, renderHome, eventSummary, renderEventPanel, documentFigures, isReady:()=>ready };
 })();

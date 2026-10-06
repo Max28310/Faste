@@ -2,6 +2,18 @@
 
 Le menu **Finances** rassemble Mes événements, Mes dépenses, Mon argent et Export comptable.
 
+## Interface simple pour le quotidien
+
+Accueil : solde bancaire, clients à encaisser, fournisseurs à payer, résultat toutes charges avant et après IS estimé. Choix mois / trimestre / exercice et pourcentages conservés ; le tableau complet et les explications sont repliés. Le carnet commercial et la marge directe restent accessibles.
+
+Événements : un dossier regroupe facturation HT, coûts directs, marge € / %, encaissements, factures, dépenses / justificatifs et préparation du jour J. Le bouton Ajouter une dépense présélectionne cet événement. La marge directe reste distincte du résultat global après frais généraux.
+
+Devis & factures : recherche, dates du document, état, client et totaux de la sélection. Devis et factures restent séparés ; facturé net d’avoirs, encaissé et restant sont repris depuis les calculs financiers, jamais recomptés comme chiffre d’affaires. Les lignes affichent les montants originaux ; un avoir est signalé et déduit des totaux.
+
+Dépenses : liste courante en premier, filtres mois / à payer / payées / à vérifier / sans justificatif. Les modèles mensuels sont repliés, toujours modifiables. Trésorerie et dossier comptable ont un accès direct. Catalogue, matériel, suivi détaillé et prévisionnel restent dans Catalogue & outils. Les anciennes adresses #finance, #strategy, #materials restent valides. Un mode d’emploi de six étapes est intégré. Les filtres des listes ne modifient pas les résultats ni l’export, dont la période se choisit séparément.
+
+Aucune donnée existante, formule de calcul, règle de paiement, justificatif ou récurrence n’est supprimée par cette adaptation de l’interface.
+
 ## Résultat toutes charges et estimation IS
 
 Le Dashboard affiche en priorité les résultats avant IS et après IS estimé, en euros et en pourcentage des recettes HT nettes d'avoirs. Vues **mensuelle, trimestrielle, annuelle** ; choix de l'exercice et de la période. Un mois de début d'exercice configurable définit un exercice standard de 12 mois. Les résultats de périodes futures restent vides ; l'exercice courant est limité aux documents datés jusqu'à aujourd'hui.

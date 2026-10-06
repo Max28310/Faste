@@ -3,13 +3,17 @@
 const db = fasteAuth.client;
 const state = { contacts: [], services: [], documents: [], lines: [], events: [], eventTasks: [], materials: [], settings: {}, strategic: {}, forecast: null, forecastScenario: 'realistic', forecastChartMode: 'monthly', forecastDirty: false, forecastSaving: false, forecastRevision: 0, forecastSaveTimer: null, crmFilter: 'all', docFilter: 'all', eventFilter: 'all', editingContact: null, editingService: null, editingMaterial: null, editingDocument: null, editingEvent: null };
 const pageMeta = {
-  dashboard: ['Dashboard', 'L’essentiel de l’activité FASTE.'],
-  crm: ['CRM', 'Contacts, clients, lieux et prestataires.'],
+  dashboard: ['Accueil', 'Votre activité, votre argent et vos résultats.'],
+  crm: ['Clients & contacts', 'Clients, prospects, lieux et prestataires.'],
   documents: ['Devis & Factures', 'Créer, suivre, convertir et encaisser.'],
-  events: ['Événements', 'Pense-bêtes opérationnels générés depuis les devis acceptés.'],
+  events: ['Événements', 'Un dossier pour préparer chaque événement et suivre ce qu’il rapporte.'],
   prestations: ['Prestations', 'Catalogue de services et tarifs par défaut.'],
   materials: ['Matériel', 'Inventaire partagé et toujours à jour.'],
-  finance: ['Finances', 'Mes événements, mes dépenses et mon argent.'],
+  finance: ['Suivi financier détaillé', 'Retrouvez les tableaux et les réglages complémentaires.'],
+  expenses: ['Dépenses', 'Factures fournisseurs, tickets et abonnements.'],
+  money: ['Trésorerie', 'Ce qui est sur le compte, ce qui doit entrer et ce qui doit sortir.'],
+  accountant: ['Dossier comptable', 'Un seul tableau, accompagné de vos pièces justificatives.'],
+  guide: ['Mode d’emploi', 'Six étapes pour utiliser Gestion FASTE.'],
   strategy: ['Prévisionnel', 'Simuler, comparer et piloter la trajectoire financière de FASTE.'],
   settings: ['Paramètres', 'Informations légales et coordonnées de l’entreprise.']
 };
@@ -149,10 +153,10 @@ function renderAll() {
 }
 
 function renderDashboard() {
-  if(typeof FinanceUI!=='undefined') FinanceUI.renderProfit();
+  if(typeof FinanceUI!=='undefined') { FinanceUI.renderHome(); FinanceUI.renderProfit(); }
   const accepted = state.documents.filter(doc => doc.type === 'devis' && doc.status === 'accepted');
   const invoices = state.documents.filter(doc => doc.type === 'facture');
-  const future = state.documents.filter(doc => doc.event_date && doc.event_date >= today()).sort((a, b) => a.event_date.localeCompare(b.event_date));
+  const future = state.events.filter(event => event.event_date && event.event_date >= today() && event.status !== 'completed').sort((a, b) => a.event_date.localeCompare(b.event_date));
   $('#dashSigned').textContent = euro(accepted.reduce((sum, doc) => sum + num(doc.total_ttc), 0));
   $('#dashDue').textContent = euro(invoices.reduce((sum, doc) => sum + num(doc.remaining_amount), 0));
   $('#dashPending').textContent = state.documents.filter(doc => doc.type === 'devis' && doc.status === 'sent').length;
@@ -170,7 +174,7 @@ function renderDashboard() {
   invoices.filter(doc => effectiveStatus(doc) === 'late').forEach(doc => actions.push({ icon: '€', title: `Facture ${doc.number} en retard`, sub: doc.contact?.name || 'Client', date: doc.due_date, page: 'documents' }));
   state.documents.filter(doc => doc.type === 'devis' && doc.status === 'sent').forEach(doc => actions.push({ icon: '▣', title: `Relancer le devis ${doc.number}`, sub: doc.contact?.name || 'Client', date: doc.document_date, page: 'documents' }));
   $('#actionList').innerHTML = actions.length ? actions.slice(0, 8).map(action => `<button class="action-item" data-go="${action.page}" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer"><span class="action-icon">${action.icon}</span><span class="action-main"><strong>${esc(action.title)}</strong><small>${esc(action.sub)}</small></span><span class="action-date">${dateFr(action.date)}</span></button>`).join('') : '<div class="empty-state">Aucune action urgente. Tout est à jour.</div>';
-  $('#eventList').innerHTML = future.length ? future.slice(0, 6).map(doc => `<button class="event-item" data-document="${doc.id}" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer"><span class="event-main"><strong>${esc(doc.event_type || 'Événement')}</strong><small>${esc(doc.contact?.name || 'Contact à préciser')}${doc.venue ? ` · ${esc(doc.venue)}` : ''}</small></span><span class="event-date">${dateFr(doc.event_date)}</span></button>`).join('') : '<div class="empty-state">Aucun événement à venir.</div>';
+  $('#eventList').innerHTML = future.length ? future.slice(0, 6).map(doc => `<button class="event-item" data-edit-event="${doc.id}" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer"><span class="event-main"><strong>${esc(doc.title || 'Événement')}</strong><small>${esc(doc.contact?.name || 'Contact à préciser')}${doc.venue ? ` · ${esc(doc.venue)}` : ''}</small></span><span class="event-date">${dateFr(doc.event_date)}</span></button>`).join('') : '<div class="empty-state">Aucun événement à venir.</div>';
 }
 
 function renderContacts() {
@@ -228,12 +232,27 @@ async function deleteContact() {
 
 function renderDocuments() {
   const query = ($('#documentSearch')?.value || '').toLowerCase().trim();
+  const clientSelect = $('#documentClient'), selectedClient = clientSelect.value;
+  const clients = state.contacts.filter(c => state.documents.some(d => d.contact_id === c.id)).sort((a,b) => a.name.localeCompare(b.name,'fr'));
+  clientSelect.innerHTML = '<option value="">Tous les clients</option>'+clients.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); clientSelect.value=selectedClient;
+  const from=$('#documentFrom').value,to=$('#documentTo').value,statusFilter=$('#documentStatus').value;
   let list = state.documents.filter(doc => `${doc.number} ${doc.contact?.name || ''} ${doc.event_type || ''} ${doc.venue || ''}`.toLowerCase().includes(query));
   if (state.docFilter === 'devis' || state.docFilter === 'facture') list = list.filter(doc => doc.type === state.docFilter);
   else if (state.docFilter === 'pending') list = list.filter(doc => doc.type === 'devis' && doc.status === 'sent');
   else if (state.docFilter === 'unpaid') list = list.filter(doc => doc.type === 'facture' && num(doc.remaining_amount) > 0);
+  list=list.filter(d=>(!from || d.document_date>=from)&&(!to || d.document_date<=to)&&(!selectedClient || d.contact_id===selectedClient)&&(statusFilter==='all' || effectiveStatus(d)===statusFilter));
+  const financeAvailable=typeof FinanceUI!=='undefined' && FinanceUI.isReady();
+  const figures=d=>financeAvailable ? FinanceUI.documentFigures(d) : null;
   $('#documentCount').textContent = `${list.length} document${list.length > 1 ? 's' : ''}`;
-  $('#documentsBody').innerHTML = list.length ? list.map(doc => { const status = effectiveStatus(doc); return `<tr><td><span class="cell-title">${esc(doc.number)}</span></td><td>${doc.type === 'devis' ? 'Devis' : 'Facture'}</td><td>${esc(doc.contact?.name || '—')}</td><td>${esc(doc.event_type || '—')}${doc.venue ? `<span class="cell-sub">${esc(doc.venue)}</span>` : ''}</td><td>${dateFr(doc.event_date)}</td><td><strong>${euro(doc.total_ttc)}</strong></td><td><span class="badge ${status}">${esc(statusLabel(doc.type, status))}</span></td><td><div class="row-actions"><button class="mini-btn" data-pdf-document="${doc.id}">PDF</button><button class="mini-btn" data-edit-document="${doc.id}">Ouvrir</button></div></td></tr>`; }).join('') : '<tr><td colspan="8"><div class="empty-state">Aucun document trouvé.</div></td></tr>';
+  $('#documentQuoteTotal').textContent=euro(list.filter(d=>d.type==='devis').reduce((n,d)=>n+num(d.total_ht),0));
+  const invoices=list.filter(d=>d.type==='facture');
+  $('#documentInvoiceTotal').textContent=financeAvailable ? euro(FasteFinance.sum(invoices,d=>figures(d).netHt)) : 'À charger';
+  $('#documentPaidTotal').textContent=financeAvailable ? euro(FasteFinance.sum(invoices,d=>figures(d).paid)) : 'À charger';
+  $('#documentDueTotal').textContent=financeAvailable ? euro(FasteFinance.sum(invoices,d=>figures(d).due)) : 'À charger';
+  $('#documentsBody').innerHTML=list.length ? list.map(doc=>{
+    const status=effectiveStatus(doc), f=figures(doc), invoice=doc.type==='facture';
+    return `<tr><td><strong>${esc(doc.number)}</strong><span class="cell-sub">${invoice ? 'Facture' : 'Devis'} · <span class="badge ${esc(status)}">${esc(statusLabel(doc.type,status))}</span></span></td><td><strong>${esc(doc.contact?.name||'—')}</strong><span class="cell-sub">${esc(doc.event_type||'Événement')}${doc.venue ? ' · '+esc(doc.venue) : ''}</span></td><td>${dateFr(doc.document_date)}</td><td>${euro(doc.total_ht)} HT<span class="cell-sub"><strong>${euro(doc.total_ttc)} TTC</strong></span>${f?.creditTtc>0 ? '<span class="cell-sub">Avoir déduit des totaux</span>' : ''}</td><td>${invoice ? f ? `<strong>${euro(f.due)}</strong><span class="cell-sub">restant</span><span class="cell-sub">${euro(f.paid)} encaissé</span>` : 'À charger' : '—'}</td><td>${invoice ? dateFr(doc.due_date) : '—'}</td><td><div class="row-actions"><button class="mini-btn" data-edit-document="${esc(doc.id)}">Ouvrir</button><button class="mini-btn" data-pdf-document="${esc(doc.id)}">PDF</button>${invoice && f?.due>0 ? `<button class="mini-btn" data-finance-action="receipt" data-id="${esc(doc.id)}">Encaisser</button>` : ''}${invoice && f ? `<button class="mini-btn" data-finance-action="credit" data-id="${esc(doc.id)}">Avoir</button>` : ''}</div></td></tr>`;
+  }).join('') : '<tr><td colspan="7"><div class="empty-state">Aucun document dans cette sélection. Modifiez les filtres ou créez un devis.</div></td></tr>';
 }
 
 function documentStatusChoices(type) {
@@ -355,7 +374,8 @@ function renderEvents() {
   const container = $('#eventsGrid');
   if (!container) return;
   const query = ($('#eventSearch')?.value || '').toLowerCase().trim();
-  let list = state.events.filter(event => `${event.title} ${event.venue || ''} ${event.contact?.name || ''} ${event.quote?.number || ''}`.toLowerCase().includes(query));
+  const from=$('#eventFrom').value,to=$('#eventTo').value;
+  let list = state.events.filter(event => (!from || event.event_date>=from) && (!to || event.event_date<=to) && `${event.title} ${event.venue || ''} ${event.contact?.name || ''} ${event.quote?.number || ''}`.toLowerCase().includes(query));
   if (state.eventFilter === 'upcoming') list = list.filter(event => event.event_date && event.event_date >= today() && event.status !== 'completed');
   else if (state.eventFilter !== 'all') list = list.filter(event => event.status === state.eventFilter);
   list.sort((a, b) => (a.event_date || '9999-12-31').localeCompare(b.event_date || '9999-12-31'));
@@ -364,7 +384,8 @@ function renderEvents() {
     const total = event.tasks.length;
     const done = event.tasks.filter(task => task.is_done).length;
     const progress = total ? Math.round((done / total) * 100) : 0;
-    return `<button class="event-card" data-edit-event="${event.id}"><span class="event-card-top"><h3>${esc(event.title)}</h3><span class="badge ${esc(event.status)}">${esc(eventStatusLabel(event.status))}</span></span><span class="event-card-meta"><span>◷ ${dateFr(event.event_date)}${event.venue ? ` · ${esc(event.venue)}` : ''}</span><span>◎ ${esc(event.contact?.name || 'Contact à préciser')}${event.assigned_to ? ` · ${esc(event.assigned_to)}` : ''}</span></span><span class="event-progress"><span style="width:${progress}%"></span></span><span class="event-progress-label"><span>${done}/${total} tâches</span><span>${progress} %</span></span></button>`;
+    const finance=typeof FinanceUI!=='undefined' ? FinanceUI.eventSummary(event.id) : null;
+    return `<button class="event-card" data-edit-event="${event.id}"><span class="event-card-top"><h3>${esc(event.title)}</h3><span class="badge ${esc(event.status)}">${esc(eventStatusLabel(event.status))}</span></span><span class="event-card-meta"><span>◷ ${dateFr(event.event_date)}${event.venue ? ` · ${esc(event.venue)}` : ''}</span><span>◎ ${esc(event.contact?.name || 'Contact à préciser')}${event.assigned_to ? ` · ${esc(event.assigned_to)}` : ''}</span></span>${finance ? `<span class="event-card-money"><span>Facturé HT<strong>${euro(finance.billed)}</strong></span><span>Coûts directs<strong>${euro(finance.costs)}</strong></span><span>Marge directe<strong class="${finance.margin<0 ? 'negative' : ''}">${euro(finance.margin)}<small>${finance.rate==null ? '—' : new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1}).format(finance.rate)+' %'}</small></strong></span></span>` : '<span class="cell-sub">Finances à charger</span>'}<span class="event-progress"><span style="width:${progress}%"></span></span><span class="event-progress-label"><span>${done}/${total} tâches</span><span>${progress} %</span></span></button>`;
   }).join('') : '<div class="empty-state panel">Aucune fiche événement dans cette vue. Elle apparaîtra automatiquement dès qu’un devis sera accepté.</div>';
 }
 
@@ -427,6 +448,7 @@ function openEvent(id) {
     ['Autres informations utiles', 'general_notes']
   ].map(([label, name]) => `<label>${label}<textarea name="${name}" rows="3">${esc(event[name] || '')}</textarea></label>`).join('');
   renderEventTasks(event.tasks);
+  if(typeof FinanceUI!=='undefined') FinanceUI.renderEventPanel(event.id);
   openModal('eventModal');
 }
 
@@ -803,10 +825,16 @@ function generatePdf(doc, { download = true } = {}) {
 
 function navigate(page) {
   const target = pageMeta[page] ? page : 'dashboard';
-  $$('.page').forEach(section => section.classList.toggle('active', section.id === `page-${target}`));
-  $$('.nav-link[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === target));
+  const financeRoutes={finance:'events',expenses:'expenses',money:'money',accountant:'export'};
+  const surface=financeRoutes[target] ? 'finance' : target;
+  $$('.page').forEach(section => section.classList.toggle('active', section.id === `page-${surface}`));
+  $$('.nav-link[data-page]').forEach(button => { const active=button.dataset.page===target; button.classList.toggle('active',active); if(active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
+  const resource=$('.nav-resources'); if(resource && resource.querySelector('.active')) resource.open=true;
+  if(financeRoutes[target] && typeof FinanceUI!=='undefined') FinanceUI.showTab(financeRoutes[target]);
+  document.body.dataset.route=target;
   $('#pageTitle').textContent = pageMeta[target][0]; $('#pageSubtitle').textContent = pageMeta[target][1];
   $('#sidebar').classList.remove('open'); if (location.hash !== `#${target}`) history.replaceState(null, '', `#${target}`);
+  $$('.quick-menu').forEach(d=>d.open=false);
 }
 
 function bindEvents() {
@@ -817,6 +845,7 @@ function bindEvents() {
   document.addEventListener('keydown', event => { if (event.key === 'Escape') { const modal = document.querySelector('.modal.open'); if (modal) closeModal(modal.id); } });
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
+    if(event.target.closest('.quick-menu button')) $('.quick-menu').open=false;
     if (action === 'new-contact') openContact(); if (action === 'new-document') openDocument(); if (action === 'new-service') openService(); if (action === 'new-material') openMaterial();
     const contact = event.target.closest('[data-edit-contact]')?.dataset.editContact; if (contact) openContact(contact);
     const service = event.target.closest('[data-edit-service]')?.dataset.editService; if (service) openService(service);
@@ -831,6 +860,10 @@ function bindEvents() {
   $('#docFilters').addEventListener('click', event => { const button = event.target.closest('button[data-filter]'); if (!button) return; $$('#docFilters button').forEach(item => item.classList.toggle('active', item === button)); state.docFilter = button.dataset.filter; renderDocuments(); });
   $('#eventFilters').addEventListener('click', event => { const button = event.target.closest('button[data-filter]'); if (!button) return; $$('#eventFilters button').forEach(item => item.classList.toggle('active', item === button)); state.eventFilter = button.dataset.filter; renderEvents(); });
   $('#contactSearch').addEventListener('input', renderContacts); $('#documentSearch').addEventListener('input', renderDocuments); $('#eventSearch').addEventListener('input', renderEvents);
+  ['documentFrom','documentTo','documentStatus','documentClient'].forEach(id=>$('#'+id).addEventListener('change',renderDocuments));
+  $('#resetDocumentFilters').addEventListener('click',()=>{ ['documentSearch','documentFrom','documentTo','documentClient'].forEach(id=>$('#'+id).value=''); $('#documentStatus').value='all'; state.docFilter='all'; $$('#docFilters button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); renderDocuments(); });
+  ['eventFrom','eventTo'].forEach(id=>$('#'+id).addEventListener('change',renderEvents));
+  $('#resetEventFilters').addEventListener('click',()=>{ ['eventSearch','eventFrom','eventTo'].forEach(id=>$('#'+id).value=''); state.eventFilter='all'; $$('#eventFilters button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); renderEvents(); });
   $('#contactForm').addEventListener('submit', saveContact); $('#deleteContactBtn').addEventListener('click', deleteContact);
   $('#serviceForm').addEventListener('submit', saveService); $('#deleteServiceBtn').addEventListener('click', disableService);
   $('#materialForm').addEventListener('submit', saveMaterial); $('#deleteMaterialBtn').addEventListener('click', deleteMaterial);
