@@ -2,6 +2,8 @@
 
 Le menu **Finances** rassemble Mes événements, Mes dépenses, Mon argent et Export comptable.
 
+Le Dashboard affiche aussi la **marge des événements en euros et en pourcentage** : cumul des factures HT nettes d'avoirs, moins les coûts courants rattachés aux événements/dossiers. Le pourcentage est calculé sur le total facturé HT, sans moyenner les pourcentages des événements. Les frais généraux non rattachés, rémunérations, amortissements et impôts ne sont pas déduits. La carte signale les pièces/TVA à vérifier et les données TEST. Le bouton Voir par événement ouvre Finances.
+
 ## Tableau comptable unique
 
 L'archive exportée contient **un seul tableau**, dans `FASTE_export_comptable.xlsx`, feuille **Journal comptable**. Son CSV reprend exactement le même journal. Les PDF et originaux restent joints et leurs chemins apparaissent sur les lignes concernées. Les colonnes Type, Statut et Pièce liée permettent de filtrer les documents et retrouver leurs règlements. Le journal regroupe factures, avoirs négatifs, dépenses, règlements, frais personnels et autres mouvements. Les HT/TVA/TTC des documents ne sont pas répétés sur les paiements ; les mouvements bancaires ont leurs propres colonnes. Les documents hors période, devis à facturer et synthèses marge/trésorerie/BFR sont informatifs, sans montant dans les colonnes de facturation ou de banque. Ne pas additionner les synthèses aux opérations. Les lignes annulées sont conservées avec incidence nulle. Les dépenses provisoires restent signalées. Bordures noires, filtres, en-tête et premières colonnes figés. Un texte court dans l'archive précise ces règles ; aucun autre tableau séparé n'est produit.

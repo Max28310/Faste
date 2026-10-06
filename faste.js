@@ -157,6 +157,13 @@ function renderDashboard() {
   $('#dashPending').textContent = state.documents.filter(doc => doc.type === 'devis' && doc.status === 'sent').length;
   $('#dashEvents').textContent = future.length;
 
+  const margin = typeof FinanceUI !== 'undefined' ? FinanceUI.dashboardSummary() : null;
+  $('#dashMargin').textContent = margin ? euro(margin.margin) : 'Indisponible';
+  $('#dashMarginRate').textContent = margin?.rate != null ? new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1}).format(margin.rate) + ' %' : '—';
+  $('#dashMargin').classList.toggle('negative', margin?.margin < 0); $('#dashMarginRate').classList.toggle('negative', margin?.rate < 0);
+  $('#dashMarginBase').textContent = margin ? `${euro(margin.billed)} facturés HT − ${euro(margin.costs)} de coûts directs.` : 'Actualisez pour charger les finances.';
+  $('#dashMarginNote').textContent = ['Avant frais généraux non alloués, rémunération, amortissements et impôts.', margin?.pendingVat ? 'La TVA récupérable à confirmer reste incluse dans les coûts.' : '', margin?.provisional ? 'Certaines dépenses sont encore à vérifier.' : '', margin?.test ? 'Les exemples TEST sont inclus.' : ''].filter(Boolean).join(' ');
+
   const actions = [];
   state.contacts.filter(contact => contact.next_action_date && contact.next_action_date <= today()).forEach(contact => actions.push({ icon: '◎', title: contact.next_action || `Relancer ${contact.name}`, sub: contact.name, date: contact.next_action_date, page: 'crm' }));
   invoices.filter(doc => effectiveStatus(doc) === 'late').forEach(doc => actions.push({ icon: '€', title: `Facture ${doc.number} en retard`, sub: doc.contact?.name || 'Client', date: doc.due_date, page: 'documents' }));

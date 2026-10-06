@@ -264,5 +264,11 @@ const FinanceUI = (() => {
     $('#financeExportForm [name="from"]').value = localDate().slice(0, 4) + '-01-01'; $('#financeExportForm [name="to"]').value = localDate();
   }
   const creditTotal = id => F.credited({id}, data.credits, localDate());
-  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal };
+  function dashboardSummary() {
+    if (!ready) return null;
+    const date=localDate(), rows=F.eventRows(model(),date), billed=F.sum(rows,r => r.billed), costs=F.sum(rows,r => r.costs), margin=F.money(F.cents(billed)-F.cents(costs));
+    const linked=rows.flatMap(r => r.expenses).filter(e => e.document_date<=date && e.kind==='charge');
+    return { billed, costs, margin, rate:billed>0 ? margin/billed*100 : null, pendingVat:linked.some(e => e.deduction_status==='unknown'), provisional:linked.some(e => e.provisional), test:state.documents.some(d => d.number?.startsWith('TEST-')) };
+  }
+  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal, dashboardSummary };
 })();
