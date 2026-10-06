@@ -2,6 +2,18 @@
 
 Le menu **Finances** rassemble Mes événements, Mes dépenses, Mon argent et Export comptable.
 
+## Dépenses mensuelles et avoirs
+
+Dans Mes dépenses, **Dépense récurrente** enregistre un fournisseur, un montant HT/TVA, un jour et des dates de début/fin. Un job PostgreSQL horaire (minute 15) crée les échéances arrivées, même application fermée ; le chargement du module rattrape aussi les échéances. Chaque mois est unique. Le 31 devient le dernier jour du mois si nécessaire. Une pause empêche les nouvelles lignes ; reprendre rattrape les échéances manquantes sur la période active. Pour un arrêt définitif, renseigner une date de fin. Une modification de montant du modèle concerne les futures lignes, sans réécrire les mois créés.
+
+Les lignes générées sont **À vérifier**, sans paiement, sans déduction de TVA automatique et sans justificatif inventé. Ouvrir la dépense, vérifier montant et référence sur la facture mensuelle, joindre la pièce et cocher Montants vérifiés. Le modèle ne copie pas le justificatif d'un autre mois. Les prévisions incluent les récurrences futures, sans les confondre avec des dépenses déjà facturées. L'export signale les dépenses provisoires à vérifier avant comptabilisation.
+
+Les avoirs sont enregistrés dans Mes événements, sur une facture non soldée : motif, date, réduction HT et TVA. Ils réduisent les recettes et le restant, sans changer les encaissements ni la banque. Le remboursement d'une facture payée n'est pas pris en charge par cette première version. L'export ajoute les avoirs en Excel, CSV et PDF de gestion ; les montants positifs des avoirs sont à soustraire. Les pièces officielles et leur conformité restent à contrôler avant usage réel.
+
+## Jeu de test du 6 octobre 2026
+
+`supabase/demo_finance.sql` contient quatre clients TEST, quatre devis dont un à facturer, trois factures (3 600 € payés ; 2 400 € moins avoir de 240 € ; 6 000 € avec acompte de 1 800 €), un avoir, trois dépenses d'événement et deux lignes mensuelles (assurance 90 € sans TVA ; logiciel 30 € TTC). Les modèles TEST sont limités à octobre. Les dépenses n'ont pas de justificatifs originaux fictivement téléversés. Les PDF clients et d'avoir sont générés dans l'export. Ces données affectent les indicateurs : les nettoyer avant exploitation réelle. Le solde 0 € de l'essai précédent a été daté au 5 octobre pour montrer les mouvements du 6 : trésorerie de test 4 680 € ; client restant 6 360 € ; fournisseurs restant 720 € ; frais personnels Maxime 120 €.
+
 ## Démarrage
 
 1. Mon argent : saisir un solde bancaire vérifié de fin de journée. Aucun zéro n’est présumé.

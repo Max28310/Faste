@@ -299,7 +299,7 @@ function documentTotals(lines = readDocumentLines()) {
 function calculateDocument() {
   const totals = documentTotals();
   $('#docTotalHt').textContent = euro(totals.ht); $('#docTotalVat').textContent = euro(totals.vat); $('#docTotalTtc').textContent = euro(totals.ttc);
-  const paid = num($('#documentForm [name="paid_amount"]')?.value); $('#docRemaining').textContent = euro(Math.max(0, totals.ttc - paid));
+  const paid = num($('#documentForm [name="paid_amount"]')?.value), credit = typeof FinanceUI !== 'undefined' ? FinanceUI.creditTotal(state.editingDocument) : 0; $('#docRemaining').textContent = euro(Math.max(0, totals.ttc - paid - credit));
   $$('.doc-line', $('#documentLines')).forEach(row => { const total = num($('.line-quantity', row).value) * num($('.line-price', row).value) * (1 + num($('.line-vat', row).value) / 100); $('.line-total', row).textContent = euro(total); });
 }
 
