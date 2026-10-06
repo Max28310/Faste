@@ -427,6 +427,12 @@ function readEventTasks() {
   })).filter(task => task.label);
 }
 
+function showEventSection(section, focus=false) {
+  const names=['documents','preparation','expenses','profit']; if(!names.includes(section))return;
+  $$('#eventModal [data-event-section]').forEach(button=>{const active=button.dataset.eventSection===section;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;button.classList.toggle('active',active);if(active&&focus)button.focus();});
+  names.forEach(name=>$('#event-section-'+name).hidden=name!==section);
+  $('#eventSaveBtn').hidden=section!=='preparation';
+}
 function openEvent(id) {
   const event = state.events.find(item => item.id === id);
   if (!event) return;
@@ -457,7 +463,7 @@ function openEvent(id) {
   renderEventTasks(event.tasks);
   if(typeof FinanceUI!=='undefined') FinanceUI.renderEventPanel(event.id);
   if(typeof PlanningUI!=='undefined') PlanningUI.eventPanel(event.id);
-  openModal('eventModal');
+  showEventSection('preparation');openModal('eventModal');
 }
 
 async function saveEvent(event) {
@@ -846,12 +852,16 @@ function navigate(page) {
 }
 
 function bindEvents() {
+  $('.dossier-nav').addEventListener('keydown',event=>{const tab=event.target.closest('[data-event-section]');if(!tab)return;const keys=['ArrowLeft','ArrowRight','Home','End'];if(!keys.includes(event.key))return;event.preventDefault();const tabs=$$('.dossier-nav [data-event-section]'),i=tabs.indexOf(tab);const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(i+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;showEventSection(tabs[next].dataset.eventSection,true);});
+  $('#eventForm').addEventListener('invalid',()=>showEventSection('preparation'),true);
+
   $$('.nav-link[data-page]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.page)));
   $('#logoutBtn').addEventListener('click', () => fasteAuth.logout()); $('#refreshBtn').addEventListener('click', () => loadData()); $('#menuBtn').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
   $$('[data-close]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.close)));
   $$('.modal').forEach(modal => modal.addEventListener('mousedown', event => { if (event.target === modal) closeModal(modal.id); }));
   document.addEventListener('keydown', event => { if (event.key === 'Escape') { const modal = document.querySelector('.modal.open'); if (modal) closeModal(modal.id); } });
   document.addEventListener('click', event => {
+    const dossierTab=event.target.closest('[data-event-section]');if(dossierTab)showEventSection(dossierTab.dataset.eventSection);
     const action = event.target.closest('[data-action]')?.dataset.action;
     if(event.target.closest('.quick-menu button')) $('.quick-menu').open=false;
     if (action === 'new-contact') { openContact(); if(event.target.closest('#page-planning')) $('#contactForm [name="type"]').value='prestataire'; } if (action === 'new-document') openDocument(); if (action === 'new-service') openService(); if (action === 'new-material') openMaterial();

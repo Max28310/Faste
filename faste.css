@@ -69,3 +69,17 @@ body.gestion-simple{--bg:#f3f5f8;--sidebar:#0b233a;--panel:#fff;--panel2:#f4f7fb
 /* Prévisions internes et ressources de production. */
 .gestion-simple .quote-plan-panel{padding:18px 20px;margin:0 24px 18px;border:1px solid #b9cde5;border-radius:12px;background:#f5f9ff}.gestion-simple .planning-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:15px 0}.gestion-simple .quote-cost-row{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(120px,1fr) 130px 38px;gap:10px;align-items:end;border-bottom:1px solid #cbd7e6;padding:12px 0}.gestion-simple .quote-cost-row label{display:grid;gap:6px;font-size:13px;color:#52677e}.gestion-simple .quote-cost-row input,.gestion-simple .quote-cost-row select{width:100%;background:white;color:#172a40;border:1px solid #adbed2;border-radius:8px;padding:10px;font-size:14px}.gestion-simple .planning-check{display:flex;align-items:start;gap:9px;margin:16px 0;font-size:14px;line-height:1.5}.gestion-simple .planning-check input{margin-top:4px;accent-color:#1764bf}.gestion-simple .event-planning-panel{padding:0 24px}.gestion-simple #quotePlanPanel .panel-head{margin-top:18px}.gestion-simple #planningFormError{margin:0 24px 18px}.gestion-simple #eventPlanningPanel table{min-width:600px}.gestion-simple #page-planning .dossier-lines>div{border-bottom:0}.gestion-simple #planningTeamList{display:flex;gap:8px;flex-wrap:wrap}.gestion-simple #planningForm .field[hidden]{display:none!important}
 @media(max-width:800px){.gestion-simple .quote-cost-row{grid-template-columns:minmax(0,1fr) 38px}.gestion-simple .quote-cost-row label{grid-column:1}.gestion-simple .quote-cost-row>.icon-btn{grid-column:2;grid-row:1}.gestion-simple .planning-fields{grid-template-columns:1fr}.gestion-simple .event-planning-panel{padding:0 14px}.gestion-simple .quote-plan-panel{margin:0 14px 16px;padding:16px}.gestion-simple #page-planning .page-actions>div{display:flex;flex-wrap:wrap;gap:8px}}
+
+/* Contraste du thème clair et dossier central. */
+.gestion-simple .cell-title{color:#172a40}
+.gestion-simple .nav-link.active:hover{color:#154d92;background:#dbeafd}
+.gestion-simple .quick-menu button{color:#172a40}
+.gestion-simple .dossier-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 24px 20px;padding:12px;background:#edf3fb;border:1px solid #c7d5e6;border-radius:12px}
+.gestion-simple .dossier-nav button{background:white;color:#193f6b;border:1px solid #a9bcd3;border-radius:8px;padding:12px 8px;cursor:pointer;font-weight:650}
+.gestion-simple .dossier-nav button.active{background:#1764bf;color:white;border-color:#1764bf}
+.gestion-simple .dossier-section{padding:0 24px 20px}
+.gestion-simple .dossier-section[hidden],.gestion-simple #eventSaveBtn[hidden]{display:none!important}
+.gestion-simple .dossier-section .event-finance-panel{margin:0 0 18px}
+.gestion-simple .dossier-section .event-planning-panel{padding:0}
+.gestion-simple .dossier-section #eventForm>.form-grid{padding-left:0;padding-right:0}
+@media(max-width:700px){.gestion-simple .dossier-nav{grid-template-columns:1fr 1fr;margin:0 14px 16px;padding:8px}.gestion-simple .dossier-nav button{padding:12px 6px;font-size:14px}.gestion-simple .dossier-section{padding:0 14px 18px}}
