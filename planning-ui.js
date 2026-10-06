@@ -7,7 +7,7 @@ const PlanningUI=(()=>{
  const models=[['undecided','À définir'],['global','FASTE facture l’offre globale'],['direct','Client règle directement les autres prestataires'],['mixed','Mixte : certains prestataires via FASTE']];
  const pct=n=>n==null?'—':new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1}).format(n)+' %';
  const button=(text,action,id='',cls='mini-btn')=>`<button type="button" class="${cls}" data-planning-action="${action}" data-id="${esc(id)}">${text}</button>`;
- async function all(table){const rows=[];for(let offset=0;;offset+=500){const r=await db.from(table).select('*').order('id').range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data);if(r.data.length<500)return rows;}}
+ async function all(table){const rows=[];for(let offset=0;;offset+=500){const r=await db.from(table).select('*').order(table==='event_quote_plans'?'quote_id':'id').range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data);if(r.data.length<500)return rows;}}
  async function load(){try{[data.plans,data.members,data.bookings]=await Promise.all(['event_quote_plans','event_team_members','event_resource_bookings'].map(all));ready=true;error='';}catch(e){ready=false;error=e.message;}}
  function labelFields(box){box.querySelectorAll('.field').forEach((row,i)=>{const label=row.querySelector('label'),control=row.querySelector('input,select,textarea');if(label&&control){control.id=box.id+'-field-'+i;label.htmlFor=control.id;}});}
  const plan=id=>data.plans.find(p=>p.quote_id===id)||null;
