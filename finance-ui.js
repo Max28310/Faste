@@ -2,12 +2,13 @@
 'use strict';
 const FinanceUI = (() => {
   const F = FasteFinance;
-  let data = { expenses: [], payments: [], flows: [], attachments: [], settings: {}, recurring: [], credits: [] };
+  let data = { expenses: [], payments: [], flows: [], attachments: [], settings: {}, recurring: [], credits: [], adjustments: [] };
   let ready = false, errorMessage = '', editing = null, busy = false, pendingId = null;
   const model = () => ({ ...data, documents: state.documents, events: state.events });
   const pct = n => n == null ? '—' : new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(n) + ' %';
   const localDate = () => new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const categoryChoices = ['Location matériel', 'Prestataires', 'Transport', 'Hébergement', 'Communication', 'Assurance', 'Logiciels', 'Banque', 'Comptabilité', 'Matériel', 'Autre'].map(s => [s, s]);
+  const categoryChoices = ['Location matériel', 'Prestataires', 'Transport', 'Hébergement', 'Communication', 'Assurance', 'Logiciels', 'Banque', 'Comptabilité', 'Loyer / stockage', 'Entretien', 'Rémunérations et charges sociales', 'Intérêts d’emprunt', 'Impôts et taxes hors IS', 'Matériel', 'Autre'].map(s => [s, s]);
+  const adjustmentChoices = [['depreciation','Amortissement du matériel'],['provision','Provision'],['other_expense','Autre charge / régularisation'],['other_income','Autre produit / régularisation'],['tax_addback','Réintégration fiscale (augmente la base IS)'],['tax_deduction','Déduction fiscale (diminue la base IS)']];
   async function all(table) {
     const rows = [];
     for (let start = 0; ; start += 500) {
@@ -19,9 +20,9 @@ const FinanceUI = (() => {
   async function load() {
     try {
       const generation = await db.rpc('finance_generate_recurring'); if (generation.error) throw generation.error;
-      const results = await Promise.all(['finance_expenses', 'finance_payments', 'finance_flows', 'finance_attachments', 'finance_settings', 'finance_recurring', 'finance_credits'].map(all));
+      const results = await Promise.all(['finance_expenses', 'finance_payments', 'finance_flows', 'finance_attachments', 'finance_settings', 'finance_recurring', 'finance_credits', 'finance_adjustments'].map(all));
       [data.expenses, data.payments, data.flows, data.attachments] = results;
-      data.settings = results[4][0] || {}; data.recurring = results[5]; data.credits = results[6]; ready = true; errorMessage = '';
+      data.settings = results[4][0] || {}; data.recurring = results[5]; data.credits = results[6]; data.adjustments = results[7]; ready = true; errorMessage = '';
     } catch (e) { ready = false; errorMessage = e.message || 'Chargement impossible'; }
   }
   function card(label, value, detail, negative = false) { return `<article class="kpi"><span>${label}</span><strong class="${negative ? 'negative' : ''}">${value}</strong><small>${detail}</small></article>`; }
@@ -48,6 +49,7 @@ const FinanceUI = (() => {
     $('#financeInvoicesBody').innerHTML = invoices.map(d => `<tr><td>${esc(d.number)}<span class="cell-sub">${esc(d.contact?.name || '')}</span></td><td>${euro(d.total_ttc)}<span class="cell-sub">Avoirs : ${euro(F.credited(d, data.credits, asOf))}</span></td><td>${euro(F.docPaid(d, data.payments, asOf))}</td><td>${euro(F.remainingDoc(d, data.payments, asOf, data.credits))}</td><td>${dateFr(d.due_date)}</td><td>${button('Enregistrer un encaissement', 'receipt', d.id)} ${button('Ajouter un avoir', 'credit', d.id)} ${button('Justificatifs', 'files-document', d.id)}</td></tr>`).join('') || '<tr><td colspan="6"><div class="empty-state">Créez une facture depuis Devis & Factures.</div></td></tr>';
     $('#financeRecurringBody').innerHTML = data.recurring.map(r => `<tr><td>${esc(r.supplier)}<span class="cell-sub">${esc(r.label)}</span></td><td>${euro(F.expenseTtc(r))}</td><td>Le ${r.day_of_month} · ${dateFr(r.start_date)}${r.end_date ? ' → ' + dateFr(r.end_date) : ''}</td><td>${r.active ? 'Active' : 'En pause'}</td><td>${button('Modifier', 'edit-recurring', r.id)} ${button(r.active ? 'Mettre en pause' : 'Reprendre', r.active ? 'pause-recurring' : 'resume-recurring', r.id)}</td></tr>`).join('') || '<tr><td colspan="5">Aucune dépense récurrente. Ajoutez une assurance ou un abonnement mensuel.</td></tr>';
     $('#financeCreditsBody').innerHTML = data.credits.map(c => `<tr><td>${esc(c.number)}<span class="cell-sub">${esc(state.documents.find(d => d.id === c.document_id)?.number || '')}</span></td><td>${dateFr(c.document_date)}</td><td>${esc(c.reason)}</td><td>−${euro(F.expenseTtc(c))}</td><td>${c.cancelled ? 'Annulé' : button('Annuler la saisie', 'cancel-credit', c.id)}</td></tr>`).join('') || '<tr><td colspan="5">Aucun avoir.</td></tr>';
+    $('#financeAdjustmentsBody').innerHTML=data.adjustments.map(a=>`<tr><td>${dateFr(a.document_date)}</td><td>${esc(a.label)}<span class="cell-sub">${esc(a.reference)}</span></td><td>${esc(adjustmentChoices.find(c=>c[0]===a.category)?.[1]||a.category)}</td><td>${euro(a.amount)}</td><td>${a.cancelled ? 'Annulé' : button('Annuler','cancel-adjustment',a.id)} ${button('Justificatifs','files-adjustment',a.id)}</td></tr>`).join('')||'<tr><td colspan="5">Ajoutez ici les dotations d’amortissement et ajustements validés. Ils ne créent aucun paiement bancaire.</td></tr>';
     $('#financePaymentsBody').innerHTML = [...data.payments].sort((a, b) => b.payment_date.localeCompare(a.payment_date)).map(p => `<tr><td>${dateFr(p.payment_date)}</td><td>${esc(state.documents.find(d => d.id === p.document_id)?.number || data.expenses.find(e => e.id === p.expense_id)?.supplier || '')}<span class="cell-sub">${esc(p.reference)}</span></td><td>${p.document_id ? '+' : '−'}${euro(p.amount)}</td><td>${p.payer === 'bank' ? 'Compte FASTE' : esc(p.payer)}</td><td>${p.cancelled ? 'Annulé' : button('Annuler le paiement', 'cancel-payment', p.id)} ${button('Pièces', 'files-payment', p.id)}</td></tr>`).join('') || '<tr><td colspan="5"><div class="empty-state">Les nouveaux paiements seront datés et conservés ici.</div></td></tr>';
     const f = F.forecast(m, asOf);
     $('#financeForecastBody').innerHTML = f.rows.map(r => `<tr><td>${r.month}</td><td>${euro(r.incoming)}</td><td>${euro(r.outgoing)}</td><td class="${r.balance < 0 ? 'negative-cell' : ''}">${r.balance == null ? 'Solde initial à renseigner' : euro(r.balance)}</td></tr>`).join('');
@@ -79,6 +81,12 @@ const FinanceUI = (() => {
     const d = state.documents.find(x => x.id === id);
     form('Avoir sur ' + d.number, { type: 'credit', id }, [field('Date de l’avoir', 'document_date', localDate(), { type: 'date', required: true }), field('Motif', 'reason', '', { required: true, full: true }), field('Réduction HT (€)', 'amount_ht', '', { type: 'number', min: '0.01', step: '0.01', required: true }), field('TVA de la réduction (€)', 'amount_vat', '', { type: 'number', min: 0, step: '0.01', required: true })].join(''), 'Imputation sur le montant non encaissé uniquement. L’avoir diminue le restant et les recettes HT, sans mouvement bancaire. Pour une facture déjà payée et un remboursement, faites valider le traitement avec l’expert-comptable.');
     const f = $('#financeForm'); f.elements.namedItem('amount_ht').addEventListener('input', () => { f.elements.namedItem('amount_vat').value = F.money(Math.round(Number(f.elements.namedItem('amount_ht').value) * 20)).toFixed(2); });
+  }
+  function profitSettings() {
+    form('Exercice et estimation de l’IS',{type:'profit-settings'},field('Premier mois de l’exercice de 12 mois','fiscal_start_month',data.settings.fiscal_start_month||1,{choices:Array.from({length:12},(_,i)=>[String(i+1),new Intl.DateTimeFormat('fr-FR',{month:'long'}).format(new Date(2026,i,1))])})+field('Taux réduit IS confirmé ?','reduced_is_confirmed',String(data.settings.reduced_is_confirmed===true),{choices:[['false','À confirmer : estimation au taux normal de 25 %'],['true','Oui : 15 % jusqu’à 42 500 €, puis 25 %']],full:true}), 'Taux réduit : CA ≤ 10 M€, capital entièrement libéré et détenu à au moins 75 % par des personnes physiques. Confirmez ces conditions avec votre expert-comptable. Le calendrier et le seuil supposent un exercice de 12 mois. Les déficits antérieurs, crédits d’impôt et corrections fiscales ne sont pas devinés : saisissez les ajustements validés.');
+  }
+  function adjustment() {
+    form('Ajustement du résultat — sans mouvement bancaire',{type:'adjustment'},[field('Date de rattachement','document_date',localDate(),{type:'date',required:true}),field('Libellé','label','',{required:true}),field('Référence de la pièce / calcul validé','reference','',{required:true,full:true}),field('Nature','category','depreciation',{choices:adjustmentChoices,full:true}),field('Montant (€), positif','amount','',{type:'number',min:'0.01',step:'0.01',required:true}),field('Note','notes','',{rows:2,full:true}),uploadField()].join(''),'Utilisez le montant validé ou estimé avec le cabinet. Amortissements, provisions et autres charges diminuent le résultat ; autres produits l’augmentent. Les corrections fiscales modifient seulement la base IS. Ne ressaisissez pas une charge déjà présente dans Mes dépenses. Pour un amortissement mensuel, saisissez la dotation du mois, pas le prix complet du matériel.');
   }
   function expense(id = null, preset = '') {
     const e = data.expenses.find(x => x.id === id) || {};
@@ -141,6 +149,11 @@ const FinanceUI = (() => {
         if (editing.id && data.expenses.find(e => e.id === editing.id)?.provisional) {
           const checked = $('#financeExpenseVerified')?.checked; if (checked) { const r = await db.from('finance_expenses').update({ provisional: false }).eq('id', id); if (r.error) throw r.error; }
         }
+      } else if (editing.type === 'profit-settings') {
+        result=await db.from('finance_settings').upsert({id:1,fiscal_start_month:Number(v.fiscal_start_month),reduced_is_confirmed:v.reduced_is_confirmed==='true',updated_at:new Date().toISOString()}).select('id').single();
+      } else if (editing.type === 'adjustment') {
+        const negative=['depreciation','provision','other_expense','tax_deduction'].includes(v.category);
+        result=await db.from('finance_adjustments').insert({id:pendingId,document_date:v.document_date,label:v.label.trim(),reference:v.reference.trim(),category:v.category,amount:Number(v.amount)*(negative ? -1 : 1),notes:v.notes||null}).select('id').single(); target={adjustment_id:pendingId};
       } else if (editing.type === 'recurring') {
         const payload = { supplier: v.supplier.trim(), label: v.label.trim(), category: v.category, amount_ht: Number(v.amount_ht), amount_vat: Number(v.amount_vat), start_date: v.start_date, end_date: v.end_date || null, day_of_month: Number(v.day_of_month), notes: v.notes || null };
         result = editing.id ? await db.from('finance_recurring').update(payload).eq('id', editing.id).select('id').single() : await db.from('finance_recurring').insert({ ...payload, id: pendingId }).select('id').single();
@@ -155,6 +168,7 @@ const FinanceUI = (() => {
         result = await db.from('finance_flows').insert({ id: pendingId, label: v.label.trim(), flow_date: v.flow_date, amount: Number(v.amount), category: v.category, beneficiary: v.beneficiary || null, realized: v.realized === 'true' }).select('id').single(); target = { flow_id: pendingId };
       } else if (editing.type === 'files') { target = editing.target; result = {}; }
       if (result.error) throw result.error;
+      if(editing.type==='profit-settings') { $('#dashProfitYear').value=''; profitSelectionKey=''; }
       saved = true;
       if (files.length && target) await attach(files, target);
       closeModal('financeModal'); toast('Enregistré et partagé avec votre associé.'); await loadData({ quiet: true });
@@ -186,6 +200,9 @@ const FinanceUI = (() => {
       case 'pause-recurring': await change('finance_recurring', id, { active: false }); break;
       case 'resume-recurring': await change('finance_recurring', id, { active: true }); break;
       case 'credit': credit(id); break;
+      case 'profit-settings': profitSettings(); break; case 'adjustment': adjustment(); break;
+      case 'cancel-adjustment': if(confirm('Annuler cet ajustement ? Il restera dans l’historique.')) await change('finance_adjustments',id,{cancelled:true}); break;
+      case 'files-adjustment': await files({adjustment_id:id}); break;
       case 'cancel-credit': if (confirm('Annuler cet avoir saisi par erreur ? Il restera dans l’historique.')) await change('finance_credits', id, { cancelled: true }); break;
       case 'files-expense': await files({ expense_id: id }); break; case 'files-document': await files({ document_id: id }); break;
       case 'files-payment': await files({ payment_id: id }); break; case 'files-flow': await files({ flow_id: id }); break;
@@ -204,7 +221,7 @@ const FinanceUI = (() => {
     const credits = data.credits.filter(c => within(c.document_date));
     const docIds = new Set([...docs.map(d => d.id), ...payments.map(p => p.document_id).filter(Boolean), ...credits.map(c => c.document_id)]), expIds = new Set([...expenses.map(e => e.id), ...payments.map(p => p.expense_id).filter(Boolean)]);
     const linkedDocs = state.documents.filter(d => docIds.has(d.id)); const linkedExpenses = data.expenses.filter(e => expIds.has(e.id));
-    const attachments = data.attachments.filter(a => docIds.has(a.document_id) || expIds.has(a.expense_id) || payments.some(p => p.id === a.payment_id) || flows.some(f => f.id === a.flow_id));
+    const attachments = data.attachments.filter(a => docIds.has(a.document_id) || expIds.has(a.expense_id) || payments.some(p => p.id === a.payment_id) || flows.some(f => f.id === a.flow_id) || data.adjustments.some(j=>within(j.document_date)&&j.id===a.adjustment_id));
     const tables = {
       Factures: [['ID', 'Numéro', 'Client', 'Devis lié', 'Événement', 'Date facture', 'Échéance', 'HT', 'TVA', 'TTC', 'Encaissé à fin période', 'Restant à fin période', 'Encaissement historique sans date'], ...docs.map(d => [d.id, d.number, d.contact?.name, d.source_quote_id, d.event_type, d.document_date, d.due_date, Number(d.total_ht), Number(d.total_vat), Number(d.total_ttc), F.docPaid(d, data.payments, to), F.remainingDoc(d, data.payments, to, data.credits), Number(d.finance_initial_paid || 0)])],
       Depenses: [['ID', 'Fournisseur', 'Référence', 'Événement ID', 'Facture dossier ID', 'Date', 'Échéance', 'Catégorie', 'Nature', 'HT', 'TVA', 'TTC', 'Déduction vérifiée', 'TVA déductible', 'Payé à fin période', 'Archivée'], ...expenses.map(e => [e.id, e.supplier, e.reference, e.event_id, e.document_id, e.document_date, e.due_date, e.category, e.kind, Number(e.amount_ht), Number(e.amount_vat), F.expenseTtc(e), e.deduction_status, Number(e.deductible_vat), F.paidExpense(e, data.payments, to), e.archived ? 'Oui' : 'Non'])],
@@ -262,6 +279,27 @@ const FinanceUI = (() => {
     $('#financeEventSearch').addEventListener('input', render); $('#financeExpenseSearch').addEventListener('input', render);
     $('#financeExportForm').addEventListener('submit', exportPackage);
     $('#financeExportForm [name="from"]').value = localDate().slice(0, 4) + '-01-01'; $('#financeExportForm [name="to"]').value = localDate();
+    ['dashProfitMode','dashProfitYear','dashProfitPeriod'].forEach(id=>$('#'+id).addEventListener('change',renderProfit));
+  }
+  let profitSelectionKey='';
+  function renderProfit() {
+    if(!$('#dashProfitPanel')) return;
+    $('#dashProfitPanel [data-finance-action]').disabled=!ready;
+    if(!ready) { $('#dashProfitBefore').textContent='Indisponible'; $('#dashProfitAfter').textContent='Indisponible'; $('#dashProfitBeforeRate').textContent=''; $('#dashProfitAfterRate').textContent=''; $('#dashProfitBreakdown').textContent=''; $('#dashProfitBody').innerHTML=''; $('#dashProfitNote').textContent='Actualisez pour charger les finances.'; return; }
+    const today=localDate(), month=Number(data.settings.fiscal_start_month||1), currentYear=FasteProfit.fiscalYear(today,month), yearInput=$('#dashProfitYear');
+    if(!yearInput.value) yearInput.value=currentYear;
+    const year=Number(yearInput.value); if(!Number.isInteger(year)||year<2000||year>2200) return;
+    const mode=$('#dashProfitMode').value, rows=FasteProfit.periods(model(),year,mode,today), key=year+'-'+mode+'-'+month, select=$('#dashProfitPeriod');
+    if(key!==profitSelectionKey) { select.innerHTML=rows.map((r,i)=>`<option value="${i}">${esc(r.label)}</option>`).join(''); select.value=String(Math.max(0,rows.findIndex(r=>today>=r.from&&today<=r.to))); profitSelectionKey=key; }
+    const selected=rows[Number(select.value)||0];
+    $('#dashProfitBefore').textContent=selected.future ? 'À venir' : euro(selected.pretax); $('#dashProfitAfter').textContent=selected.future ? 'À venir' : euro(selected.after);
+    $('#dashProfitBeforeRate').textContent=selected.future ? '' : pct(selected.beforeRate)+' des recettes HT'; $('#dashProfitAfterRate').textContent=selected.future ? '' : pct(selected.afterRate)+' des recettes HT';
+    $('#dashProfitBefore').classList.toggle('negative',selected.pretax<0); $('#dashProfitAfter').classList.toggle('negative',selected.after<0);
+    $('#dashProfitBreakdown').textContent=`${selected.label} : ${euro(selected.revenue)} de recettes HT − ${euro(selected.direct)} de coûts directs − ${euro(selected.overhead)} de frais généraux ${selected.nonCash<0 ? '−' : '+'} ${euro(Math.abs(selected.nonCash))} d’ajustements = ${euro(selected.pretax)} avant IS. IS estimé affecté à la période : ${euro(selected.is)}.`;
+    const unclassified=data.flows.some(f=>!f.cancelled&&f.realized&&Number(f.amount)<0&&['tax','other'].includes(f.category)&&f.flow_date>=selected.from&&f.flow_date<=selected.actualTo);
+    $('#dashProfitNote').textContent=[`Estimation au ${dateFr(selected.actualTo)}. ${selected.reduced ? 'Taux réduit confirmé : 15 % jusqu’à 42 500 € de bénéfice sur 12 mois, puis 25 %.' : 'Taux normal de 25 % ; éligibilité au taux réduit à confirmer dans les paramètres.'} IS calculé sur le cumul fiscal de l’exercice ; une période déficitaire peut réduire une provision d’IS précédente.`,selected.pendingVat ? 'TVA récupérable à confirmer : calcul prudent TTC.' : '',selected.provisional ? 'Des dépenses récurrentes sont encore à vérifier.' : '',unclassified ? 'Des sorties diverses existent : vérifiez que les charges correspondantes sont enregistrées dans Mes dépenses, sans doubler les paiements.' : '',state.documents.some(d=>d.number?.startsWith('TEST-')) ? 'Les exemples TEST sont inclus.' : '', 'Fiable seulement si toutes les charges, régularisations et corrections fiscales sont saisies. Le résultat après IS reste dans la société ; il ne représente pas automatiquement votre rémunération disponible.'].filter(Boolean).join(' ');
+    if(selected.future) { $('#dashProfitBreakdown').textContent=selected.label+' : période à venir.'; $('#dashProfitNote').textContent='Les résultats seront calculés au fil des factures, charges et ajustements enregistrés. Aucun bénéfice futur n’est supposé.'; }
+    $('#dashProfitBody').innerHTML=rows.map(r=>`<tr${r===selected ? ' class="selected-row"' : ''}><td>${esc(r.label)}${r.future ? '<span class="cell-sub">À venir</span>' : r.actualTo<r.to ? '<span class="cell-sub">Cumul en cours</span>' : ''}</td>${[r.revenue,r.direct,r.overhead,r.nonCash,r.pretax].map(v=>`<td>${r.future ? '—' : euro(v)}</td>`).join('')}<td>${r.future ? '—' : pct(r.beforeRate)}</td><td>${r.future ? '—' : euro(r.is)}</td><td>${r.future ? '—' : euro(r.after)}</td><td>${r.future ? '—' : pct(r.afterRate)}</td></tr>`).join('');
   }
   const creditTotal = id => F.credited({id}, data.credits, localDate());
   function dashboardSummary() {
@@ -270,5 +308,5 @@ const FinanceUI = (() => {
     const linked=rows.flatMap(r => r.expenses).filter(e => e.document_date<=date && e.kind==='charge');
     return { billed, costs, margin, rate:billed>0 ? margin/billed*100 : null, pendingVat:linked.some(e => e.deduction_status==='unknown'), provisional:linked.some(e => e.provisional), test:state.documents.some(d => d.number?.startsWith('TEST-')) };
   }
-  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal, dashboardSummary };
+  return { load, render, bind, expense, payment, recurring, exportTables, creditTotal, dashboardSummary, renderProfit };
 })();

@@ -1,8 +1,8 @@
 /* Journal unique de gestion. Pièces et mouvements bancaires restent dans des colonnes distinctes. */
 (function(root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./finance-core.js'));
-  else root.FasteExport = factory(root.FasteFinance);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function(F) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./finance-core.js'),require('./finance-profit.js'));
+  else root.FasteExport = factory(root.FasteFinance,root.FasteProfit);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function(F,P) {
   'use strict';
   const headers = ['Date', 'Type', 'Référence', 'Client / fournisseur', 'Événement / catégorie', 'Pièce liée', 'Libellé / détail', 'Échéance', 'HT (€)', 'TVA (€)', 'TTC (€)', 'Entrée banque (€)', 'Sortie banque (€)', 'Frais avancés associé (€)', 'Payeur / bénéficiaire', 'Statut', 'TVA déductible (€)', 'Reste à fin période (€)', 'Justificatifs / PDF', 'Notes', 'Indicateur (€)', 'Marge (%)', 'ID'];
   const safe = s => String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -41,6 +41,10 @@
     docs.filter(d => d.type==='devis' && d.status==='accepted' && d.document_date<=to && !docs.some(i => i.type==='facture' && i.source_quote_id===d.id)).forEach(d => add({'Date':d.document_date,'Type':'Devis à facturer','Référence':d.number,'Client / fournisseur':client(d),'Événement / catégorie':event(d),'Statut':'Information — non facturé','Notes':`Devis accepté de ${d.total_ttc} € TTC : exclu de la facturation et des mouvements.`,'ID':d.id},true));
     F.eventRows(data,to).forEach(r => add({'Date':to,'Type':'Synthèse marge','Client / fournisseur':r.quote?.contact?.name || r.docs[0]?.contact?.name,'Événement / catégorie':r.title,'Statut':'Information — cumul à fin de période','Notes':`Recettes nettes HT ${r.billed} € ; coûts directs ${r.costs} €. Avant frais généraux non alloués, rémunération et amortissements.`,'Indicateur (€)':r.margin,'Marge (%)':r.rate,'ID':r.id},true));
     const snapshot=F.snapshot(data,to);
+    (data.adjustments||[]).filter(a=>within(a.document_date)).forEach(a=>add({'Date':a.document_date,'Type':['tax_addback','tax_deduction'].includes(a.category) ? 'Correction fiscale' : 'Ajustement résultat','Référence':a.reference,'Libellé / détail':a.label,'Événement / catégorie':a.category,'Statut':a.cancelled ? 'Annulé' : 'Hors banque','Justificatifs / PDF':files('adjustment_id',a.id).join('\n'),'Indicateur (€)':a.cancelled ? 0 : Number(a.amount),'Notes':(a.notes||'')+' — Impact signé sur '+(['tax_addback','tax_deduction'].includes(a.category) ? 'la base IS seulement.' : 'le résultat avant IS. Ne pas compter comme mouvement bancaire.'),'ID':a.id}));
+    P.range(data,from,to).forEach(r=>{
+      [['Résultat avant IS',r.pretax,r.beforeRate],['IS estimé attribué à la période',r.is,null],['Résultat après IS estimé',r.after,r.afterRate]].forEach(([label,value,rate])=>add({'Date':r.to,'Type':'Synthèse résultat','Libellé / détail':label,'Événement / catégorie':r.from+' → '+r.to,'Statut':'Estimation — information','Indicateur (€)':value,'Marge (%)':rate,'Notes':`Recettes HT nettes ${r.revenue} € ; coûts directs ${r.direct} € ; frais généraux ${r.overhead} € ; ajustements résultat ${r.nonCash} €. IS basé sur le cumul fiscal de l’exercice, ${r.reduced ? 'taux réduit confirmé' : 'taux normal 25 %'}. Ajustements fiscaux saisis ; hors crédits d’impôt non enregistrés. Ne pas additionner aux pièces et paiements.`},true));
+    });
     [['Trésorerie calculée',snapshot.cash],['BFR opérationnel estimé',snapshot.bfr],['Solde bancaire de référence',data.settings.balance_amount]].forEach(([label,value]) => add({'Date':to,'Type':'Situation','Libellé / détail':label,'Statut':'Information — ne pas additionner aux pièces','Notes':label==='Solde bancaire de référence' ? 'Date du solde : '+(data.settings.balance_date || 'non renseignée') : 'Estimation de gestion ; à rapprocher des pièces et du relevé.','Indicateur (€)':value},true));
     rows.sort((a,b) => Number(a.info)-Number(b.info) || String(a.values[0] || '').localeCompare(String(b.values[0] || '')) || String(a.values[1]).localeCompare(String(b.values[1])));
     return [headers,...rows.map(r => r.values)];

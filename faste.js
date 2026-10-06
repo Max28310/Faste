@@ -149,6 +149,7 @@ function renderAll() {
 }
 
 function renderDashboard() {
+  if(typeof FinanceUI!=='undefined') FinanceUI.renderProfit();
   const accepted = state.documents.filter(doc => doc.type === 'devis' && doc.status === 'accepted');
   const invoices = state.documents.filter(doc => doc.type === 'facture');
   const future = state.documents.filter(doc => doc.event_date && doc.event_date >= today()).sort((a, b) => a.event_date.localeCompare(b.event_date));
