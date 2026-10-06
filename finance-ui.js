@@ -230,10 +230,19 @@ const FinanceUI = (() => {
     busy = true; const btn = $('#financeExportBtn'); btn.disabled = true; $('#financeExportStatus').textContent = 'Préparation des données…';
     try {
       const fresh = await loadData({ quiet: true }); if (!fresh || !ready) throw new Error(errorMessage || 'Actualisation des données impossible');
-      const { tables, attachments, docs, credits } = exportTables(v.from, v.to);
+      const { attachments, docs, credits } = exportTables(v.from, v.to);
+      const rows = FasteExport.journal({ ...model(), contacts: state.contacts, lines: state.lines }, v.from, v.to);
       if (attachments.reduce((s, a) => s + a.size, 0) > 209715200) throw new Error('Les pièces dépassent 200 Mo. Exportez une période plus courte.');
       const zip = new JSZip(), workbook = new ExcelJS.Workbook(); workbook.creator = 'FASTE';
-      for (const [name, rows] of Object.entries(tables)) { zip.file(name + '.csv', F.csv(rows)); const sheet = workbook.addWorksheet(name); sheet.addRows(rows.map(row => row.map(x => x ?? ''))); sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF142940' } }; sheet.views = [{ state: 'frozen', ySplit: 1 }]; sheet.columns.forEach(c => c.width = 24); }
+      zip.file('FASTE_journal_comptable.csv', F.csv(rows));
+      const sheet = workbook.addWorksheet('Journal comptable');
+      sheet.addTable({ name: 'JournalFASTE', ref: 'A1', headerRow: true, totalsRow: false, style: { theme: 'TableStyleMedium2', showRowStripes: true }, columns: rows[0].map(name => ({ name, filterButton: true })), rows: rows.slice(1).map(row => row.map(x => x ?? '')) });
+      sheet.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
+      const widths = [13,28,29,30,38,29,55,13,16,16,16,19,19,23,22,32,22,25,60,65,23,18,38]; sheet.columns.forEach((c,i) => c.width=widths[i] || 24);
+      sheet.eachRow((row,i) => { row.alignment={vertical:'top',wrapText:true}; row.eachCell({includeEmpty:true},cell => cell.border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}}); row.height=i===1 ? 34 : Math.min(110,Math.max(32,...row.values.filter(x => typeof x==='string').map(x => x.split('\n').length*15))); });
+      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF142940' } };
+      [9,10,11,12,13,14,17,18,21].forEach(i => sheet.getColumn(i).numFmt='#,##0.00 "€"'); sheet.getColumn(22).numFmt='0.00 " %"';
+      zip.file('LIRE_AVANT_COMPTABILISATION.txt', 'Un seul tableau : FASTE_export_comptable.xlsx, feuille Journal comptable. Le CSV contient le même tableau.\nFiltrer Type pour distinguer factures, avoirs, dépenses et règlements. Les paiements ont leurs montants dans les colonnes Entrée/Sortie banque et ne répètent pas le HT/TVA/TTC des pièces. Les avoirs sont négatifs. Les frais personnels sont séparés de la banque. Les prévisions, pièces hors période et synthèses ne sont pas à additionner aux opérations. La colonne Justificatifs / PDF donne le chemin du fichier joint dans cette archive. Les PDF clients sont générés depuis la version actuelle ; les justificatifs originaux sont conservés. Les dépenses À vérifier doivent être confirmées sur une pièce. Cet export de gestion n’est pas un FEC. Les lignes TEST sont fictives et ne doivent pas être comptabilisées.');
       zip.file('FASTE_export_comptable.xlsx', await workbook.xlsx.writeBuffer());
       for (let i = 0; i < attachments.length; i++) { const a = attachments[i]; $('#financeExportStatus').textContent = `Justificatifs : ${i + 1}/${attachments.length}…`; const r = await db.storage.from('faste-finance').download(a.path); if (r.error) throw new Error(`Pièce ${a.filename} inaccessible : ${r.error.message}. L’export n’a pas été livré incomplet.`); zip.file('justificatifs/' + a.id + '-' + a.filename, await r.data.arrayBuffer()); }
       for (const doc of docs) zip.file('factures_clients/' + doc.id + '-' + doc.number.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf', generatePdf(doc, { download: false }));
@@ -244,7 +253,7 @@ const FinanceUI = (() => {
         zip.file('avoirs_clients/' + c.id + '-' + c.number.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf',pdf.output('arraybuffer'));
       }
       const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `FASTE_comptable_${v.from}_${v.to}.zip`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
-      $('#financeExportStatus').textContent = `Export téléchargé : Excel, CSV, ${docs.length} PDF clients et ${attachments.length} justificatif(s).`;
+      $('#financeExportStatus').textContent = `Export téléchargé : un seul tableau Excel (${rows.length-1} lignes), son CSV, ${docs.length} PDF clients, ${credits.length} avoir(s) et ${attachments.length} justificatif(s).`;
     } catch (e) { $('#financeExportStatus').textContent = 'Export impossible : ' + e.message; } finally { busy = false; btn.disabled = false; render(); }
   }
   function bind() {

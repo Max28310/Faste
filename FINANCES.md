@@ -2,6 +2,10 @@
 
 Le menu **Finances** rassemble Mes événements, Mes dépenses, Mon argent et Export comptable.
 
+## Tableau comptable unique
+
+L'archive exportée contient **un seul tableau**, dans `FASTE_export_comptable.xlsx`, feuille **Journal comptable**. Son CSV reprend exactement le même journal. Les PDF et originaux restent joints et leurs chemins apparaissent sur les lignes concernées. Les colonnes Type, Statut et Pièce liée permettent de filtrer les documents et retrouver leurs règlements. Le journal regroupe factures, avoirs négatifs, dépenses, règlements, frais personnels et autres mouvements. Les HT/TVA/TTC des documents ne sont pas répétés sur les paiements ; les mouvements bancaires ont leurs propres colonnes. Les documents hors période, devis à facturer et synthèses marge/trésorerie/BFR sont informatifs, sans montant dans les colonnes de facturation ou de banque. Ne pas additionner les synthèses aux opérations. Les lignes annulées sont conservées avec incidence nulle. Les dépenses provisoires restent signalées. Bordures noires, filtres, en-tête et premières colonnes figés. Un texte court dans l'archive précise ces règles ; aucun autre tableau séparé n'est produit.
+
 ## Dépenses mensuelles et avoirs
 
 Dans Mes dépenses, **Dépense récurrente** enregistre un fournisseur, un montant HT/TVA, un jour et des dates de début/fin. Un job PostgreSQL horaire (minute 15) crée les échéances arrivées, même application fermée ; le chargement du module rattrape aussi les échéances. Chaque mois est unique. Le 31 devient le dernier jour du mois si nécessaire. Une pause empêche les nouvelles lignes ; reprendre rattrape les échéances manquantes sur la période active. Pour un arrêt définitif, renseigner une date de fin. Une modification de montant du modèle concerne les futures lignes, sans réécrire les mois créés.
